@@ -22,8 +22,8 @@
 
 t_log * logger;
 
-int server_socket = socket(AF_INET, SOCK_STREAM, 0);
-int client_socket = socket (AF_INET, SOCK_STREAM, 0);
+//int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+//int client_socket = socket (AF_INET, SOCK_STREAM, 0);
 
 
 
