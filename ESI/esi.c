@@ -60,10 +60,10 @@ int conectar_a(char *IP, char* puerto){
 }
 
 void protocolo_conexion(char* IP, char* puerto){
-	int socket = conectar_a(IP, puerto);
+	/*int socket = conectar_a(IP, puerto);
 	wait_hello(socket);
 	send_hello(socket);
-	void * content = wait_content(socket);
+	void * content = wait_content(socket);*/
 }
 
 //Por alguna razon los logs no me estan funcionando

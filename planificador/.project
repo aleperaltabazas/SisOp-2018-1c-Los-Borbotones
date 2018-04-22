@@ -3,6 +3,7 @@
 	<name>planificador</name>
 	<comment></comment>
 	<projects>
+		<project>shared-library</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

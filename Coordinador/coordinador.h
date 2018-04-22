@@ -8,6 +8,6 @@
 #ifndef COORDINADOR_H_
 #define COORDINADOR_H_
 
-
+#include <shared-library.h>
 
 #endif /* COORDINADOR_H_ */

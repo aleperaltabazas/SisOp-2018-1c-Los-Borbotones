@@ -8,6 +8,6 @@
 #ifndef PLANIFICADOR_H_
 #define PLANIFICADOR_H_
 
-
+#include <shared-library.h>
 
 #endif /* PLANIFICADOR_H_ */
