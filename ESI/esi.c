@@ -7,6 +7,10 @@
 
 #include "esi.h"
 
+int main(int argv, char** argc){
+	return EXIT_SUCCESS;
+}
+
 int conectar_a(char *IP, char* puerto){
 
 	struct sockaddr_in direccion_servidor;
@@ -18,7 +22,7 @@ int conectar_a(char *IP, char* puerto){
 	int res = connect(socket_cliente, (void*) &direccion_servidor, sizeof(direccion_servidor));
 
 	if(res != 0)
-		tira_error("Error en conexion");
+		salir_con_error("Error en conexion", socket);
 
 		//Tira error logea el error y exitea
 
@@ -26,9 +30,17 @@ int conectar_a(char *IP, char* puerto){
 
 }
 
-void tira_error(char* mensaje){
-	t_log * logger;
-	log_error(logger, mensaje);
+//Por alguna razon los logs no me estan funcionando
+//Si alguno tiene mejor suerte avise
 
-	exit(-1);
+void salir_con_error(char* mensaje, int socket){
+	//log_error(logger, mensaje);
+	close(socket);
+
+	exit_gracefully(1);
+}
+
+void exit_gracefully(int return_val){
+	//log_destroy(logger);
+	exit(return_val);
 }
