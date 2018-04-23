@@ -20,6 +20,8 @@
 #include <commons/collections/list.h>
 #include <pthread.h>*/
 
-#include <shared-library.h>
+//#include <shared-library.h>
+
+#include "shared-library.h"
 
 #endif /* ESI_H_ */

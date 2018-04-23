@@ -32,7 +32,7 @@ int main(int argc, char** argv){
 	listen(listening_socket, BACKLOG);
 	//Le decimos que escuche
 
-	//printf("%i", 42);
+	printf("%i", 42);
 
 	return EXIT_SUCCESS;
 }
