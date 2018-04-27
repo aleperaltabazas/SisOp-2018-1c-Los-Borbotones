@@ -52,7 +52,32 @@ int main(){
 		}
 	}
 
+// para escuchar al coordinador
 
+
+	/*int socketEscucha = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+
+	bind(socketEscucha, serverInfo->ai_addr, serverInfo->ai_addrlen);
+	freeaddrinfo(serverInfo);
+	*/
+
+	listen(server__Socket, BACKLOG);
+	struct sockaddr_in addr;			// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
+	socklen_t addrlen = sizeof(addr);
+	int socketQueAcepta = accept(server__Socket, (struct sockaddr *) &addr, &addrlen);
+		char mssje[PACKAGE_SIZE];
+			int stat = 1;		// Estructura que manjea el status de los recieve.
+
+			printf("Cliente conectado. Esperando mensajes:\n");
+			log_trace(logger, "Escuché"); //Creo que el log es mejor pero en el ejemplito usan printf
+
+			while (stat != 0) {
+				stat = recv(socketQueAcepta, (void*) mssje, PACKAGE_SIZE, 0);
+				if (stat != 0) printf("%s", mssje);
+			}
+
+//close(socketEscucha);
+close(socketQueAcepta);
 close(server__Socket);
 	return 0;
 

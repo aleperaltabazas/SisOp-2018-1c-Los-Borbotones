@@ -51,16 +51,28 @@ int main(){
 			stat = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
 			if (stat != 0) printf("%s", package);
 		}
-		/*int quieroMandar = 1;
+
+		//para responder a la instancia
+
+		/*int socketNuevoParaInstancia = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
+        connect(socketNuevoParaInstancia, server_info->ai_addr, server_info->ai_addrlen);
+
+
+    	freeaddrinfo(server_info);
+    	*/
+
+    	int quieroMandar = 1;
+    	char message[PACKAGESIZE];
 			printf("Ya puedo enviar la respuesta. Escriba 'exit' para salir\n");
 
 			while(quieroMandar){
-				fgets(package, PACKAGESIZE, stdin);
-				if (!strcmp(package,"exit\n")) quieroMandar = 0;
-				if (quieroMandar) {send(listening_socket, package, strlen(package) + 1, 0);
+				fgets(message, PACKAGESIZE, stdin);
+				if (!strcmp(message,"exit\n")) quieroMandar = 0;
+				if (quieroMandar) {send(listening_socket, message, strlen(message) + 1, 0);
 							 log_trace(logger, "Mandamos un mensaje a la instancia");
 				}
-			}*/
+			}
+		//close(socketNuevoParaInstancia);
 		close(socketCliente);
 		close(listening_socket);
 		return 0;
