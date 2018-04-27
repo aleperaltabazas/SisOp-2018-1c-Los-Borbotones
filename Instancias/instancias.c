@@ -59,7 +59,7 @@ int main(){
 
 	bind(socketEscucha, serverInfo->ai_addr, serverInfo->ai_addrlen);
 	freeaddrinfo(serverInfo);
-	*/
+
 
 	listen(server__Socket, BACKLOG);
 	struct sockaddr_in addr;			// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
@@ -77,7 +77,9 @@ int main(){
 			}
 
 //close(socketEscucha);
-close(socketQueAcepta);
+ *
+ */
+//close(socketQueAcepta);
 close(server__Socket);
 	return 0;
 

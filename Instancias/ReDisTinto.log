@@ -65,3 +65,35 @@
 [TRACE] 01:57:40:344 INSTANCIA/(8464:8464): Nace una nueva Instancia
 [TRACE] 01:57:40:345 INSTANCIA/(8464:8464): Conectó sin problemas
 [TRACE] 01:57:49:957 INSTANCIA/(8464:8464): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 02:35:51:689 INSTANCIA/(9421:9421): Nace una nueva Instancia
+[TRACE] 02:35:51:728 INSTANCIA/(9421:9421): Conectó sin problemas
+[TRACE] 02:35:57:725 INSTANCIA/(9421:9421): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 02:39:48:986 INSTANCIA/(9551:9551): Nace una nueva Instancia
+[TRACE] 02:39:49:35 INSTANCIA/(9551:9551): Conectó sin problemas
+[TRACE] 02:40:16:516 INSTANCIA/(9590:9590): Nace una nueva Instancia
+[TRACE] 02:40:16:516 INSTANCIA/(9590:9590): Conectó sin problemas
+[TRACE] 02:40:33:635 INSTANCIA/(9610:9610): Nace una nueva Instancia
+[TRACE] 02:40:33:642 INSTANCIA/(9610:9610): Conectó sin problemas
+[TRACE] 02:41:00:67 INSTANCIA/(9655:9655): Nace una nueva Instancia
+[TRACE] 02:41:00:68 INSTANCIA/(9655:9655): Conectó sin problemas
+[TRACE] 02:41:13:22 INSTANCIA/(9674:9674): Nace una nueva Instancia
+[TRACE] 02:41:13:28 INSTANCIA/(9674:9674): Conectó sin problemas
+[TRACE] 02:41:25:309 INSTANCIA/(9690:9690): Nace una nueva Instancia
+[TRACE] 02:41:25:312 INSTANCIA/(9690:9690): Conectó sin problemas
+[TRACE] 02:41:40:484 INSTANCIA/(9708:9708): Nace una nueva Instancia
+[TRACE] 02:41:40:485 INSTANCIA/(9708:9708): Conectó sin problemas
+[TRACE] 02:41:56:678 INSTANCIA/(9725:9725): Nace una nueva Instancia
+[TRACE] 02:41:56:684 INSTANCIA/(9725:9725): Conectó sin problemas
+[TRACE] 02:42:24:697 INSTANCIA/(9752:9752): Nace una nueva Instancia
+[TRACE] 02:42:24:698 INSTANCIA/(9752:9752): Conectó sin problemas
+[TRACE] 02:43:33:992 INSTANCIA/(9822:9822): Nace una nueva Instancia
+[TRACE] 02:43:33:995 INSTANCIA/(9822:9822): Conectó sin problemas
+[TRACE] 02:43:49:855 INSTANCIA/(9822:9822): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 02:45:13:978 INSTANCIA/(9896:9896): Nace una nueva Instancia
+[TRACE] 02:45:14:28 INSTANCIA/(9896:9896): Conectó sin problemas
+[TRACE] 02:46:06:654 INSTANCIA/(9941:9941): Nace una nueva Instancia
+[TRACE] 02:46:06:832 INSTANCIA/(9941:9941): Conectó sin problemas
+[TRACE] 02:46:15:960 INSTANCIA/(9941:9941): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 02:47:58:722 INSTANCIA/(10017:10017): Nace una nueva Instancia
+[TRACE] 02:47:58:723 INSTANCIA/(10017:10017): Conectó sin problemas
+[TRACE] 02:48:03:791 INSTANCIA/(10017:10017): Mandamos un mensaje al servidor, esperamos respuesta

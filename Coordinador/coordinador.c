@@ -49,8 +49,20 @@ int main(){
 
 		while (stat != 0) {
 			stat = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
-			if (stat != 0) printf("%s", package);
-		}
+			if (stat != 0) {
+				printf("%s", package);
+			}
+			if(send(socketCliente, package, stat, 0) < 0 ){
+			        perror("enviando respuesta");
+			      return(1);
+			}
+			    else {
+			      printf("Desconectado");
+			      return(-1);
+			    }
+			  }
+
+
 
 		//para responder a la instancia
 
@@ -59,7 +71,7 @@ int main(){
 
 
     	freeaddrinfo(server_info);
-    	*/
+
 
     	int quieroMandar = 1;
     	char message[PACKAGESIZE];
@@ -73,6 +85,8 @@ int main(){
 				}
 			}
 		//close(socketNuevoParaInstancia);
+		 *
+		 */
 		close(socketCliente);
 		close(listening_socket);
 		return 0;
