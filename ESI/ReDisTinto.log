@@ -13,3 +13,9 @@
 [TRACE] 11:18:02:168 ESI/(11883:11883): Conectó sin problemas
 [TRACE] 11:18:48:192 ESI/(11883:11883): Mandamos un mensaje al servidor
 [TRACE] 11:19:49:94 ESI/(11883:11883): Mandamos un mensaje al servidor
+[TRACE] 00:23:14:492 ESI/(5328:5328): Nace un nuevo ESI
+[TRACE] 00:23:14:525 ESI/(5328:5328): Conectó sin problemas
+[TRACE] 00:23:17:781 ESI/(5343:5343): Nace un nuevo ESI
+[TRACE] 00:23:17:784 ESI/(5343:5343): Conectó sin problemas
+[TRACE] 00:23:41:672 ESI/(5343:5343): Mandamos un mensaje al servidor
+[TRACE] 00:42:56:635 ESI/(5328:5328): Mandamos un mensaje al servidor

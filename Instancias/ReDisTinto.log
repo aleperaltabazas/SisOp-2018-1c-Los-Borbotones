@@ -1,0 +1,41 @@
+[TRACE] 00:39:17:668 INSTANCIA/(5784:5784): Nace una nueva Instancia
+[TRACE] 00:39:17:673 INSTANCIA/(5784:5784): Conectó sin problemas
+[TRACE] 00:39:25:375 INSTANCIA/(5784:5784): Mandamos un mensaje al servidor
+[TRACE] 00:41:14:936 INSTANCIA/(5862:5862): Nace una nueva Instancia
+[TRACE] 00:41:14:939 INSTANCIA/(5862:5862): Conectó sin problemas
+[TRACE] 00:41:32:901 INSTANCIA/(5862:5862): Mandamos un mensaje al servidor
+[TRACE] 00:42:34:466 INSTANCIA/(5946:5946): Nace una nueva Instancia
+[TRACE] 00:42:34:472 INSTANCIA/(5946:5946): Conectó sin problemas
+[TRACE] 00:44:36:672 INSTANCIA/(5986:5986): Nace una nueva Instancia
+[TRACE] 00:44:36:673 INSTANCIA/(5986:5986): Conectó sin problemas
+[TRACE] 00:45:34:539 INSTANCIA/(6026:6026): Nace una nueva Instancia
+[TRACE] 00:45:34:544 INSTANCIA/(6026:6026): Conectó sin problemas
+[TRACE] 00:46:23:970 INSTANCIA/(6089:6089): Nace una nueva Instancia
+[TRACE] 00:46:23:971 INSTANCIA/(6089:6089): Conectó sin problemas
+[TRACE] 00:46:42:393 INSTANCIA/(6089:6089): Mandamos un mensaje al servidor
+[TRACE] 00:47:03:123 INSTANCIA/(6107:6107): Nace una nueva Instancia
+[TRACE] 00:47:03:123 INSTANCIA/(6107:6107): Conectó sin problemas
+[TRACE] 00:47:46:30 INSTANCIA/(6146:6146): Nace una nueva Instancia
+[TRACE] 00:47:46:34 INSTANCIA/(6146:6146): Conectó sin problemas
+[TRACE] 00:47:55:934 INSTANCIA/(6146:6146): Mandamos un mensaje al servidor
+[TRACE] 00:59:51:969 INSTANCIA/(6471:6471): Nace una nueva Instancia
+[TRACE] 00:59:52:27 INSTANCIA/(6471:6471): Conectó sin problemas
+[TRACE] 01:00:15:864 INSTANCIA/(6488:6488): Nace una nueva Instancia
+[TRACE] 01:00:15:864 INSTANCIA/(6488:6488): Conectó sin problemas
+[TRACE] 01:01:15:57 INSTANCIA/(6534:6534): Nace una nueva Instancia
+[TRACE] 01:01:15:59 INSTANCIA/(6534:6534): Conectó sin problemas
+[TRACE] 01:01:33:385 INSTANCIA/(6534:6534): Mandamos un mensaje al servidor
+[TRACE] 01:15:33:809 INSTANCIA/(6962:6962): Nace una nueva Instancia
+[TRACE] 01:15:33:822 INSTANCIA/(6962:6962): Conectó sin problemas
+[TRACE] 01:15:46:370 INSTANCIA/(6962:6962): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 01:16:30:794 INSTANCIA/(7005:7005): Nace una nueva Instancia
+[TRACE] 01:16:30:795 INSTANCIA/(7005:7005): Conectó sin problemas
+[TRACE] 01:17:01:779 INSTANCIA/(7025:7025): Nace una nueva Instancia
+[TRACE] 01:17:01:796 INSTANCIA/(7025:7025): Conectó sin problemas
+[TRACE] 01:17:15:787 INSTANCIA/(7044:7044): Nace una nueva Instancia
+[TRACE] 01:17:15:788 INSTANCIA/(7044:7044): Conectó sin problemas
+[TRACE] 01:17:32:388 INSTANCIA/(7077:7077): Nace una nueva Instancia
+[TRACE] 01:17:32:390 INSTANCIA/(7077:7077): Conectó sin problemas
+[TRACE] 01:17:58:898 INSTANCIA/(7116:7116): Nace una nueva Instancia
+[TRACE] 01:17:58:899 INSTANCIA/(7116:7116): Conectó sin problemas
+[TRACE] 01:18:22:67 INSTANCIA/(7116:7116): Mandamos un mensaje al servidor, esperamos respuesta

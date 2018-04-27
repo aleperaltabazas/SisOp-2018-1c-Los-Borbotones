@@ -50,6 +50,6 @@ a ser parte de redes (o eso me gustaría creer)
 	close(socketCliente);
 	close(listenningSocket);
 	return 0;
-	pthread_create ();
+	//pthread_create (); esta funcion la vemos despues con hilos
 }
 
