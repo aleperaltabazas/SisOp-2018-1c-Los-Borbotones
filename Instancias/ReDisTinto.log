@@ -97,3 +97,7 @@
 [TRACE] 02:47:58:722 INSTANCIA/(10017:10017): Nace una nueva Instancia
 [TRACE] 02:47:58:723 INSTANCIA/(10017:10017): Conectó sin problemas
 [TRACE] 02:48:03:791 INSTANCIA/(10017:10017): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 17:48:48:115 INSTANCIA/(7242:7242): Nace una nueva Instancia
+[TRACE] 17:48:48:117 INSTANCIA/(7242:7242): Conectó sin problemas
+[TRACE] 17:48:57:139 INSTANCIA/(7242:7242): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 18:01:23:373 INSTANCIA/(7242:7242): Mandamos un mensaje al servidor, esperamos respuesta

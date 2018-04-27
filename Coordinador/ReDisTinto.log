@@ -64,3 +64,6 @@
 [TRACE] 02:47:46:498 Coordinador/(9999:9999): Nace el coordinador
 [TRACE] 02:47:46:531 Coordinador/(9999:9999): Esperando 
 [TRACE] 02:47:58:723 Coordinador/(9999:9999): Escuché
+[TRACE] 17:48:25:735 Coordinador/(7223:7223): Nace el coordinador
+[TRACE] 17:48:25:742 Coordinador/(7223:7223): Esperando 
+[TRACE] 17:48:48:117 Coordinador/(7223:7223): Escuché

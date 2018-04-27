@@ -9,7 +9,32 @@
 
 #define PUERTO "6667"
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
-#define PACKAGESIZE 1024
+#define PACKAGE_SIZE 1024
+
+void responder(){
+
+	char respuesta[1024] = "Todo OK";
+	struct addrinfo hints;
+	struct addrinfo *server_info;
+
+	getaddrinfo(NULL, "6668", &hints, &server_info);
+	//No se si se puede responder por el mismo puerto asi que pruebo con el 6668
+		//Le pasamos NULL en IP por el AI_PASSIVE
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = AI_PASSIVE;		//Le indicamos localhost
+	hints.ai_socktype = SOCK_STREAM;
+
+	int socket_respuesta = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
+		//Socket para responder al que me mande un mensaje
+
+	if(send(socket_respuesta, respuesta, PACKAGE_SIZE, 0) < 0 ){
+				      	  perror("No pude contestar");
+				      	  //return(-1);
+				}
+	close(socket_respuesta);
+}
 
 int main(){
 	logger = log_create("ReDisTinto.log", "Coordinador", true, LOG_LEVEL_TRACE);
@@ -41,26 +66,21 @@ int main(){
 		socklen_t addrlen = sizeof(addr);
 		int socketCliente = accept(listening_socket, (struct sockaddr *) &addr, &addrlen);
 	//Nota: Tenemos n sockets address, y vamos a tener que ver como podemos tratar con ellos, se me ocurre threads pero también existe select
-		char package[PACKAGESIZE];
+		char package[PACKAGE_SIZE];
 		int stat = 1;		// Estructura que manjea el status de los recieve.
 
 		printf("Cliente conectado. Esperando mensajes:\n");
 		log_trace(logger, "Escuché"); //Creo que el log es mejor pero en el ejemplito usan printf
 
 		while (stat != 0) {
-			stat = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
-			if (stat != 0) {
-				printf("%s", package);
-			}
-			if(send(socketCliente, package, stat, 0) < 0 ){
-			        perror("enviando respuesta");
-			      return(1);
-			}
-			    else {
-			      printf("Desconectado");
-			      return(-1);
-			    }
-			  }
+					stat = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
+					if (stat != 0) {
+						printf("%s", package);
+					}
+
+					responder();
+
+				}
 
 
 
