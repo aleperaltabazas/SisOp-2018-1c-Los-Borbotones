@@ -51,7 +51,7 @@ int main(){
 			stat = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
 			if (stat != 0) printf("%s", package);
 		}
-		int quieroMandar = 1;
+		/*int quieroMandar = 1;
 			printf("Ya puedo enviar la respuesta. Escriba 'exit' para salir\n");
 
 			while(quieroMandar){
@@ -60,7 +60,7 @@ int main(){
 				if (quieroMandar) {send(listening_socket, package, strlen(package) + 1, 0);
 							 log_trace(logger, "Mandamos un mensaje a la instancia");
 				}
-			}
+			}*/
 		close(socketCliente);
 		close(listening_socket);
 		return 0;
