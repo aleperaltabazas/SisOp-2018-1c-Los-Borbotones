@@ -1,2 +1,15 @@
 [TRACE] 20:39:56:784 ESI/(13369:13369): Nace un nuevo ESI
 [TRACE] 20:39:56:804 ESI/(13369:13369): Conectó sin problemas
+[TRACE] 00:14:29:597 ESI/(6770:6770): Nace un nuevo ESI
+[TRACE] 00:14:29:610 ESI/(6770:6770): Conectó sin problemas
+[TRACE] 00:14:42:916 ESI/(6800:6800): Nace un nuevo ESI
+[TRACE] 00:14:42:919 ESI/(6800:6800): Conectó sin problemas
+[TRACE] 00:15:26:903 ESI/(6770:6770): Mandamos un mensaje al servidor
+[TRACE] 00:15:57:598 ESI/(6770:6770): Mandamos un mensaje al servidor
+[TRACE] 00:16:20:200 ESI/(6770:6770): Mandamos un mensaje al servidor
+[TRACE] 08:54:31:150 ESI/(6948:6948): Nace un nuevo ESI
+[TRACE] 08:54:31:152 ESI/(6948:6948): Conectó sin problemas
+[TRACE] 11:18:02:165 ESI/(11883:11883): Nace un nuevo ESI
+[TRACE] 11:18:02:168 ESI/(11883:11883): Conectó sin problemas
+[TRACE] 11:18:48:192 ESI/(11883:11883): Mandamos un mensaje al servidor
+[TRACE] 11:19:49:94 ESI/(11883:11883): Mandamos un mensaje al servidor
