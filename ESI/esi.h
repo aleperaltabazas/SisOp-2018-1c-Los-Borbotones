@@ -19,6 +19,8 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 
-//t_log* log; //Definimos el logger de forma pseudo-global
+void escucharRespuesta(void);
+void iniciar_log(void);
+void loggear(char* mensaje);
 
 #endif /* ESI_H_ */

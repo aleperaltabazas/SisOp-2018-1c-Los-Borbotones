@@ -67,3 +67,66 @@
 [TRACE] 17:48:25:735 Coordinador/(7223:7223): Nace el coordinador
 [TRACE] 17:48:25:742 Coordinador/(7223:7223): Esperando 
 [TRACE] 17:48:48:117 Coordinador/(7223:7223): EscuchÃ©
+[TRACE] 17:34:57:473 Coordinador/(5032:5032): Nace el coordinador
+[TRACE] 17:34:57:485 Coordinador/(5032:5032): Esperando 
+[TRACE] 17:41:02:737 Coordinador/(5192:5192): Nace el coordinador
+[TRACE] 17:41:02:746 Coordinador/(5192:5192): Esperando 
+[TRACE] 17:47:29:790 Coordinador/(5324:5324): Nace el coordinador.
+[TRACE] 17:47:29:811 Coordinador/(5324:5324): Esperando 
+[TRACE] 17:48:00:692 Coordinador/(5339:5339): Nace el coordinador.
+[TRACE] 17:48:00:707 Coordinador/(5339:5339): Esperando 
+[TRACE] 17:49:14:434 Coordinador/(5032:5032): EscuchÃ©
+[TRACE] 17:56:19:401 Coordinador/(5464:5464): Nace el coordinador.
+[TRACE] 17:56:19:417 Coordinador/(5464:5464): Esperando 
+[TRACE] 17:57:18:300 Coordinador/(5482:5482): Nace el coordinador.
+[TRACE] 17:57:18:309 Coordinador/(5482:5482): Esperando 
+[TRACE] 18:02:40:977 Coordinador/(5541:5541): Nace el coordinador.
+[TRACE] 18:02:41:25 Coordinador/(5541:5541): Esperando 
+[TRACE] 18:03:11:485 Coordinador/(5541:5541): Cliente conectado.
+[TRACE] 18:37:16:669 Coordinador/(6334:6334): Nace el coordinador.
+[TRACE] 18:37:16:860 Coordinador/(6334:6334): Esperando 
+[TRACE] 18:37:41:613 Coordinador/(6334:6334): Cliente conectado.
+[TRACE] 18:52:09:668 Coordinador/(6730:6730): Nace el coordinador.
+[TRACE] 18:52:09:707 Coordinador/(6730:6730): Esperando 
+[TRACE] 18:54:10:789 Coordinador/(6809:6809): Nace el coordinador.
+[TRACE] 18:54:10:801 Coordinador/(6809:6809): Esperando 
+[TRACE] 18:54:43:109 Coordinador/(6809:6809): Cliente conectado.
+[TRACE] 19:00:59:237 Coordinador/(6986:6986): Nace el coordinador.
+[TRACE] 19:00:59:252 Coordinador/(6986:6986): Esperando 
+[TRACE] 19:01:49:742 Coordinador/(6986:6986): Cliente conectado.
+[TRACE] 19:14:43:128 Coordinador/(7340:7340): Nace el coordinador.
+[TRACE] 19:14:43:324 Coordinador/(7340:7340): Esperando 
+[TRACE] 19:15:22:864 Coordinador/(7340:7340): Cliente conectado.
+[TRACE] 19:18:47:585 Coordinador/(7473:7473): Nace el coordinador.
+[TRACE] 19:18:47:594 Coordinador/(7473:7473): Esperando...
+[TRACE] 19:19:10:920 Coordinador/(7473:7473): Cliente conectado.
+[TRACE] 19:23:00:206 Coordinador/(7565:7565): Nace el coordinador.
+[TRACE] 19:23:00:224 Coordinador/(7565:7565): Esperando...
+[TRACE] 19:23:32:15 Coordinador/(7565:7565): Cliente conectado.
+[TRACE] 19:23:32:19 Coordinador/(7565:7565): Esperando mensaje del cliente.
+[TRACE] 19:23:32:40 Coordinador/(7565:7565): ESI on duty.
+[TRACE] 19:23:32:61 Coordinador/(7565:7565): Cliente desconectado.
+[TRACE] 19:23:32:82 Coordinador/(7565:7565): Cerrando sesion...
+[TRACE] 19:33:43:357 Coordinador/(7845:7845): Nace el coordinador.
+[TRACE] 19:33:43:380 Coordinador/(7845:7845): Esperando...
+[TRACE] 19:34:14:216 Coordinador/(7845:7845): Cliente conectado.
+[TRACE] 19:34:14:220 Coordinador/(7845:7845): Esperando mensaje del cliente.
+[TRACE] 19:34:15:130 Coordinador/(7845:7845): Fallo la conexion con el cliente.
+[TRACE] 19:34:15:172 Coordinador/(7845:7845): (ìç¿t
+s·
+[TRACE] 19:34:15:181 Coordinador/(7845:7845): Terminando conexion con el cliente.
+[TRACE] 19:34:15:185 Coordinador/(7845:7845): Cerrando sesion...
+[TRACE] 19:39:25:240 Coordinador/(8012:8012): Nace el coordinador.
+[TRACE] 19:39:25:257 Coordinador/(8012:8012): Esperando...
+[TRACE] 19:40:03:132 Coordinador/(8012:8012): Cliente conectado.
+[TRACE] 19:40:03:135 Coordinador/(8012:8012): Esperando mensaje del cliente.
+[TRACE] 19:40:03:160 Coordinador/(8012:8012): A wild ESI has appeared!
+[TRACE] 19:40:03:165 Coordinador/(8012:8012): Terminando conexion con el cliente.
+[TRACE] 19:40:03:211 Coordinador/(8012:8012): Cerrando sesion...
+[TRACE] 19:45:26:836 Coordinador/(8166:8166): Nace el coordinador.
+[TRACE] 19:45:26:853 Coordinador/(8166:8166): Esperando...
+[TRACE] 19:45:47:890 Coordinador/(8166:8166): Cliente conectado.
+[TRACE] 19:45:47:892 Coordinador/(8166:8166): Esperando mensaje del cliente.
+[TRACE] 19:45:47:900 Coordinador/(8166:8166): A wild ESI has appeared!
+[TRACE] 19:45:47:902 Coordinador/(8166:8166): Terminando conexion con el cliente.
+[TRACE] 19:45:47:902 Coordinador/(8166:8166): Cerrando sesion...

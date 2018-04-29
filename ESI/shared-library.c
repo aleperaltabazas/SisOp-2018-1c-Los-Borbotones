@@ -46,13 +46,6 @@ int conectar_a(char *IP, char* puerto){
 
 }
 
-void protocolo_conexion(char* IP, char* puerto){
-	/*int socket = conectar_a(IP, puerto);
-	wait_hello(socket);
-	send_hello(socket);
-	void * content = wait_content(socket);*/
-}
-
 //Por alguna razon los logs no me estan funcionando
 //Si alguno tiene mejor suerte avise
 
@@ -62,7 +55,7 @@ void inicializar_log(char* nombre_archivo, char* nombre_log){
 }
 
 void salir_con_error(char* mensaje, int socket){
-	//log_error(logger, mensaje);
+	log_error(logger, mensaje);
 	close(socket);
 
 	exit_gracefully(1);

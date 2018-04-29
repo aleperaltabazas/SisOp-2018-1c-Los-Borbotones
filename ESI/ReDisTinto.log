@@ -19,3 +19,56 @@
 [TRACE] 00:23:17:784 ESI/(5343:5343): Conectó sin problemas
 [TRACE] 00:23:41:672 ESI/(5343:5343): Mandamos un mensaje al servidor
 [TRACE] 00:42:56:635 ESI/(5328:5328): Mandamos un mensaje al servidor
+[TRACE] 17:49:14:423 ESI/(5361:5361): Nace un nuevo ESI
+[TRACE] 17:49:14:437 ESI/(5361:5361): Conectó sin problemas
+[TRACE] 17:58:06:328 ESI/(5497:5497): Nace un nuevo ESI
+[TRACE] 17:58:06:435 ESI/(5497:5497): Conectó sin problemas
+[TRACE] 18:03:11:466 ESI/(5557:5557): Nace un nuevo ESI
+[TRACE] 18:03:11:530 ESI/(5557:5557): Conectó sin problemas
+[TRACE] 18:37:41:582 ESI/(6348:6348): Nace un nuevo ESI
+[TRACE] 18:37:41:643 ESI/(6348:6348): Conectó sin problemas
+[TRACE] 18:37:41:649 ESI/(6348:6348): Mensaje enviado.
+[TRACE] 18:37:43:629 ESI/(6348:6348): Mensaje recibido desde el servidor.
+[TRACE] 18:37:43:633 ESI/(6348:6348): Cerrando conexion con servidor y terminando.
+[TRACE] 18:43:12:552 ESI/(6478:6478): Nace un nuevo ESI
+[TRACE] 18:43:12:607 ESI/(6478:6478): Conectó sin problemas
+[TRACE] 18:47:59:958 ESI/(6624:6624): Nace un nuevo ESI
+[ERROR] 18:48:00:47 ESI/(6624:6624): Fallo la conexion.
+[TRACE] 18:54:43:99 ESI/(6827:6827): Nace un nuevo ESI
+[TRACE] 18:54:43:117 ESI/(6827:6827): Conectó sin problemas
+[TRACE] 18:54:43:134 ESI/(6827:6827): Mensaje enviado.
+[TRACE] 18:54:44:67 ESI/(6827:6827): Mensaje recibido desde el servidor.
+[TRACE] 18:54:44:72 ESI/(6827:6827): Cerrando conexion con servidor y terminando.
+[TRACE] 19:01:49:664 ESI/(7002:7002): Nace un nuevo ESI
+[TRACE] 19:01:49:827 ESI/(7002:7002): Conectó sin problemas
+[TRACE] 19:01:49:838 ESI/(7002:7002): Mensaje enviado.
+[TRACE] 19:01:50:865 ESI/(7002:7002): Mensaje recibido desde el servidor.
+[TRACE] 19:01:50:868 ESI/(7002:7002): Cerrando conexion con servidor y terminando.
+[TRACE] 19:13:23:372 ESI/(7322:7322): Nace un nuevo ESI
+[ERROR] 19:13:23:399 ESI/(7322:7322): Fallo la conexion.
+[TRACE] 19:15:22:856 ESI/(7357:7357): Nace un nuevo ESI
+[TRACE] 19:15:22:877 ESI/(7357:7357): Conectó sin problemas
+[TRACE] 19:15:22:885 ESI/(7357:7357): Mensaje enviado.
+[TRACE] 19:15:25:246 ESI/(7357:7357): Mensaje recibido desde el servidor.
+[TRACE] 19:19:10:909 ESI/(7487:7487): Nace un nuevo ESI
+[TRACE] 19:19:10:929 ESI/(7487:7487): Conectó sin problemas
+[TRACE] 19:19:10:936 ESI/(7487:7487): Mensaje enviado.
+[TRACE] 19:19:12:324 ESI/(7487:7487): Mensaje recibido desde el servidor.
+[TRACE] 19:23:31:981 ESI/(7581:7581): Nace un nuevo ESI
+[TRACE] 19:23:32:32 ESI/(7581:7581): Conectó sin problemas
+[TRACE] 19:23:32:47 ESI/(7581:7581): Mensaje enviado.
+[TRACE] 19:23:32:69 ESI/(7581:7581): Mensaje recibido desde el servidor.
+[TRACE] 19:23:32:80 ESI/(7581:7581): Cerrando conexion con servidor y terminando.
+[TRACE] 19:40:02:986 ESI/(8026:8026): ESI on duty.
+[TRACE] 19:40:03:153 ESI/(8026:8026): Conectó sin problemas
+[TRACE] 19:40:03:169 ESI/(8026:8026): Mensaje enviado.
+[TRACE] 19:40:03:178 ESI/(8026:8026): Mensaje recibido desde el servidor.
+[TRACE] 19:40:03:195 ESI/(8026:8026): Cerrando conexion con servidor y terminando.
+[TRACE] 19:43:27:458 ESI/(8129:8129): ESI on duty.
+[ERROR] 19:43:27:480 ESI/(8129:8129): Fallo la conexion con el servidor.
+[TRACE] 19:45:47:879 ESI/(8184:8184): ESI on duty.
+[TRACE] 19:45:47:892 ESI/(8184:8184): Conectó sin problemas
+[TRACE] 19:45:47:905 ESI/(8184:8184): Mensaje enviado.
+[TRACE] 19:45:47:908 ESI/(8184:8184): Mensaje recibido desde el servidor.
+[TRACE] 19:45:47:923 ESI/(8184:8184): Gracias por conectarse al coordinador!
+[TRACE] 19:45:47:971 ESI/(8184:8184): Cerrando conexion con servidor y terminando.
