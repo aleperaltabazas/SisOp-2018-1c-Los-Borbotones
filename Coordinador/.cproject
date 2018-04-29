@@ -40,6 +40,7 @@
 									<listOptionValue builtIn="false" value="shared-library"/>
 									<listOptionValue builtIn="false" value="commons"/>
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="${workspace_loc:/commons}"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.875127295" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

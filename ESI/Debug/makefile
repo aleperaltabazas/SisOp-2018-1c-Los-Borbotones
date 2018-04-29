@@ -25,13 +25,13 @@ endif
 all: ESI
 
 dependents:
-	-cd /home/utnso/workspace/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
+	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
 
 # Tool invocations
-ESI: $(OBJS) $(USER_OBJS) /home/utnso/workspace/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
+ESI: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/workspace/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "ESI" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "ESI" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -41,6 +41,6 @@ clean:
 	-@echo ' '
 
 .PHONY: all clean dependents
-/home/utnso/workspace/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so:
+/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so:
 
 -include ../makefile.targets
