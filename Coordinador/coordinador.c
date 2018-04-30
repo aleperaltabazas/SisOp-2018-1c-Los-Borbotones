@@ -7,7 +7,7 @@
 
 #include "coordinador.h"
 
-#define PUERTO "6667"
+#define PUERTO "8000"
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 
@@ -55,19 +55,28 @@ int main() {
 
 	char package[PACKAGE_SIZE];
 	char message[] = "Gracias por conectarse al coordinador!";
+	char messageParaPlanificador[] = "Hola planificador! Trabajemos juntos para organizar los ESIs";
 
 	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
 
 	if (res <= 0) {
 		loggear("Fallo la conexion con el cliente.");
+		return 0;
 	}
 
+	if (package == "El planificador ha llegado")
+	{
+		send(socketCliente, messageParaPlanificador, strlen(messageParaPlanificador) + 1, 0);
+	}
+
+	else{
 	loggear("Mensaje recibido exitosamente:");
 	loggear(package);
 	send(socketCliente, message, strlen(message) + 1, 0);
 
 	loggear("Terminando conexion con el cliente.");
 	loggear("Cerrando sesion...");
+	}
 
 	/*int i;
 	 for(i = 0; i<4; i++){
@@ -90,30 +99,4 @@ void iniciar_log() {
 
 void loggear(char* mensaje) {
 	log_trace(logger, mensaje);
-}
-
-void responder() {
-
-	char respuesta[1024] = "Todo OK";
-	struct addrinfo hints;
-	struct addrinfo *server_info;
-
-	getaddrinfo(NULL, "6668", &hints, &server_info);
-	//No se si se puede responder por el mismo puerto asi que pruebo con el 6668
-	//Le pasamos NULL en IP por el AI_PASSIVE
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = AI_PASSIVE;		//Le indicamos localhost
-	hints.ai_socktype = SOCK_STREAM;
-
-	int socket_respuesta = socket(server_info->ai_family,
-			server_info->ai_socktype, server_info->ai_protocol);
-	//Socket para responder al que me mande un mensaje
-
-	if (send(socket_respuesta, respuesta, PACKAGE_SIZE, 0) < 0) {
-		perror("No pude contestar");
-		//return(-1);
-	}
-	close(socket_respuesta);
 }

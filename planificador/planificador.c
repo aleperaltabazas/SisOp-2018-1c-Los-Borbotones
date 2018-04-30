@@ -6,7 +6,8 @@
  */
 #include "planificador.h"
 
-#define PUERTO "6667"
+#define PUERTO "8001"
+#define PUERTOALCOORDINADOR "8000"
 #define BACKLOG 5			// Define cuantas conexiones vamos a mantener pendientes al mismo tiempo
 #define PACKAGESIZE 1024	// Define cual va a ser el size maximo del paquete a enviar
 
@@ -20,6 +21,27 @@ int main(){
 	hints.ai_family = AF_UNSPEC;		// No importa si uso IPv4 o IPv6
 	hints.ai_flags = AI_PASSIVE;		// Asigna el address del localhost: 127.0.0.1
 	hints.ai_socktype = SOCK_STREAM;	// Indica que usaremos el protocolo TCP
+
+	//Propongo que lo primero que haga el planificador sea conectarse con el coordinador, luego que se quede escuchando
+	getaddrinfo(NULL, PUERTO, &hints, &serverInfo);
+	log_trace(logger, "Conectando con el coordinador...");
+	int serverSocketCoordinador;
+		serverSocketCoordinador = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+
+	int conexionCoordinador = connect(serverSocketCoordinador, serverInfo->ai_addr,
+				serverInfo->ai_addrlen);
+
+	if (conexionCoordinador < 0) {
+			salir_con_error("Falló la conexion con el coordinador.", serverSocketCoordinador);
+	}
+
+	freeaddrinfo(serverInfo);
+
+	log_trace(logger, "Conectado al coordinador");
+
+	char message[] = "El planificador ha llegado";
+	send(serverSocketCoordinador, message, strlen(message) + 1, 0);
+
 	getaddrinfo(NULL, PUERTO, &hints, &serverInfo); // Notar que le pasamos NULL como IP, ya que le indicamos que use localhost en AI_PASSIVE
 /*Nota: Lean nos dijo que mantengamos esto así por ahora.
 Nota de la nota: Luego de meditarlo, considero que escapa de lo que es operativos en si y como son conexiones pasan
@@ -46,6 +68,7 @@ a ser parte de redes (o eso me gustaría creer)
 	while (status != 0) {
 		status = recv(socketCliente, (void*) package, PACKAGESIZE, 0);
 		if (status != 0) printf("%s", package);
+		send(socketCliente, (void*) package, PACKAGESIZE, 0);
 	}
 	close(socketCliente);
 	close(listenningSocket);
