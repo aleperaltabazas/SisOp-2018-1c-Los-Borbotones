@@ -8,7 +8,8 @@
 #ifndef COORDINADOR_H_
 #define COORDINADOR_H_
 
-#include <shared-library.h>
+//#include <shared-library.h>
+#include "shared-library.h"
 
 //Variables globales
 
@@ -23,6 +24,5 @@ void *atender_ESI(void);
 void *atender_Instaica(void);
 void *atender_Planificador(void);
 void iniciar_log(void);
-void loggear(char* mensaje);
 
 #endif /* COORDINADOR_H_ */

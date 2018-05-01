@@ -8,6 +8,7 @@
 #include "shared-library.h"
 
 void conectar_a(char *ip, char *puerto, char *mensaje) {
+	loggear("Intentando conexion al servidor.");
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
 	memset(&hints, 0, sizeof(hints));

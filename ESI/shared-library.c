@@ -7,61 +7,110 @@
 
 #include "shared-library.h"
 
-int conectar_a(char *IP, char* puerto){
-	/*struct sockaddr_in direccion_servidor;
-	direccion_servidor.sin_family = AF_INET;
-	direccion_servidor.sin_addr.s_addr = inet_addr(IP);
-	direccion_servidor.sin_port = htons(puerto);
+void conectar_a(char *ip, char *puerto, char *mensaje) {
+	loggear("Intentando conexion al servidor.");
+	struct addrinfo hints;
+	struct addrinfo *serverInfo;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;		// IPv4 o IPv6
+	hints.ai_socktype = SOCK_STREAM;		// Protocolo TCP
 
-	int socket_cliente = socket(AF_INET, SOCK_STREAM, 0);
-	int res = connect(socket_cliente, (void*) &direccion_servidor, sizeof(direccion_servidor));
+	getaddrinfo(ip, puerto, &hints, &serverInfo);
+	int serverSocket;
+	serverSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype,
+			serverInfo->ai_protocol);
 
-	if(res != 0)
-		salir_con_error("Error en conexion", socket);
+	int conexion = connect(serverSocket, serverInfo->ai_addr,
+			serverInfo->ai_addrlen);
 
-		//Tira error logea el error y exitea
+	if (conexion < 0) {
+		salir_con_error("Fallo la conexion con el servidor.", serverSocket);
+	}
 
-	return socket_cliente;*/
+	loggear("Conectó sin problemas");
 
+	freeaddrinfo(serverInfo);
+
+	char package[PACKAGE_SIZE];
+
+	send(serverSocket, mensaje, strlen(mensaje) + 1, 0);
+
+	loggear("Mensaje enviado.");
+	int res = recv(serverSocket, (void*) package, PACKAGE_SIZE, 0);
+
+	if (res != 0) {
+		loggear("Mensaje recibido desde el servidor.");
+		loggear(package);
+
+	} else {
+		salir_con_error("Fallo el envio de mensaje de parte del servidor.",
+				serverSocket);
+	}
+
+	//send(serverSocket, 0, sizeof(int), 0);
+	loggear("Cerrando conexion con servidor y terminando.");
+
+	close(serverSocket);
+	return;
+}
+
+void recibir_conexion(char* puerto) {
 	struct addrinfo hints;
 	struct addrinfo *server_info;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = AI_PASSIVE;		//Le indicamos localhost
 	hints.ai_socktype = SOCK_STREAM;
 
-	getaddrinfo(IP, puerto, &hints, &server_info);
+	getaddrinfo(NULL, puerto, &hints, &server_info);
 
-	int server_socket = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
+	int listening_socket = socket(server_info->ai_family,
+			server_info->ai_socktype, server_info->ai_protocol);
 
-	int res = connect(server_socket, server_info->ai_addr, server_info->ai_addrlen);
-
+	bind(listening_socket, server_info->ai_addr, server_info->ai_addrlen);
 	freeaddrinfo(server_info);
 
-	if (res < 0) {
-	  salir_con_error("ESI: Fallo la conexion", server_socket);
+	listen(listening_socket, BACKLOG);
+
+	log_trace(logger, "Esperando...");
+	struct sockaddr_in addr;// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
+	socklen_t addrlen = sizeof(addr);
+
+	int socketCliente = accept(listening_socket, (struct sockaddr *) &addr,
+			&addrlen);
+
+	loggear("Cliente conectado.");
+
+	loggear("Esperando mensaje del cliente.");
+
+	char package[PACKAGE_SIZE];
+	char message[] = "Gracias por conectarse al coordinador!";
+
+	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
+
+	if (res <= 0) {
+		loggear("Fallo la conexion con el cliente.");
 	}
-	//log_info(logger, "Conectado!");
-	return server_socket;
 
+	loggear("Mensaje recibido exitosamente:");
+	loggear(package);
+	send(socketCliente, message, strlen(message) + 1, 0);
+
+	loggear("Terminando conexion con el cliente.");
+
+	close(socketCliente);
+	close(listening_socket);
 }
 
-//Por alguna razon los logs no me estan funcionando
-//Si alguno tiene mejor suerte avise
-
-void inicializar_log(char* nombre_archivo, char* nombre_log){
-	//log_create(nombre_archivo, nombre_log, true, LOG_LEVEL_INFO);
-	return;
-}
-
-void salir_con_error(char* mensaje, int socket){
+void salir_con_error(char* mensaje, int socket) {
 	log_error(logger, mensaje);
 	close(socket);
 
 	exit_gracefully(1);
 }
 
-void exit_gracefully(int return_val){
+void exit_gracefully(int return_val) {
 	//log_destroy(logger);
 	exit(return_val);
 }

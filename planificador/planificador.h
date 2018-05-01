@@ -15,12 +15,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <shared-library.h>
+//#include <shared-library.h>
+#include "shared-library.h"
 #include <commons/log.h>
 #include <commons/collections/list.h>
 
-
-
-
+void iniciar_log();
 
 #endif /* PLANIFICADOR_H_ */

@@ -15,12 +15,12 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+//#include <shared-library.h>
 #include "shared-library.h"
 #include <commons/log.h>
 #include <commons/collections/list.h>
 
 void escucharRespuesta(void);
 void iniciar_log(void);
-void loggear(char* mensaje);
 
 #endif /* ESI_H_ */

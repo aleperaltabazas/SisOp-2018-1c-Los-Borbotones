@@ -101,3 +101,12 @@
 [TRACE] 17:48:48:117 INSTANCIA/(7242:7242): Conectó sin problemas
 [TRACE] 17:48:57:139 INSTANCIA/(7242:7242): Mandamos un mensaje al servidor, esperamos respuesta
 [TRACE] 18:01:23:373 INSTANCIA/(7242:7242): Mandamos un mensaje al servidor, esperamos respuesta
+[TRACE] 00:48:15:446 Coordinador/(6196:6196): An instance joins the brawl!
+[TRACE] 00:48:15:453 Coordinador/(6196:6196): Intentando conexion al servidor.
+[ERROR] 00:48:15:459 Coordinador/(6196:6196): Fallo la conexion con el servidor.
+[TRACE] 00:51:21:768 Coordinador/(6258:6258): An instance joins the brawl!
+[TRACE] 00:51:21:809 Coordinador/(6258:6258): Intentando conexion al servidor.
+[ERROR] 00:51:21:813 Coordinador/(6258:6258): Fallo la conexion con el servidor.
+[TRACE] 00:59:22:512 Coordinador/(6448:6448): An instance joins the brawl!
+[TRACE] 00:59:22:518 Coordinador/(6448:6448): Intentando conexion al servidor.
+[ERROR] 00:59:22:552 Coordinador/(6448:6448): Fallo la conexion con el servidor.
