@@ -217,3 +217,68 @@ s·
 [TRACE] 00:56:38:84 Coordinador/(6343:6343): A wild ESI has appeared!
 [TRACE] 00:56:38:93 Coordinador/(6343:6343): Terminando conexion con el cliente.
 [TRACE] 00:56:38:130 Coordinador/(6343:6343): Esperando...
+[TRACE] 14:45:52:66 Coordinador/(5045:5045): Nace el coordinador.
+[TRACE] 14:45:52:87 Coordinador/(5045:5045): Cliente conectado.
+[TRACE] 14:45:52:88 Coordinador/(5045:5045): Esperando mensaje del cliente.
+[TRACE] 14:45:52:88 Coordinador/(5045:5045): Fallo la conexion con el cliente.
+[TRACE] 14:45:52:89 Coordinador/(5045:5045): Mensaje recibido exitosamente:
+[TRACE] 14:45:52:92 Coordinador/(5045:5045): 
+
+[TRACE] 14:45:52:92 Coordinador/(5045:5045): Terminando conexion con el cliente.
+[ERROR] 14:45:52:94 Coordinador/(5045:5045): Fallo el bindeo
+[TRACE] 14:47:34:714 Coordinador/(5076:5076): Nace el coordinador.
+[TRACE] 14:47:34:724 Coordinador/(5076:5076): Cliente conectado.
+[TRACE] 14:47:34:727 Coordinador/(5076:5076): Esperando mensaje del cliente.
+[TRACE] 14:47:34:821 Coordinador/(5076:5076): Fallo la conexion con el cliente.
+[TRACE] 14:47:34:824 Coordinador/(5076:5076): Mensaje recibido exitosamente:
+[TRACE] 14:47:34:829 Coordinador/(5076:5076): 
+
+[TRACE] 14:47:34:835 Coordinador/(5076:5076): Terminando conexion con el cliente.
+[ERROR] 14:47:34:838 Coordinador/(5076:5076): Fallo el bindeo
+[TRACE] 14:51:34:406 Coordinador/(5143:5143): Nace el coordinador.
+[TRACE] 14:56:06:497 Coordinador/(5251:5251): Nace el coordinador.
+[TRACE] 14:56:59:838 Coordinador/(5251:5251): Cliente conectado.
+[TRACE] 14:56:59:841 Coordinador/(5251:5251): Esperando mensaje del cliente.
+[TRACE] 14:56:59:853 Coordinador/(5251:5251): Mensaje recibido exitosamente:
+[TRACE] 14:56:59:857 Coordinador/(5251:5251): A wild ESI has appeared!
+[TRACE] 14:56:59:861 Coordinador/(5251:5251): Terminando conexion con el cliente.
+[ERROR] 14:56:59:871 Coordinador/(5251:5251): Fallo el bindeo
+[TRACE] 15:02:21:194 Coordinador/(5387:5387): Nace el coordinador.
+[TRACE] 15:02:52:370 Coordinador/(5387:5387): Cliente conectado.
+[TRACE] 15:02:52:373 Coordinador/(5387:5387): Esperando mensaje del cliente.
+[TRACE] 15:02:52:386 Coordinador/(5387:5387): Mensaje recibido exitosamente:
+[TRACE] 15:02:52:390 Coordinador/(5387:5387): A wild ESI has appeared!
+[TRACE] 15:02:52:397 Coordinador/(5387:5387): Terminando conexion con el cliente.
+[TRACE] 15:08:31:535 Coordinador/(5492:5492): Nace el coordinador.
+[TRACE] 15:14:57:610 Coordinador/(5625:5625): Nace el coordinador.
+[TRACE] 15:16:10:525 Coordinador/(5625:5625): Cliente conectado.
+[TRACE] 15:16:10:529 Coordinador/(5625:5625): Esperando mensaje del cliente.
+[TRACE] 15:16:10:538 Coordinador/(5625:5625): Mensaje recibido exitosamente:
+[TRACE] 15:16:10:541 Coordinador/(5625:5625): My name is Planificador.c, and I'm the fastest planifier alive...
+[TRACE] 15:16:10:547 Coordinador/(5625:5625): Terminando conexion con el cliente.
+[TRACE] 15:20:10:621 Coordinador/(5739:5739): Nace el coordinador.
+[TRACE] 15:20:10:632 Coordinador/(5739:5739): Esperando...
+[TRACE] 15:24:22:802 Coordinador/(5857:5857): Nace el coordinador.
+[TRACE] 15:24:22:814 Coordinador/(5857:5857): Esperando...
+[TRACE] 15:24:49:978 Coordinador/(5857:5857): Cliente conectado.
+[TRACE] 15:24:49:986 Coordinador/(5857:5857): Esperando mensaje del cliente.
+[TRACE] 15:24:49:999 Coordinador/(5857:5857): Mensaje recibido exitosamente:
+[TRACE] 15:24:49:7 Coordinador/(5857:5857): My name is Planificador.c, and I'm the fastest planifier alive...
+[TRACE] 15:24:50:47 Coordinador/(5857:5857): Terminando conexion con el cliente.
+[TRACE] 15:24:50:48 Coordinador/(5857:5857): Esperando...
+[TRACE] 15:34:49:548 Coordinador/(6012:6012): Nace el coordinador.
+[TRACE] 15:34:49:588 Coordinador/(6012:6012): Esperando...
+[TRACE] 15:35:27:948 Coordinador/(6012:6012): Cliente conectado.
+[TRACE] 15:35:27:951 Coordinador/(6012:6012): Esperando mensaje del cliente.
+[TRACE] 15:35:27:962 Coordinador/(6012:6012): Mensaje recibido exitosamente:
+[TRACE] 15:35:27:969 Coordinador/(6012:6012): My name is Planificador.c, and I'm the fastest planifier alive...
+[TRACE] 15:35:27:980 Coordinador/(6012:6012): Terminando conexion con el cliente.
+[TRACE] 15:35:27:988 Coordinador/(6012:6012): Esperando...
+[TRACE] 15:39:18:52 Coordinador/(6192:6192): Nace el coordinador.
+[TRACE] 15:39:18:56 Coordinador/(6192:6192): Esperando...
+[TRACE] 15:39:52:450 Coordinador/(6192:6192): Cliente conectado.
+[TRACE] 15:39:52:452 Coordinador/(6192:6192): Esperando mensaje del cliente.
+[TRACE] 15:39:52:460 Coordinador/(6192:6192): Mensaje recibido exitosamente:
+[TRACE] 15:39:52:460 Coordinador/(6192:6192): A wild ESI has appeared!
+[TRACE] 15:39:52:461 Coordinador/(6192:6192): Terminando conexion con el cliente.
+[TRACE] 15:39:52:462 Coordinador/(6192:6192): Esperando...

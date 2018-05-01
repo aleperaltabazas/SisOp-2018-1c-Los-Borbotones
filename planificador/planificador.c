@@ -9,8 +9,13 @@
 int main() {
 	iniciar_log();
 	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, "My name is Planificador.c, and I'm the fastest planifier alive...");
+
+	int socket_oyente;
+
 	while (1) {
-		recibir_conexion(PUERTO_PLANIFICADOR);
+		socket_oyente = escuchar_socket(PUERTO_PLANIFICADOR);
+		listen(socket_oyente, BACKLOG);
+		aceptar_conexion(socket_oyente);
 	}
 }
 

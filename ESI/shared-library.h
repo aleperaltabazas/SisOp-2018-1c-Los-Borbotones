@@ -32,7 +32,9 @@ t_log * logger;
 //int server_socket = socket(AF_INET, SOCK_STREAM, 0);
 //int client_socket = socket (AF_INET, SOCK_STREAM, 0);
 
-void conectar_a(char* IP, char* puerto, char* mensaje);
+int conectar_a(char* IP, char* puerto, char* mensaje);
+int escuchar_socket(char * puerto);
+int aceptar_conexion(int listening_socket);
 void recibir_conexion(char* puerto);
 void salir_con_error(char* mensaje, int socket);
 void exit_gracefully(int return_val);

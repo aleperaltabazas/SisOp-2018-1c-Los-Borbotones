@@ -10,10 +10,17 @@
 int main() {
 	char mensaje[] = "A wild ESI has appeared!";
 	iniciar_log();
-	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
-	//conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR, mensaje);
+
+	int socket_coordinador;
+	int socket_planificador;
+
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
+	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR, mensaje);
 
 	loggear("Conexion exitosa.");
+
+	close(socket_coordinador);
+	close(socket_planificador);
 
 	return EXIT_SUCCESS;
 
@@ -22,10 +29,6 @@ int main() {
 void iniciar_log() {
 	logger = log_create("ReDisTinto.log", "ESI", true, LOG_LEVEL_TRACE);
 	loggear("ESI on duty!");
-}
-
-void loggear(char* mensaje) {
-	log_trace(logger, mensaje);
 }
 
 void escucharRespuesta() {

@@ -7,7 +7,7 @@
 
 #include "shared-library.h"
 
-void conectar_a(char *ip, char *puerto, char *mensaje) {
+int conectar_a(char *ip, char *puerto, char *mensaje) {
 	loggear("Intentando conexion al servidor.");
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
@@ -47,10 +47,64 @@ void conectar_a(char *ip, char *puerto, char *mensaje) {
 				serverSocket);
 	}
 
-	//send(serverSocket, 0, sizeof(int), 0);
 	loggear("Cerrando conexion con servidor y terminando.");
 
-	close(serverSocket);
+	return serverSocket;
+}
+
+int escuchar_socket(char* puerto) {
+	struct addrinfo hints;
+	struct addrinfo *server_info;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = AI_PASSIVE;		//Le indicamos localhost
+	hints.ai_socktype = SOCK_STREAM;
+
+	getaddrinfo(NULL, puerto, &hints, &server_info);
+
+	int listening_socket = socket(server_info->ai_family,
+			server_info->ai_socktype, server_info->ai_protocol);
+
+	int res = bind(listening_socket, server_info->ai_addr,
+			server_info->ai_addrlen);
+	if (res != 0) {
+		salir_con_error("Fallo el bindeo", listening_socket);
+	}
+
+	freeaddrinfo(server_info);
+
+	return listening_socket;
+}
+
+int aceptar_conexion(int listening_socket) {
+	struct sockaddr_in addr;// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
+	socklen_t addrlen = sizeof(addr);
+
+	int socketCliente = accept(listening_socket, (struct sockaddr *) &addr,
+			&addrlen);
+
+	loggear("Cliente conectado.");
+
+	loggear("Esperando mensaje del cliente.");
+
+	char package[PACKAGE_SIZE];
+	char message[] = "Gracias por conectarse al coordinador!";
+
+	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
+
+	if (res <= 0) {
+		loggear("Fallo la conexion con el cliente.");
+	}
+
+	loggear("Mensaje recibido exitosamente:");
+	loggear(package);
+	send(socketCliente, message, strlen(message) + 1, 0);
+
+	loggear("Terminando conexion con el cliente.");
+
+	return socketCliente;
+
 }
 
 void recibir_conexion(char* puerto) {

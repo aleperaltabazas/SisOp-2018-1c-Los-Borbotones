@@ -9,9 +9,19 @@
 
 int main() {
 	iniciar_log();
+
+	int socket_oyente;
+	int socket_aceptado;
+
 	while (1) {
-		recibir_conexion(PUERTO_COORDINADOR);
+		socket_oyente = escuchar_socket(PUERTO_COORDINADOR);
+		listen(socket_oyente, BACKLOG);
+		socket_aceptado = aceptar_conexion(socket_oyente);
+
 	}
+
+	close(socket_oyente);
+	close(socket_aceptado);
 
 	return EXIT_SUCCESS;
 }
