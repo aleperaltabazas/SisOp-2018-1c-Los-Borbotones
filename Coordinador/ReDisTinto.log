@@ -130,34 +130,3 @@ s·
 [TRACE] 19:45:47:900 Coordinador/(8166:8166): A wild ESI has appeared!
 [TRACE] 19:45:47:902 Coordinador/(8166:8166): Terminando conexion con el cliente.
 [TRACE] 19:45:47:902 Coordinador/(8166:8166): Cerrando sesion...
-[TRACE] 16:05:16:596 Coordinador/(5224:5224): Nace el coordinador.
-[TRACE] 16:05:16:597 Coordinador/(5224:5224): Esperando...
-[TRACE] 16:05:38:51 Coordinador/(5224:5224): Cliente conectado.
-[TRACE] 16:05:38:51 Coordinador/(5224:5224): Esperando mensaje del cliente.
-[TRACE] 16:05:38:52 Coordinador/(5224:5224): Mensaje recibido exitosamente:
-[TRACE] 16:05:38:52 Coordinador/(5224:5224): A wild ESI has appeared!
-[TRACE] 16:05:38:52 Coordinador/(5224:5224): Terminando conexion con el cliente.
-[TRACE] 16:05:38:52 Coordinador/(5224:5224): Cerrando sesion...
-[TRACE] 16:14:29:224 Coordinador/(5545:5545): Nace el coordinador.
-[TRACE] 16:14:29:225 Coordinador/(5545:5545): Esperando...
-[TRACE] 16:14:49:228 Coordinador/(5545:5545): Cliente conectado.
-[TRACE] 16:14:49:229 Coordinador/(5545:5545): Esperando mensaje del cliente.
-[TRACE] 16:14:49:230 Coordinador/(5545:5545): Mensaje recibido exitosamente:
-[TRACE] 16:14:49:230 Coordinador/(5545:5545): A wild ESI has appeared!
-[TRACE] 16:14:49:230 Coordinador/(5545:5545): Terminando conexion con el cliente.
-[TRACE] 16:14:49:231 Coordinador/(5545:5545): Cerrando sesion...
-[TRACE] 16:40:31:592 Coordinador/(5956:5956): Nace el coordinador.
-[TRACE] 16:40:31:593 Coordinador/(5956:5956): Esperando...
-[TRACE] 16:47:50:126 Coordinador/(6263:6263): Nace el coordinador.
-[TRACE] 16:47:50:134 Coordinador/(6263:6263): Esperando...
-[TRACE] 16:50:50:772 Coordinador/(6338:6338): Nace el coordinador.
-[TRACE] 16:50:50:773 Coordinador/(6338:6338): Esperando...
-[TRACE] 16:52:26:589 Coordinador/(6510:6510): Nace el coordinador.
-[TRACE] 16:52:26:756 Coordinador/(6510:6510): Esperando...
-[TRACE] 16:52:44:538 Coordinador/(6338:6338): Cliente conectado.
-[TRACE] 16:52:44:538 Coordinador/(6338:6338): Esperando mensaje del cliente.
-[TRACE] 16:52:44:539 Coordinador/(6338:6338): Fallo la conexion con el cliente.
-[TRACE] 16:52:44:539 Coordinador/(6338:6338): Mensaje recibido exitosamente:
-[TRACE] 16:52:44:539 Coordinador/(6338:6338): è1‘¿tÚv·
-[TRACE] 16:52:44:539 Coordinador/(6338:6338): Terminando conexion con el cliente.
-[TRACE] 16:52:44:540 Coordinador/(6338:6338): Cerrando sesion...

@@ -72,27 +72,3 @@
 [TRACE] 19:45:47:908 ESI/(8184:8184): Mensaje recibido desde el servidor.
 [TRACE] 19:45:47:923 ESI/(8184:8184): Gracias por conectarse al coordinador!
 [TRACE] 19:45:47:971 ESI/(8184:8184): Cerrando conexion con servidor y terminando.
-[TRACE] 13:06:30:558 ESI/(4028:4028): ESI on duty.
-[TRACE] 13:06:30:573 ESI/(4028:4028): Conectó sin problemas
-[TRACE] 13:06:30:574 ESI/(4028:4028): Mensaje enviado.
-[TRACE] 13:06:30:574 ESI/(4028:4028): Mensaje recibido desde el servidor.
-[TRACE] 13:06:30:582 ESI/(4028:4028): A wild ESI has appeared!
-[TRACE] 13:06:30:582 ESI/(4028:4028): Cerrando conexion con servidor y terminando.
-[TRACE] 16:05:38:50 ESI/(5257:5257): ESI on duty.
-[TRACE] 16:05:38:51 ESI/(5257:5257): Conectó sin problemas
-[TRACE] 16:05:38:57 ESI/(5257:5257): Mensaje enviado.
-[TRACE] 16:05:38:58 ESI/(5257:5257): Mensaje recibido desde el servidor.
-[TRACE] 16:05:38:58 ESI/(5257:5257): Gracias por conectarse al coordinador!
-[TRACE] 16:05:38:58 ESI/(5257:5257): Cerrando conexion con servidor y terminando.
-[TRACE] 16:07:04:528 ESI/(5314:5314): ESI on duty.
-[ERROR] 16:07:04:529 ESI/(5314:5314): Fallo la conexion con el servidor.
-[TRACE] 16:14:49:223 ESI/(5579:5579): ESI on duty.
-[TRACE] 16:14:49:229 ESI/(5579:5579): Conectó sin problemas al coordinador
-[TRACE] 16:14:49:230 ESI/(5579:5579): Conectó sin problemas al planificador
-[TRACE] 16:14:49:237 ESI/(5579:5579): Mensaje enviado.
-[TRACE] 16:14:49:237 ESI/(5579:5579): Mensaje recibido desde el servidor.
-[TRACE] 16:14:49:238 ESI/(5579:5579): Gracias por conectarse al coordinador!
-[TRACE] 16:14:49:244 ESI/(5579:5579): Cerrando conexion con servidor y terminando.
-[TRACE] 16:52:44:536 ESI/(6531:6531): ESI on duty.
-[TRACE] 16:52:44:538 ESI/(6531:6531): Conectó sin problemas al coordinador
-[ERROR] 16:52:44:538 ESI/(6531:6531): Fallo la conexion con el planificador.
