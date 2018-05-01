@@ -8,14 +8,20 @@
 
 int main() {
 	iniciar_log();
-	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, "My name is Planificador.c, and I'm the fastest planifier alive...");
+
+	char mensaje[] = "My name is Planificador.c, and I'm the fastest planifier alive...";
+
+	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
 
 	int socket_oyente;
+	int socket_receptor;
+	int socket_cliente;
 
 	while (1) {
 		socket_oyente = escuchar_socket(PUERTO_PLANIFICADOR);
-		listen(socket_oyente, BACKLOG);
-		aceptar_conexion(socket_oyente);
+		socket_cliente = aceptar_conexion(socket_oyente);
+		socket_receptor = recibir_mensaje(socket_cliente);
+		enviar_mensaje(socket_receptor, mensaje);
 	}
 }
 

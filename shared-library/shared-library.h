@@ -35,6 +35,8 @@ t_log * logger;
 int conectar_a(char* IP, char* puerto, char* mensaje);
 int escuchar_socket(char * puerto);
 int aceptar_conexion(int listening_socket);
+int recibir_mensaje(int socket_aceptado);
+int enviar_mensaje(int un_socket, char* message);
 void recibir_conexion(char* puerto);
 void salir_con_error(char* mensaje, int socket);
 void exit_gracefully(int return_val);

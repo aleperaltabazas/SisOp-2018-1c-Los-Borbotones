@@ -84,12 +84,16 @@ int aceptar_conexion(int listening_socket) {
 
 	loggear("Cliente conectado.");
 
+	return (socketCliente);
+
+}
+
+int recibir_mensaje(int socket_aceptado) {
 	loggear("Esperando mensaje del cliente.");
 
 	char package[PACKAGE_SIZE];
-	char message[] = "Gracias por conectarse al coordinador!";
 
-	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
+	int res = recv(socket_aceptado, (void*) package, PACKAGE_SIZE, 0);
 
 	if (res <= 0) {
 		loggear("Fallo la conexion con el cliente.");
@@ -97,12 +101,18 @@ int aceptar_conexion(int listening_socket) {
 
 	loggear("Mensaje recibido exitosamente:");
 	loggear(package);
-	send(socketCliente, message, strlen(message) + 1, 0);
+
+	return socket_aceptado;
+
+}
+
+int enviar_mensaje(int un_socket, char* message) {
+
+	send(un_socket, message, strlen(message) + 1, 0);
 
 	loggear("Terminando conexion con el cliente.");
 
-	return socketCliente;
-
+	return un_socket;
 }
 
 void recibir_conexion(char* puerto) {

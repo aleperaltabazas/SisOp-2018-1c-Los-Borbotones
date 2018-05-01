@@ -11,17 +11,19 @@ int main() {
 	iniciar_log();
 
 	int socket_oyente;
-	int socket_aceptado;
+	int socket_cliente;
+	int socket_receptor;
+	char message[] = "Gracias por conectarse al coordinador!";
 
 	while (1) {
 		socket_oyente = escuchar_socket(PUERTO_COORDINADOR);
 		listen(socket_oyente, BACKLOG);
-		socket_aceptado = aceptar_conexion(socket_oyente);
-
+		socket_cliente = aceptar_conexion(socket_oyente);
+		socket_receptor = recibir_mensaje(socket_cliente);
+		enviar_mensaje(socket_receptor, message);
 	}
 
 	close(socket_oyente);
-	close(socket_aceptado);
 
 	return EXIT_SUCCESS;
 }
