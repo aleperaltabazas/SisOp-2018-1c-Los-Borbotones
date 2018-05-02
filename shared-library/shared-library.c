@@ -7,7 +7,7 @@
 
 #include "shared-library.h"
 
-int conectar_a(char *ip, char *puerto, int* id) {
+int conectar_a(char *ip, char *puerto) {
 	loggear("Intentando conexion al servidor.");
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
@@ -30,24 +30,6 @@ int conectar_a(char *ip, char *puerto, int* id) {
 	loggear("Conectó sin problemas");
 
 	freeaddrinfo(serverInfo);
-
-	int* package;
-
-	send(serverSocket, id, sizeof(int), 0);
-
-	loggear("Mensaje enviado. Esperando mensaje del servidor.");
-	int res = recv(serverSocket, package, sizeof(int), 0);
-
-	if (res != 0) {
-		loggear("Mensaje recibido.");
-		chequear_servidor(package, serverSocket);
-
-	} else {
-		salir_con_error("Fallo el envio de mensaje de parte del servidor.",
-				serverSocket);
-	}
-
-	loggear("Cerrando conexion con servidor y terminando.");
 
 	return serverSocket;
 }
@@ -85,14 +67,14 @@ int aceptar_conexion(int listening_socket) {
 
 	loggear("Cliente conectado.");
 
-	return (socketCliente);
+	return socketCliente;
 
 }
 
 int recibir_mensaje(int socket_aceptado) {
 	loggear("Esperando mensaje del cliente.");
 
-	int* package;
+	int* package = malloc(sizeof(int));
 
 	int res = recv(socket_aceptado, package, sizeof(int) + 1, 0);
 
@@ -108,17 +90,48 @@ int recibir_mensaje(int socket_aceptado) {
 
 }
 
-int enviar_mensaje(int un_socket, int* id) {
+int enviar_mensaje(int un_socket, int id) {
 
-	send(un_socket, id, sizeof(int), 0);
+	int envio = send(un_socket,(int*) id, sizeof(int), 0);
 
-	loggear("Terminando conexion con el cliente.");
+	if(envio <= 0){
+		salir_con_error("Fallo el envio de mensaje al cliente. Terminando conexion.", un_socket);
+	}
+
+	loggear("Mensaje enviado con exito.");
 
 	return un_socket;
 }
 
+void esperar_confirmacion(int socket_servidor){
+	int* package = malloc(sizeof(int));
+
+	int res = recv(socket_servidor, package, sizeof(int), MSG_WAITALL);
+
+	if(res <= 0){
+		salir_con_error("No se pudo recibir mensaje del servidor.", socket_servidor);
+	}
+
+	loggear("Mensaje recibido. Identificando servidor: ");
+	chequear_servidor(package, socket_servidor);
+	free(package);
+}
+
+void enviar_identificacion(int server_socket, int id){
+	int envio = send(server_socket,(int*) id, sizeof(int), 0);
+
+	loggear("Enviando identificacion al servidor.");
+
+	if(envio <= 0){
+		salir_con_error("Fallo el envio", server_socket);
+	}
+
+	loggear("Mensaje enviado con exito.");
+
+}
+
 void identificar_cliente(int* id, int socket_cliente){
-	if(id == 0){
+	if(*id == 0){
 		loggear("My name is Planificador.c, and I'm the fastest planifier alive...");
 	}
 	else if(*id == 1){
@@ -128,8 +141,11 @@ void identificar_cliente(int* id, int socket_cliente){
 		loggear("It's ya boi, Instancia!");
 	}
 	else{
+		free(id);
 		salir_con_error("Cliente desconocido, cerrando conexion.", socket_cliente);
 	}
+
+	free(id);
 
 	return;
 }
@@ -139,11 +155,14 @@ void chequear_servidor(int* id, int server_socket){
 		loggear("Gracias por conectarse al planificador!");
 	}
 	if(*id == 3){
-		loggear("Gracias por conectarse al planificador!");
+		loggear("Gracias por conectarse al coordinador!");
 	}
 	else{
+		free(id);
 		salir_con_error("Servidor desconocido, cerrando conexion", server_socket);
 	}
+
+	free(id);
 }
 
 void loggear(char* mensaje) {

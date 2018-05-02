@@ -289,3 +289,7 @@
 [TRACE] 22:36:57:613 ESI/(6868:6868): Mensaje recibido.
 [TRACE] 22:36:57:619 ESI/(6868:6868): Gracias por conectarse al planificador!
 [ERROR] 22:36:57:620 ESI/(6868:6868): Servidor desconocido, cerrando conexion
+[TRACE] 15:59:12:955 ESI/(5076:5076): ESI on duty!
+[TRACE] 15:59:12:983 ESI/(5076:5076): Intentando conexion al servidor.
+[TRACE] 15:59:12:1 ESI/(5076:5076): Conectó sin problemas
+[ERROR] 16:01:52:757 ESI/(5076:5076): No se pudo recibir mensaje del servidor.

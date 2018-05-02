@@ -10,9 +10,9 @@
 int main(){
 	iniciar_log();
 
-	int* id = 2;
+	int id = 2;
 
-	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id);
+	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR);
 
 	return EXIT_SUCCESS;
 }

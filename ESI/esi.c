@@ -11,13 +11,18 @@ int main() {
 	//char mensaje[] = "A wild ESI has appeared!";
 	iniciar_log();
 
-	int* id = 1;
+	int id = 1;
 
 	int socket_coordinador;
 	int socket_planificador;
 
-	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id);
-	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR, id);
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR);
+	enviar_identificacion(socket_coordinador, id);
+	esperar_confirmacion(socket_coordinador);
+
+	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR);
+	enviar_identificacion(socket_planificador, id);
+	esperar_confirmacion(socket_planificador);
 
 	loggear("Conexion exitosa.");
 
