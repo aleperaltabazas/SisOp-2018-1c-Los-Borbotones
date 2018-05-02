@@ -271,3 +271,21 @@
 [TRACE] 18:49:10:424 ESI/(5467:5467): Intentando conexion al servidor.
 [TRACE] 18:49:10:429 ESI/(5467:5467): Conectó sin problemas
 [TRACE] 18:49:10:440 ESI/(5467:5467): Mensaje enviado.
+[TRACE] 21:38:46:649 ESI/(5166:5166): ESI on duty!
+[TRACE] 21:38:46:706 ESI/(5166:5166): Intentando conexion al servidor.
+[ERROR] 21:38:46:729 ESI/(5166:5166): Fallo la conexion con el servidor.
+[TRACE] 21:48:16:530 ESI/(5464:5464): ESI on duty!
+[TRACE] 21:48:16:536 ESI/(5464:5464): Intentando conexion al servidor.
+[TRACE] 21:48:16:549 ESI/(5464:5464): Conectó sin problemas
+[TRACE] 21:48:16:553 ESI/(5464:5464): Mensaje enviado.
+[TRACE] 22:06:28:313 ESI/(6133:6133): ESI on duty!
+[TRACE] 22:06:28:325 ESI/(6133:6133): Intentando conexion al servidor.
+[TRACE] 22:06:28:339 ESI/(6133:6133): Conectó sin problemas
+[TRACE] 22:06:28:340 ESI/(6133:6133): Mensaje enviado. Esperando mensaje del servidor.
+[TRACE] 22:36:14:48 ESI/(6868:6868): ESI on duty!
+[TRACE] 22:36:14:81 ESI/(6868:6868): Intentando conexion al servidor.
+[TRACE] 22:36:14:96 ESI/(6868:6868): Conectó sin problemas
+[TRACE] 22:36:14:102 ESI/(6868:6868): Mensaje enviado. Esperando mensaje del servidor.
+[TRACE] 22:36:57:613 ESI/(6868:6868): Mensaje recibido.
+[TRACE] 22:36:57:619 ESI/(6868:6868): Gracias por conectarse al planificador!
+[ERROR] 22:36:57:620 ESI/(6868:6868): Servidor desconocido, cerrando conexion

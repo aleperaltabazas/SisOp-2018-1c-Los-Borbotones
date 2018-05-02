@@ -9,14 +9,17 @@
 
 int main(){
 	iniciar_log();
-	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, "It's ya boi, instancia!");
+
+	int* id = 2;
+
+	conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id);
 
 	return EXIT_SUCCESS;
 }
 
 void iniciar_log() {
 	logger = log_create("ReDisTinto.log", "Coordinador", true, LOG_LEVEL_TRACE);
-	log_trace(logger, "An instance joins the brawl!");
+	log_trace(logger, "A new instance joins the brawl!");
 }
 
 

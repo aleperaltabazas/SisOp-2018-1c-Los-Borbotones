@@ -8,14 +8,16 @@
 #include "esi.h"
 
 int main() {
-	char mensaje[] = "A wild ESI has appeared!";
+	//char mensaje[] = "A wild ESI has appeared!";
 	iniciar_log();
+
+	int* id = 1;
 
 	int socket_coordinador;
 	int socket_planificador;
 
-	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
-	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR, mensaje);
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id);
+	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR, id);
 
 	loggear("Conexion exitosa.");
 

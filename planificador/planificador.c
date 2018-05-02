@@ -9,9 +9,10 @@
 int main() {
 	iniciar_log();
 
-	char mensaje[] = "My name is Planificador.c, and I'm the fastest planifier alive...";
+	//char mensaje[] = "My name is Planificador.c, and I'm the fastest planifier alive...";
+	int* id = 0;
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
+	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id);
 
 	int socket_oyente;
 	int socket_receptor;
@@ -21,8 +22,11 @@ int main() {
 		socket_oyente = escuchar_socket(PUERTO_PLANIFICADOR);
 		socket_cliente = aceptar_conexion(socket_oyente);
 		socket_receptor = recibir_mensaje(socket_cliente);
-		enviar_mensaje(socket_receptor, mensaje);
+		enviar_mensaje(socket_receptor, id);
 	}
+
+	close(socket_coordinador);
+	close(socket_receptor);
 }
 
 void iniciar_log() {

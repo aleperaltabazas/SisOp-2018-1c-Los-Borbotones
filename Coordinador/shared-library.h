@@ -32,16 +32,18 @@ t_log * logger;
 //int server_socket = socket(AF_INET, SOCK_STREAM, 0);
 //int client_socket = socket (AF_INET, SOCK_STREAM, 0);
 
-int conectar_a(char* IP, char* puerto, char* mensaje);
+int conectar_a(char* IP, char* puerto, int* id);
 int escuchar_socket(char * puerto);
 int aceptar_conexion(int listening_socket);
 int recibir_mensaje(int socket_aceptado);
-int enviar_mensaje(int un_socket, char* message);
+int enviar_mensaje(int un_socket, int* id);
 void recibir_conexion(char* puerto);
 void salir_con_error(char* mensaje, int socket);
 void exit_gracefully(int return_val);
 void inicializar_log(char* nombre_archivo, char* nombre_log);
 void loggear(char* mensaje);
+void identificar_cliente(int* id, int socket_cliente);
+void chequear_servidor(int* id, int server_socket);
 
 t_log * logger;
 

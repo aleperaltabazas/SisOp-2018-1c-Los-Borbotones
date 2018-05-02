@@ -10,20 +10,21 @@
 int main() {
 	iniciar_log();
 
+	int* id = 3;
+
 	int socket_oyente;
 	int socket_cliente;
 	int socket_receptor;
-	char message[] = "Gracias por conectarse al coordinador!";
+	//char message[] = "Gracias por conectarse al coordinador!";
 
 	while (1) {
 		socket_oyente = escuchar_socket(PUERTO_COORDINADOR);
-		listen(socket_oyente, BACKLOG);
 		socket_cliente = aceptar_conexion(socket_oyente);
 		socket_receptor = recibir_mensaje(socket_cliente);
-		enviar_mensaje(socket_receptor, message);
+		enviar_mensaje(socket_receptor, id);
 	}
 
-	close(socket_oyente);
+	close(socket_receptor);
 
 	return EXIT_SUCCESS;
 }
