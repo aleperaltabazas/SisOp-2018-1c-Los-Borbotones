@@ -293,3 +293,21 @@
 [TRACE] 15:59:12:983 ESI/(5076:5076): Intentando conexion al servidor.
 [TRACE] 15:59:12:1 ESI/(5076:5076): Conectó sin problemas
 [ERROR] 16:01:52:757 ESI/(5076:5076): No se pudo recibir mensaje del servidor.
+[TRACE] 16:00:07:427 ESI/(7882:7882): ESI on duty.
+[TRACE] 16:00:07:489 ESI/(7882:7882): Conectó sin problemas
+[TRACE] 16:00:07:534 ESI/(7882:7882): Mensaje enviado.
+[TRACE] 16:00:07:540 ESI/(7882:7882): Mensaje recibido desde el servidor.
+[TRACE] 16:00:07:557 ESI/(7882:7882): Gracias por conectarse al coordinador!
+[TRACE] 16:00:07:586 ESI/(7882:7882): Cerrando conexion con servidor y terminando.
+[TRACE] 16:01:23:333 ESI/(7908:7908): ESI on duty.
+[TRACE] 16:01:23:371 ESI/(7908:7908): Conectó sin problemas
+[TRACE] 16:01:23:404 ESI/(7908:7908): Mensaje enviado.
+[TRACE] 16:01:23:431 ESI/(7908:7908): Mensaje recibido desde el servidor.
+[TRACE] 16:01:23:461 ESI/(7908:7908): Gracias por conectarse al coordinador!
+[TRACE] 16:01:23:485 ESI/(7908:7908): Cerrando conexion con servidor y terminando.
+[TRACE] 16:02:07:875 ESI/(7924:7924): ESI on duty.
+[TRACE] 16:02:07:935 ESI/(7924:7924): Conectó sin problemas
+[TRACE] 16:02:08:25 ESI/(7924:7924): Mensaje enviado.
+[TRACE] 16:02:08:41 ESI/(7924:7924): Mensaje recibido desde el servidor.
+[TRACE] 16:02:08:45 ESI/(7924:7924): Gracias por conectarse al coordinador!
+[TRACE] 16:02:08:50 ESI/(7924:7924): Cerrando conexion con servidor y terminando.

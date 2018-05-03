@@ -165,9 +165,9 @@ void chequear_servidor(int* id, int server_socket){
 	free(id);
 }
 
-void loggear(char* mensaje) {
+/*void loggear(char* mensaje) {
 	log_trace(logger, mensaje);
-}
+}*/
 
 void salir_con_error(char* mensaje, int socket) {
 	log_error(logger, mensaje);
