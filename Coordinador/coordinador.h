@@ -21,7 +21,7 @@ pthread_t hilo_planificador;
 
 void responder(void);
 void *atender_ESI(void);
-void *atender_Instaica(void);
+void *atender_Instancia(void* unSocket);
 void *atender_Planificador(void);
 void iniciar_log(void);
 
