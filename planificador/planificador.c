@@ -32,3 +32,16 @@ void iniciar_log() {
 	logger = log_create("ReDisTinto.log", "Coordinador", true, LOG_LEVEL_TRACE);
 	log_trace(logger, "Nace el planificador.");
 }
+
+/*---Consolita---
+ *  {
+ *  int * comando = malloc(sizeof(int));
+ *
+ *  while (1) {
+ *  printf ("Bienvenido a la consola interactiva para el planificador /n /n");
+ *  listarOpciones();
+ *  recibirCodigo();
+ *  interpretarYEjecutarCodigo(comando);
+ *  }
+ * }
+ */
