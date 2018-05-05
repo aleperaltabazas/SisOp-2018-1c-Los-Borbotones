@@ -11,6 +11,4 @@
 //#include <shared-library.h>
 #include "shared-library.h"
 
-void iniciar_log(void);
-
 #endif /* INSTANCIAS_H_ */
