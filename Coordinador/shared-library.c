@@ -53,7 +53,7 @@ void manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
 	}
 
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
-	identificar_cliente(package, socketCliente);
+	identificar_cliente((char*) package, socketCliente);
 
 	loggear("Enviando mensaje al cliente.");
 
@@ -95,7 +95,7 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 	if (res != 0) {
 		loggear(
 				"Mensaje recibido desde el servidor. Identificando servidor...");
-		chequear_servidor(package, server_socket);
+		chequear_servidor((char*) package, server_socket);
 
 	} else {
 		salir_con_error("Fallo el envio de mensaje de parte del servidor.",
@@ -118,11 +118,11 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 	 * aca le asignamos un thread. Tal vez tengamos que agregar el thread a la firma de la función -.-
 	 */
 
-	if (strcmp(mensaje, mensajePlanificador)) {
+	if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
-	} else if (strcmp(mensaje, mensajeESI)) {
+	} else if (strcmp(mensaje, mensajeESI) == 0) {
 		loggear(mensajeESI);
-	} else if (strcmp(mensaje, mensajeInstancia)) {
+	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
 		loggear(mensajeInstancia);
 	} else {
 		salir_con_error("Cliente desconocido, cerrando conexion.",
@@ -133,14 +133,14 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 }
 
 void chequear_servidor(char* mensaje, int server_socket) {
-	char* mensajeCoordinador = "Coordinador: taringuero profesional.";
-	char* mensajePlanificador =
+	char mensajeCoordinador[] = "Coordinador: taringuero profesional.";
+	char mensajePlanificador[] =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
 
-	if (strcmp(mensaje, mensajeCoordinador)) {
+	if (strcmp(mensaje, mensajeCoordinador) == 0) {
 		loggear(mensajeCoordinador);
 	}
-	if (strcmp(mensaje, mensajePlanificador)) {
+	else if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
 	} else {
 		salir_con_error("Servidor desconocido, cerrando conexion.",
