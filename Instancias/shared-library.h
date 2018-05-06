@@ -29,24 +29,19 @@
 
 t_log * logger;
 
-//int server_socket = socket(AF_INET, SOCK_STREAM, 0);
-//int client_socket = socket (AF_INET, SOCK_STREAM, 0);
-
-int conectar_a(char* IP, char* puerto);
-int escuchar_socket(char * puerto);
-int aceptar_conexion(int listening_socket);
-int recibir_mensaje(int socket_aceptado);
-int enviar_mensaje(int un_socket, int id);
-void esperar_confirmacion(int socket_servidor);
-void enviar_identificacion(int server_socket, int id);
-void recibir_conexion(char* puerto);
-void salir_con_error(char* mensaje, int socket);
-void exit_gracefully(int return_val);
-void inicializar_log(char* nombre_archivo, char* nombre_log);
-void loggear(char* mensaje);
+//Funciones servidor
+int levantar_servidor(char* puerto);
+void manjear_cliente(int listening_socket, int socketCliente, char* mensaje);
 void identificar_cliente(int* id, int socket_cliente);
+
+//Funciones cliente
+int conectar_a(char* ip, char* puerto, char* mensaje);
 void chequear_servidor(int* id, int server_socket);
 
-t_log * logger;
+//Misc
+void salir_con_error(char* mensaje, int socket);
+void exit_gracefully(int return_val);
+void iniciar_log(char* nombre, char* mensajeInicial);
+void loggear(char* mensaje);
 
 #endif /* SHARED_LIBRARY_H_ */

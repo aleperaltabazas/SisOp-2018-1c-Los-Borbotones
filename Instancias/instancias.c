@@ -8,7 +8,7 @@
 #include "instancias.h"
 
 int main() {
-	iniciar_log();
+	iniciar_log("Instancias", "A new Instance joins the brawl!");
 
 	char message_coordinador[PACKAGE_SIZE] = "It's ya boi, instancia!";
 
@@ -58,10 +58,5 @@ int main() {
 	loggear("Cerrando conexion con servidor y terminando.");
 
 	return EXIT_SUCCESS;
-}
-
-void iniciar_log(void) {
-	logger = log_create("ReDisTinto.log", "Coordinador", true, LOG_LEVEL_TRACE);
-	log_trace(logger, "A new instance joins the brawl!");
 }
 

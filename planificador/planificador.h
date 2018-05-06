@@ -20,7 +20,4 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 
-void escucharRespuesta(void);
-void iniciar_log(void);
-
 #endif /* PLANIFICADOR_H_ */
