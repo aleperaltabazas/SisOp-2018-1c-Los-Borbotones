@@ -32,11 +32,11 @@ t_log * logger;
 //Funciones servidor
 int levantar_servidor(char* puerto);
 void manjear_cliente(int listening_socket, int socketCliente, char* mensaje);
-void identificar_cliente(int* id, int socket_cliente);
+void identificar_cliente(char* mensaje, int socket_cliente);
 
 //Funciones cliente
 int conectar_a(char* ip, char* puerto, char* mensaje);
-void chequear_servidor(int* id, int server_socket);
+void chequear_servidor(char* id, int server_socket);
 
 //Misc
 void salir_con_error(char* mensaje, int socket);

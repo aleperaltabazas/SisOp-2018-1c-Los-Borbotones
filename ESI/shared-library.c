@@ -52,11 +52,14 @@ void manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
 		loggear("Fallo la conexion con el cliente.");
 	}
 
-	loggear("Mensaje recibido exitosamente:");
-	loggear(package);
+	loggear("Mensaje recibido exitosamente. Identificando cliente...");
+	identificar_cliente(package, socketCliente);
+
+	loggear("Enviando mensaje al cliente.");
+
 	send(socketCliente, mensaje, strlen(mensaje) + 1, 0);
 
-	loggear("Terminando conexion con el cliente actual.");
+	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
 }
 
 int conectar_a(char *ip, char *puerto, char* mensaje) {
@@ -90,8 +93,9 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 	int res = recv(server_socket, (void*) package, PACKAGE_SIZE, 0);
 
 	if (res != 0) {
-		loggear("Mensaje recibido desde el servidor.");
-		loggear(package);
+		loggear(
+				"Mensaje recibido desde el servidor. Identificando servidor...");
+		chequear_servidor(package, server_socket);
 
 	} else {
 		salir_con_error("Fallo el envio de mensaje de parte del servidor.",
@@ -103,38 +107,47 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 	return server_socket;
 }
 
-void identificar_cliente(int* id, int socket_cliente) {
-	if (*id == 0) {
-		loggear(
-				"My name is Planificador.c, and I'm the fastest planifier alive...");
-	} else if (*id == 1) {
-		loggear("A wild ESI has appeared!");
-	} else if (*id == 2) {
-		loggear("It's ya boi, Instancia!");
+void identificar_cliente(char* mensaje, int socket_cliente) {
+	char* mensajePlanificador =
+			"My name is Planificador.c and I'm the fastest planifier alive...";
+	char* mensajeESI = "A wild ESI has appeared!";
+	char* mensajeInstancia = "It's ya boi, instancia!";
+
+	/*
+	 * Oh, Ale, para que mierda haces esto? Porque cuando no me de paja y entienda hilos
+	 * aca le asignamos un thread. Tal vez tengamos que agregar el thread a la firma de la función -.-
+	 */
+
+	if (strcmp(mensaje, mensajePlanificador)) {
+		loggear(mensajePlanificador);
+	} else if (strcmp(mensaje, mensajeESI)) {
+		loggear(mensajeESI);
+	} else if (strcmp(mensaje, mensajeInstancia)) {
+		loggear(mensajeInstancia);
 	} else {
-		free(id);
 		salir_con_error("Cliente desconocido, cerrando conexion.",
 				socket_cliente);
 	}
 
-	free(id);
-
 	return;
 }
 
-void chequear_servidor(int* id, int server_socket) {
-	if (*id == 0) {
-		loggear("Gracias por conectarse al planificador!");
+void chequear_servidor(char* mensaje, int server_socket) {
+	char* mensajeCoordinador = "Coordinador: taringuero profesional.";
+	char* mensajePlanificador =
+			"My name is Planificador.c and I'm the fastest planifier alive...";
+
+	if (strcmp(mensaje, mensajeCoordinador)) {
+		loggear(mensajeCoordinador);
 	}
-	if (*id == 3) {
-		loggear("Gracias por conectarse al coordinador!");
+	if (strcmp(mensaje, mensajePlanificador)) {
+		loggear(mensajePlanificador);
 	} else {
-		free(id);
-		salir_con_error("Servidor desconocido, cerrando conexion",
+		salir_con_error("Servidor desconocido, cerrando conexion.",
 				server_socket);
 	}
 
-	free(id);
+	return;
 }
 
 void iniciar_log(char* nombre, char* mensajeInicial) {
@@ -142,7 +155,7 @@ void iniciar_log(char* nombre, char* mensajeInicial) {
 	loggear(mensajeInicial);
 }
 
-void loggear(char* mensaje){
+void loggear(char* mensaje) {
 	log_trace(logger, mensaje);
 }
 

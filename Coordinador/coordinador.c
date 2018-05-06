@@ -14,7 +14,7 @@
 int main() {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 
-	char mensaje[] = "Gracias por conectarse al coordinador!";
+	char mensaje[] = "Coordinador: taringuero profesional.";
 
 	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
 	int socketCliente;
