@@ -120,10 +120,15 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 
 	if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
+		pthread_create(&hilo_planificador, NULL, atender_Planificador,
+				(void*) socket_cliente);
 	} else if (strcmp(mensaje, mensajeESI) == 0) {
 		loggear(mensajeESI);
+		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
 		loggear(mensajeInstancia);
+		pthread_create(&hilo_instancia, NULL, atender_Instancia,
+				(void*) socket_cliente);
 	} else {
 		salir_con_error("Cliente desconocido, cerrando conexion.",
 				socket_cliente);
@@ -139,8 +144,7 @@ void chequear_servidor(char* mensaje, int server_socket) {
 
 	if (strcmp(mensaje, mensajeCoordinador) == 0) {
 		loggear(mensajeCoordinador);
-	}
-	else if (strcmp(mensaje, mensajePlanificador) == 0) {
+	} else if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
 	} else {
 		salir_con_error("Servidor desconocido, cerrando conexion.",
@@ -169,4 +173,46 @@ void salir_con_error(char* mensaje, int socket) {
 void exit_gracefully(int return_val) {
 	//log_destroy(logger);
 	exit(return_val);
+}
+
+void* atender_Planificador(void* un_socket) {
+	int i = 0;
+	while (1) {
+		loggear("Hola soy el hilo que atiende el planificador y estoy vivo.");
+		sleep(5);
+
+		if (i == 50) {
+			break;
+		}
+
+		i++;
+	}
+
+	loggear("Hola soy el hilo del planificador y me voy a cerrar.");
+
+	return NULL;
+}
+
+void* atender_ESI(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de ESI inicializado correctamente.");
+
+	return NULL;
+}
+
+void* atender_Planificador(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de planificador inicializado correctamente.");
+
+	return NULL;
+}
+
+void* atender_Instancia(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de instancia inicializado correctamente.");
+
+	return NULL;
 }

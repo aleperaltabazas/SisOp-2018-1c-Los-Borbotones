@@ -27,7 +27,17 @@
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 
+//Variables globales
+
 t_log * logger;
+pthread_t hilo_ESI;
+pthread_t hilo_instancia;
+pthread_t hilo_planificador;
+
+//Funciones de hilos
+void *atender_ESI(void* un_socket);
+void *atender_Instancia(void* un_socket);
+void *atender_Planificador(void* un_socket);
 
 //Funciones servidor
 int levantar_servidor(char* puerto);
