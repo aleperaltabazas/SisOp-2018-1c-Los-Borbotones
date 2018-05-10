@@ -27,7 +27,7 @@ int levantar_servidor(char* puerto) {
 	return listening_socket;
 }
 
-void manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
+int manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
 
 	loggear("Esperando cliente...");
 
@@ -60,6 +60,8 @@ void manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
 	send(socketCliente, mensaje, strlen(mensaje) + 1, 0);
 
 	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
+
+	return socketCliente;
 }
 
 int conectar_a(char *ip, char *puerto, char* mensaje) {

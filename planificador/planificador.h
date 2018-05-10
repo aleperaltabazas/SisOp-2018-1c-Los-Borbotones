@@ -8,16 +8,12 @@
 #ifndef PLANIFICADOR_H_
 #define PLANIFICADOR_H_
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-//#include <shared-library.h>
-#include "shared-library.h"
-#include <commons/log.h>
-#include <commons/collections/list.h>
+#include <shared-library.h>
+//#include "shared-library.h"
+
+//Funciones
+FILE* levantar_archivo(char** archivo);
+void error_de_archivo(char* mensaje, int retorno);
+void che_parsea(int socket_cliente, FILE* archivo_a_parsear);
 
 #endif /* PLANIFICADOR_H_ */

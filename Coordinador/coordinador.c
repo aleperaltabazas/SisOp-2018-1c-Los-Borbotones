@@ -11,7 +11,7 @@
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 
-int main() {
+int main(int argc, char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 
 	char mensaje[] = "Coordinador: taringuero profesional.";
@@ -20,7 +20,7 @@ int main() {
 	int socketCliente;
 
 	while (1) {
-		manejar_cliente(listening_socket, socketCliente, mensaje);
+		socketCliente = manejar_cliente(listening_socket, socketCliente, mensaje);
 	}
 
 	loggear("Cerrando sesion...");
@@ -30,3 +30,26 @@ int main() {
 	return EXIT_SUCCESS;
 }
 
+void* atender_ESI(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de ESI inicializado correctamente.");
+
+	return NULL;
+}
+
+void* atender_Planificador(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de planificador inicializado correctamente.");
+
+	return NULL;
+}
+
+void* atender_Instancia(void* un_socket) {
+	int socket_cliente = (int) un_socket;
+
+	loggear("Hilo de instancia inicializado correctamente.");
+
+	return NULL;
+}

@@ -19,6 +19,7 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 #include <pthread.h>
+#include <parsi/parser.h>
 
 #define PUERTO_COORDINADOR "8000"
 #define PUERTO_PLANIFICADOR "8001"
@@ -31,7 +32,7 @@ t_log * logger;
 
 //Funciones servidor
 int levantar_servidor(char* puerto);
-void manjear_cliente(int listening_socket, int socketCliente, char* mensaje);
+int manjear_cliente(int listening_socket, int socketCliente, char* mensaje);
 void identificar_cliente(char* mensaje, int socket_cliente);
 
 //Funciones cliente

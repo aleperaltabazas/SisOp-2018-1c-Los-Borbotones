@@ -110,3 +110,14 @@
 [TRACE] 00:59:22:512 Coordinador/(6448:6448): An instance joins the brawl!
 [TRACE] 00:59:22:518 Coordinador/(6448:6448): Intentando conexion al servidor.
 [ERROR] 00:59:22:552 Coordinador/(6448:6448): Fallo la conexion con el servidor.
+[TRACE] 17:41:59:633 Instancias/(6656:6656): A new Instance joins the brawl!
+[ERROR] 17:41:59:640 Instancias/(6656:6656): Fallo la conexion con el servidor.
+[TRACE] 17:43:48:953 Instancias/(6715:6715): A new Instance joins the brawl!
+[ERROR] 17:43:49:27 Instancias/(6715:6715): Fallo la conexion con el servidor.
+[TRACE] 17:46:56:532 Instancias/(6818:6818): A new Instance joins the brawl!
+[TRACE] 17:46:56:559 Instancias/(6818:6818): Conectó sin problemas
+[TRACE] 17:46:56:565 Instancias/(6818:6818): Mensaje enviado.
+[TRACE] 17:46:56:567 Instancias/(6818:6818): Mensaje recibido desde el servidor. Identificando servidor...
+[TRACE] 17:46:56:569 Instancias/(6818:6818): Coordinador: taringuero profesional.
+[TRACE] 17:46:56:570 Instancias/(6818:6818): Cerrando conexion con servidor y terminando.
+[TRACE] 17:46:56:571 Instancias/(6818:6818): Cerrando conexion con servidor y terminando.

@@ -8,16 +8,12 @@
 #ifndef ESI_H_
 #define ESI_H_
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <shared-library.h>
-#include "shared-library.h"
-#include <commons/log.h>
-#include <commons/collections/list.h>
+//#include "shared-library.h"
+
+//Funciones
+void parsear(FILE* archivo_a_parsear);
+void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador);
+bool solicitar_permiso(int socket_coordinador);
 
 #endif /* ESI_H_ */
