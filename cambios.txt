@@ -1,0 +1,4 @@
+-Cambio de la firma de manejar_cliente() a int para que devuelva un socket
+-Comienzo del protocolo de parseo. Nos convendria implementar hilos para el planificador y NO despues de que recibe una conexion, sino que cuando identifique alcliente haya un hilo destinado a manejar esa orden de parseo.
+-El ESI espera orden del plani. Despues pide permiso al coordi. Despues parsea. Hay que hacerlo!
+-Sigue faltando desarrollar los hilos del coordi :V
