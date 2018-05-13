@@ -14,9 +14,16 @@ int main(int argc, char** argv) {
 	char mensaje[] =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
 
+	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
+	ESIs = list_create();
+	ESIs_bloqueados = list_create();
+	ESIs_en_ejecucion = list_create();
+	ESIs_listos = list_create();
+	ESIs_finalizados = list_create();
+
 	//FILE* fp = levantar_archivo(algunArchivo);
 
-	archivo_de_parseo = levantar_archivo("script.esi");
+	//archivo_de_parseo = levantar_archivo("script.esi");
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			mensaje);
@@ -31,6 +38,21 @@ int main(int argc, char** argv) {
 	}
 
 	loggear("Cerrando sesion...");
+
+	//Borro todos los datos de las listas...
+	//Habria que liberar la memoria por cada elemento que fue agregado o con el clean ya alcanza?
+	list_clean(ESIs);
+	list_clean(ESIs_bloqueados);
+	list_clean(ESIs_en_ejecucion);
+	list_clean(ESIs_listos);
+	list_clean(ESIs_finalizados);
+
+	//Libero las cabezas de las listas...
+	free(ESIs);
+	free(ESIs_bloqueados);
+	free(ESIs_en_ejecucion);
+	free(ESIs_listos);
+	free(ESIs_bloqueados);
 
 	close(listening_socket);
 	close(socketCliente);
@@ -89,6 +111,7 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 	char* mensajePlanificador =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
 	char* mensajeESI = "A wild ESI has appeared!";
+	char* mensajeESI_lista = "Hilo de ESI agregado a la lista de ESIs";
 	char* mensajeInstancia = "It's ya boi, instancia!";
 
 	if (strcmp(mensaje, mensajePlanificador) == 0) {
@@ -96,7 +119,15 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 		loggear("Wait, what the fuck?");
 	} else if (strcmp(mensaje, mensajeESI) == 0) {
 		loggear(mensajeESI);
+
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
+
+		//Esto me agrega el hilo de ESI a la lista y me devuelve su posicion, la cual podria usarse como id
+		ESI_id = list_add(ESIs,(void*) hilo_ESI);
+		loggear(mensajeESI_lista);
+
+		//Creo que el detach no se haria de inmediato, en base al algoritmo se va a hacer detach a un ESI determinado
+		//Sino siempre que llegue un ESI mientras que se este ejecutando otro va a tomar prioridad el que llega
 		pthread_detach(hilo_ESI);
 	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
 		loggear(mensajeInstancia);

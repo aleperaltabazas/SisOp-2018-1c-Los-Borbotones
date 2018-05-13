@@ -9,13 +9,20 @@
 #define PLANIFICADOR_H_
 
 #include <shared-library.h>
-//#include "shared-library.h"
 
 //Estructuras
 typedef struct parsed{
 	int socket_cliente;
 	FILE* archivo_a_parsear;
 } parsed;
+
+//Variables locales
+int ESI_id;
+t_list * ESIs;
+t_list * ESIs_bloqueados;
+t_list * ESIs_en_ejecucion;
+t_list * ESIs_listos;
+t_list * ESIs_finalizados;
 
 //Variables globales
 FILE* archivo_de_parseo;

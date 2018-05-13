@@ -40,7 +40,7 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 		loggear("Linea de parseo recibido. Solicitando permiso al coordinador.");
 	} else {
 		close(socket_coordinador);
-		salir_con_error("Fallo la entrega de la linea d eparseo.", socket_planificador);
+		salir_con_error("Fallo la entrega de la linea de parseo.", socket_planificador);
 	}
 
 	if (!solicitar_permiso(socket_coordinador)) {
