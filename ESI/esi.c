@@ -32,16 +32,15 @@ int main(int argc, char** argv) {
 void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 	loggear("Esperando orden de parseo del planificador");
 
-	FILE* archivo_a_parsear;
+	char* line;
 
-	int res = recv(socket_planificador, (void*) archivo_a_parsear, sizeof(FILE),
-	MSG_WAITALL);
+	int res = recv(socket_planificador, (void*) line, LINE_MAX, 0);
 
 	if (res != 0) {
-		loggear("Archivo recibido. Solicitando permiso al coordinador.");
+		loggear("Linea de parseo recibido. Solicitando permiso al coordinador.");
 	} else {
 		close(socket_coordinador);
-		salir_con_error("Fallo la entrega del archivo.", socket_planificador);
+		salir_con_error("Fallo la entrega de la linea d eparseo.", socket_planificador);
 	}
 
 	if (!solicitar_permiso(socket_coordinador)) {
@@ -50,67 +49,55 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 	}
 
 	loggear("Parseando...");
-	parsear(archivo_a_parsear);
+	parsear(line);
 
 	loggear("Parseo terminado.");
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	bool package;
-	int pedido_de_parseo = 1;
+	uint32_t package;
+	uint32_t pedido_de_parseo = 1;
 
 	send(socket_coordinador, &pedido_de_parseo, sizeof(int), 0);
 
-	int res = recv(socket_coordinador, (void*) package, sizeof(bool),
-			MSG_WAITALL);
+	loggear("Solicitud enviada.");
 
-	if(res != 0){
+	int res = recv(socket_coordinador, (void*) package, sizeof(uint32_t), 0);
+
+	if (res != 0) {
 		loggear("Solicitud confirmada.");
-	}
-	else{
+	} else {
 		salir_con_error("Fallo la solicitud", socket_coordinador);
 	}
 
-	return package;
+	return package == 1;
 }
 
-void parsear(FILE* archivo_a_parsear) {
-	char* line = NULL;
-	size_t len = 0;
-	ssize_t read;
+void parsear(char* line) {
+	t_esi_operacion parsed = parse(line);
 
-	while ((read = getline(&line, &len, archivo_a_parsear)) != -1) {
-		t_esi_operacion parsed = parse(line);
-
-		if (parsed.valido) {
-			switch (parsed.keyword) {
-			case GET:
-				loggear(strcat("GET <CLAVE>: ", parsed.argumentos.GET.clave));
-				break;
-			case SET:
-				loggear(strcat("SET <CLAVE>: ", parsed.argumentos.SET.clave));
-				loggear(strcat("SET <VALOR>: ", parsed.argumentos.SET.valor));
-				break;
-			case STORE:
-				loggear(
-						strcat("STORE <CLAVE>: ",
-								parsed.argumentos.STORE.clave));
-				break;
-			default:
-				log_error(logger,
-						"No se puedo interpretar correctamente el archivo.");
-				exit(EXIT_FAILURE);
-			}
-
-			destruir_operacion(parsed);
-		} else {
+	if (parsed.valido) {
+		switch (parsed.keyword) {
+		case GET:
+			loggear(strcat("GET <CLAVE>: ", parsed.argumentos.GET.clave));
+			break;
+		case SET:
+			loggear(strcat("SET <CLAVE>: ", parsed.argumentos.SET.clave));
+			loggear(strcat("SET <VALOR>: ", parsed.argumentos.SET.valor));
+			break;
+		case STORE:
+			loggear(strcat("STORE <CLAVE>: ", parsed.argumentos.STORE.clave));
+			break;
+		default:
 			log_error(logger,
-					"No se puedo interpretar correctamente el archivo.");
+					"No se puedo parsear la linea.");
 			exit(EXIT_FAILURE);
 		}
-	}
 
-	fclose(archivo_a_parsear);
-	if (line)
-		free(line);
+		destruir_operacion(parsed);
+	} else {
+		log_error(logger, "No se puedo interpretar correctamente el archivo.");
+		exit(EXIT_FAILURE);
+	}
 }
+

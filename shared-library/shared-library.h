@@ -9,6 +9,7 @@
 #define SHARED_LIBRARY_H_
 
 #include <stdio.h>
+#include <stdint.h>
 #include <openssl/md5.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,13 +28,12 @@
 #define IP_PLANIFICADOR "127.0.0.2"
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
+#define LINE_MAX 40
 
 t_log * logger;
 
 //Funciones servidor
 int levantar_servidor(char* puerto);
-int manjear_cliente(int listening_socket, int socketCliente, char* mensaje);
-void identificar_cliente(char* mensaje, int socket_cliente);
 
 //Funciones cliente
 int conectar_a(char* ip, char* puerto, char* mensaje);

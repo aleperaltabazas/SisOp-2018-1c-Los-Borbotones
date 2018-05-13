@@ -27,43 +27,6 @@ int levantar_servidor(char* puerto) {
 	return listening_socket;
 }
 
-int manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
-
-	loggear("Esperando cliente...");
-
-	listen(listening_socket, BACKLOG);
-
-	log_trace(logger, "Esperando...");
-	struct sockaddr_in addr;// Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
-	socklen_t addrlen = sizeof(addr);
-
-	socketCliente = accept(listening_socket, (struct sockaddr *) &addr,
-			&addrlen);
-
-	loggear("Cliente conectado.");
-
-	loggear("Esperando mensaje del cliente.");
-
-	char package[PACKAGE_SIZE];
-
-	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
-
-	if (res <= 0) {
-		loggear("Fallo la conexion con el cliente.");
-	}
-
-	loggear("Mensaje recibido exitosamente. Identificando cliente...");
-	identificar_cliente((char*) package, socketCliente);
-
-	loggear("Enviando mensaje al cliente.");
-
-	send(socketCliente, mensaje, strlen(mensaje) + 1, 0);
-
-	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
-
-	return socketCliente;
-}
-
 int conectar_a(char *ip, char *puerto, char* mensaje) {
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
@@ -109,31 +72,6 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 	return server_socket;
 }
 
-void identificar_cliente(char* mensaje, int socket_cliente) {
-	char* mensajePlanificador =
-			"My name is Planificador.c and I'm the fastest planifier alive...";
-	char* mensajeESI = "A wild ESI has appeared!";
-	char* mensajeInstancia = "It's ya boi, instancia!";
-
-	/*
-	 * Oh, Ale, para que mierda haces esto? Porque cuando no me de paja y entienda hilos
-	 * aca le asignamos un thread. Tal vez tengamos que agregar el thread a la firma de la función -.-
-	 */
-
-	if (strcmp(mensaje, mensajePlanificador) == 0) {
-		loggear(mensajePlanificador);
-	} else if (strcmp(mensaje, mensajeESI) == 0) {
-		loggear(mensajeESI);
-	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
-		loggear(mensajeInstancia);
-	} else {
-		salir_con_error("Cliente desconocido, cerrando conexion.",
-				socket_cliente);
-	}
-
-	return;
-}
-
 void chequear_servidor(char* mensaje, int server_socket) {
 	char mensajeCoordinador[] = "Coordinador: taringuero profesional.";
 	char mensajePlanificador[] =
@@ -141,8 +79,7 @@ void chequear_servidor(char* mensaje, int server_socket) {
 
 	if (strcmp(mensaje, mensajeCoordinador) == 0) {
 		loggear(mensajeCoordinador);
-	}
-	else if (strcmp(mensaje, mensajePlanificador) == 0) {
+	} else if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
 	} else {
 		salir_con_error("Servidor desconocido, cerrando conexion.",

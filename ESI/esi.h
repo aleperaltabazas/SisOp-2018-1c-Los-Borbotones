@@ -12,7 +12,7 @@
 //#include "shared-library.h"
 
 //Funciones
-void parsear(FILE* archivo_a_parsear);
+void parsear(char* line);
 void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador);
 bool solicitar_permiso(int socket_coordinador);
 
