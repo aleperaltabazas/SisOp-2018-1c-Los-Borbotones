@@ -101,12 +101,18 @@ void* atender_ESI(void* un_socket) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	uint32_t pedido;
-	uint32_t respuesta = 1;
+	package_permiso pedido;
+	package_permiso respuesta ={
+			.permiso = 1
+	};
+
+	int packageSize = sizeof(pedido.permiso);
+	char *message = malloc(packageSize);
+	char *package = malloc(packageSize);
 
 	//Me gustaria mas que la respuesta se envie como bool
 
-	int res = recv(socket_cliente, (void*) pedido, sizeof(int), 0);
+	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
 	if (res != 0){
 		loggear("Peticion de parseo recibida.");
@@ -115,17 +121,19 @@ void* atender_ESI(void* un_socket) {
 		salir_con_error("Fallo la peticion de parseo.", socket_cliente);
 	}
 
-	if(pedido != 1){
+	deserializar_permiso(&(pedido), &(package));
+
+	if(pedido.permiso != 1){
 		loggear("Peticion erronea.");
 	}
 
-	bool orden_de_parseo = puede_parsear();
-
-	if(!orden_de_parseo){
-		respuesta = 0;
+	if(!puede_parsear()){
+		respuesta.permiso = 0;
 	}
 
-	send(socket_cliente, &respuesta, sizeof(uint32_t), 0);
+	serializar_permiso(respuesta, &message);
+
+	send(socket_cliente, message, packageSize, 0);
 
 	return NULL;
 }

@@ -7,6 +7,22 @@
 
 #include "shared-library.h"
 
+void serializar_permiso(package_permiso permiso, char** message){
+	memcpy(*message, &(permiso.permiso), sizeof(permiso.permiso));
+}
+
+void deserializar_permiso(package_permiso *permiso, char** package){
+	memcpy(&permiso->permiso, *package, sizeof(permiso->permiso));
+}
+
+void serializar_linea(package_line line, char** message){
+	memcpy(*message, &(line.line), strlen(line.line) + 1);
+}
+
+void deserializar_linea(package_line *line, char** package){
+	memcpy(&line->line, *package, strlen(line->line) + 1);
+}
+
 int levantar_servidor(char* puerto) {
 	struct addrinfo hints;
 	struct addrinfo *server_info;
@@ -71,6 +87,8 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 
 	return server_socket;
 }
+
+
 
 void chequear_servidor(char* mensaje, int server_socket) {
 	char mensajeCoordinador[] = "Coordinador: taringuero profesional.";

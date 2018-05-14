@@ -32,15 +32,18 @@ int main(int argc, char** argv) {
 void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 	loggear("Esperando orden de parseo del planificador");
 
-	char* line;
+	package_line line;
+	char* package = malloc(LINE_MAX);
 
-	int res = recv(socket_planificador, (void*) line, LINE_MAX, 0);
+	int res = recv(socket_planificador, (void*) package, LINE_MAX, 0);
 
 	if (res != 0) {
-		loggear("Linea de parseo recibido. Solicitando permiso al coordinador.");
+		loggear(
+				"Linea de parseo recibido. Solicitando permiso al coordinador.");
 	} else {
 		close(socket_coordinador);
-		salir_con_error("Fallo la entrega de la linea de parseo.", socket_planificador);
+		salir_con_error("Fallo la entrega de la linea de parseo.",
+				socket_planificador);
 	}
 
 	if (!solicitar_permiso(socket_coordinador)) {
@@ -48,21 +51,29 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 		salir_con_error("Permiso denegado.", socket_planificador);
 	}
 
+	deserializar_linea(&(line), &(package));
+
 	loggear("Parseando...");
-	parsear(line);
+	parsear(line.line);
 
 	loggear("Parseo terminado.");
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	uint32_t package;
-	uint32_t pedido_de_parseo = 1;
+	package_permiso permiso = { .permiso = 1 };
+	package_permiso respuesta;
 
-	send(socket_coordinador, &pedido_de_parseo, sizeof(int), 0);
+	int packageSize = sizeof(permiso.permiso);
+	char *message = malloc(packageSize);
+	char *package = malloc(packageSize);
+
+	serializar_permiso(permiso, &message);
+
+	send(socket_coordinador, message, packageSize, 0);
 
 	loggear("Solicitud enviada.");
 
-	int res = recv(socket_coordinador, (void*) package, sizeof(uint32_t), 0);
+	int res = recv(socket_coordinador, (void*) package, packageSize, 0);
 
 	if (res != 0) {
 		loggear("Solicitud confirmada.");
@@ -70,7 +81,11 @@ bool solicitar_permiso(int socket_coordinador) {
 		salir_con_error("Fallo la solicitud", socket_coordinador);
 	}
 
-	return package == 1;
+	deserializar_permiso(&(respuesta), &(package));
+
+	free(package);
+
+	return respuesta.permiso == 1;
 }
 
 void parsear(char* line) {
@@ -89,8 +104,7 @@ void parsear(char* line) {
 			loggear(strcat("STORE <CLAVE>: ", parsed.argumentos.STORE.clave));
 			break;
 		default:
-			log_error(logger,
-					"No se puedo parsear la linea.");
+			log_error(logger, "No se puedo parsear la linea.");
 			exit(EXIT_FAILURE);
 		}
 

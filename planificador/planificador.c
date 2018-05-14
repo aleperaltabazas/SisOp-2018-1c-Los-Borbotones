@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
 	//FILE* fp = levantar_archivo(algunArchivo);
 
-	//archivo_de_parseo = levantar_archivo("script.esi");
+	archivo_de_parseo = levantar_archivo("script.esi");
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			mensaje);
@@ -66,6 +66,8 @@ FILE* levantar_archivo(char* archivo) {
 	if (fp == NULL) {
 		error_de_archivo("Error en abrir el archivo.", EXIT_FAILURE);
 	}
+
+	loggear("Archivo abierto correctamente.");
 
 	return fp;
 }
@@ -123,7 +125,7 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 
 		//Esto me agrega el hilo de ESI a la lista y me devuelve su posicion, la cual podria usarse como id
-		ESI_id = list_add(ESIs,(void*) hilo_ESI);
+		ESI_id = list_add(ESIs, (void*) hilo_ESI);
 		loggear(mensajeESI_lista);
 
 		//Creo que el detach no se haria de inmediato, en base al algoritmo se va a hacer detach a un ESI determinado
@@ -177,7 +179,16 @@ void error_de_archivo(char* mensaje_de_error, int retorno) {
 }
 
 void che_parsea(int socket_cliente, char* line) {
-	int envio = send(socket_cliente, line, strlen(line) + 1, 0);
+	int packageSize = strlen(line) + 1;
+	char *message = malloc(packageSize);
+
+	package_line linea = {
+			.line = line
+	};
+
+	serializar_linea(linea, &message);
+
+	int envio = send(socket_cliente, message, packageSize, 0);
 
 	if (envio < 0) {
 		salir_con_error("Fallo el envio de parseo.", socket_cliente);
