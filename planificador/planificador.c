@@ -10,6 +10,8 @@
 //Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int main(int argc, char** argv) {
+	pthread_create( hiloDeConsola, NULL, consola, NULL );
+	pthread_detach ( hiloDeConsola );
 	iniciar_log("Planificador", "Nace el planificador...");
 	char mensaje[] =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
@@ -158,4 +160,84 @@ void che_parsea(int socket_cliente) {
 	loggear("Orden de parseo enviada.");
 
 	return;
+}
+//---Funciones de la consola---
+float recibirCodigo() {
+		float code = 0;
+		scanf("%f", &code);
+		return code;
+}
+void interpretarYEjecutarCodigo(float comando) {
+	int opcionElegida;
+	float codigoSubsiguiente;
+	opcionElegida = comando / 1;
+	switch (opcionElegida) {
+	case 0:
+		pthread_cancel ( pthread_self() ); //Usar esto lo hace no portable, preguntarle a Lean
+		break;
+	case 1:
+		pausarOContinuar();
+		break;
+	case 2:
+		codigoSubsiguiente = comando - opcionElegida;
+		bloquear(codigoSubsiguiente);
+		break;
+	case 3:
+		codigoSubsiguiente = comando - opcionElegida;
+		desbloquear(codigoSubsiguiente);
+		break;
+	case 4:
+		listar();
+		break;
+	case 5:
+		codigoSubsiguiente = comando - opcionElegida;
+		kill(codigoSubsiguiente);
+		break;
+	case 6:
+		codigoSubsiguiente = comando - opcionElegida;
+		status(codigoSubsiguiente);
+		break;
+	case 7:
+		deadlock();
+		break;
+	default:
+		printf("Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
+		break;
+	};
+}
+void listarOpciones() {
+	printf("0 : Cancelar consola \n");
+	printf("1 : Pausar o reactivar la planificación \n");
+	printf("2.<ESI ID> : Bloquea al ESI elegido \n");
+	printf("3.<ESI ID> : Desbloquea al ESI elegido \n");
+	printf("4.<Recurso> : Lista procesos esperando dicho recurso \n");
+	printf("5.<ESI ID> : Mata al ESI elegido \n");
+	printf("6.<ESI ID> : Brinda el estado del ESI elegido \n");
+	printf("7 : Lista los ESI en deadlock \n");
+	printf("Introduzca la opcion deseada \n");
+}
+void * consola (void*) {
+	float comando;
+		printf( "Bienvenido a la consola interactiva para el planificador \n" );
+		while (1) {
+			listarOpciones();
+			comando = recibirCodigo();
+			interpretarYEjecutarCodigo(comando);
+		}
+}
+void pausarOContinuar(void) {
+	printf("Eligio pausar o continuar \n");
+}
+void bloquear(float codigo) {
+	printf("Eligio bloquear el ESI \n");
+}
+void desbloquear(float codigo) {
+}
+void listar(void) {
+}
+void kill(float codigo) {
+}
+void status(float codigo) {
+}
+void deadlock(void) {
 }
