@@ -22,27 +22,44 @@ int main(int argc, char** argv) {
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
 			mensaje);
 
-	esperar_orden_de_parseo(socket_planificador, socket_coordinador);
+	FILE* archivo_de_parseo = levantar_archivo("script.esi");
+
+	esperar_orden_de_parseo(socket_planificador, socket_coordinador, archivo_de_parseo);
 
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
 }
 
-void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
+FILE* levantar_archivo(char* archivo){
+	FILE* fp = fopen(archivo, "r");
+
+	if(fp == NULL){
+		error_de_archivo("Error en abrir el archivo.", EXIT_FAILURE);
+	}
+
+	loggear("Archivo abierto correctamente.");
+
+	return fp;
+}
+
+void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador, FILE* archivo_de_parseo) {
 	loggear("Esperando orden de parseo del planificador");
 
-	package_line line;
-	char* package = malloc(LINE_MAX);
+	package_pedido pedido_parseo;
+	int packageSize = sizeof(pedido_parseo.pedido);
 
-	int res = recv(socket_planificador, (void*) package, LINE_MAX, 0);
+	char *package = malloc(packageSize);
+
+	int res = recv(socket_planificador, (void*) package, packageSize, 0);
+
+	deserializar_pedido(&(pedido_parseo), &(package));
 
 	if (res != 0) {
-		loggear(
-				"Linea de parseo recibido. Solicitando permiso al coordinador.");
+		loggear("Orden recibida. Solicitando permiso al coordinador.");
 	} else {
 		close(socket_coordinador);
-		salir_con_error("Fallo la entrega de la linea de parseo.",
+		salir_con_error("Fallo la entrega de orden.",
 				socket_planificador);
 	}
 
@@ -51,23 +68,36 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador) {
 		salir_con_error("Permiso denegado.", socket_planificador);
 	}
 
-	deserializar_linea(&(line), &(package));
-
 	loggear("Parseando...");
-	parsear(line.line);
+	t_esi_operacion parseo = parsear(siguiente_linea(archivo_de_parseo));
 
 	loggear("Parseo terminado.");
 }
 
-bool solicitar_permiso(int socket_coordinador) {
-	package_permiso permiso = { .permiso = 1 };
-	package_permiso respuesta;
+char* siguiente_linea(FILE* fp){
+	char* line = NULL;
+	size_t len = 0;
+	ssize_t read;
 
-	int packageSize = sizeof(permiso.permiso);
+	read = getline(&line, &len, fp);
+
+	if(read == -1){
+		loggear("No hay mas lineas para parsear");
+		free(line);
+	}
+
+	return line;
+}
+
+bool solicitar_permiso(int socket_coordinador) {
+	package_pedido pedido_permiso = { .pedido = 1 };
+	package_pedido respuesta;
+
+	int packageSize = sizeof(pedido_permiso.pedido);
 	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
 
-	serializar_permiso(permiso, &message);
+	serializar_pedido(pedido_permiso, &message);
 
 	send(socket_coordinador, message, packageSize, 0);
 
@@ -81,14 +111,14 @@ bool solicitar_permiso(int socket_coordinador) {
 		salir_con_error("Fallo la solicitud", socket_coordinador);
 	}
 
-	deserializar_permiso(&(respuesta), &(package));
+	deserializar_pedido(&(respuesta), &(package));
 
 	free(package);
 
-	return respuesta.permiso == 1;
+	return respuesta.pedido == 1;
 }
 
-void parsear(char* line) {
+t_esi_operacion parsear(char* line) {
 	t_esi_operacion parsed = parse(line);
 
 	if (parsed.valido) {
@@ -113,5 +143,11 @@ void parsear(char* line) {
 		log_error(logger, "No se puedo interpretar correctamente el archivo.");
 		exit(EXIT_FAILURE);
 	}
+
+	return parsed;
 }
 
+void error_de_archivo(char* mensaje_de_error, int retorno) {
+	log_error(logger, mensaje_de_error);
+	exit_gracefully(retorno);
+}

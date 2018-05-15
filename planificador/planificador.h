@@ -10,12 +10,6 @@
 
 #include <shared-library.h>
 
-//Estructuras
-typedef struct parsed{
-	int socket_cliente;
-	FILE* archivo_a_parsear;
-} parsed;
-
 //Variables locales
 int ESI_id;
 t_list * ESIs;
@@ -40,6 +34,6 @@ void* atender_ESI(void* a_parsear);
 //Funciones
 FILE* levantar_archivo(char* archivo);
 void error_de_archivo(char* mensaje, int retorno);
-void che_parsea(int socket_cliente, char* line);
+void che_parsea(int socket_cliente);
 
 #endif /* PLANIFICADOR_H_ */

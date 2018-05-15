@@ -33,13 +33,9 @@
 t_log * logger;
 
 //Estructuras
-typedef struct package_permiso{
-	uint32_t permiso;
-} package_permiso;
-
-typedef struct package_line{
-	char* line;
-} package_line;
+typedef struct package_permiso {
+	uint32_t pedido;
+} package_pedido;
 
 //Funciones servidor
 int levantar_servidor(char* puerto);
@@ -47,8 +43,8 @@ int levantar_servidor(char* puerto);
 //Funciones cliente
 int conectar_a(char* ip, char* puerto, char* mensaje);
 void chequear_servidor(char* id, int server_socket);
-void serializar_permiso(package_permiso permiso, char** message);
-void deserializar_permiso(package_permiso *permiso, char **package);
+void serializar_pedido(package_pedido pedido, char** message);
+void deserializar_permiso(package_pedido *pedido, char **package);
 
 //Misc
 void salir_con_error(char* mensaje, int socket);

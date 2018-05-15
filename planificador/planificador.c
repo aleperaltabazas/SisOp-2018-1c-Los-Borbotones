@@ -21,16 +21,10 @@ int main(int argc, char** argv) {
 	ESIs_listos = list_create();
 	ESIs_finalizados = list_create();
 
-	//FILE* fp = levantar_archivo(algunArchivo);
-
-	archivo_de_parseo = levantar_archivo("script.esi");
-
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			mensaje);
 	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
 	int socketCliente;
-
-	//parsed a_parsear = { .socket_cliente = socketCliente, .archivo_a_parsear = fp };
 
 	while (1) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
@@ -58,18 +52,6 @@ int main(int argc, char** argv) {
 	close(socketCliente);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
-}
-
-FILE* levantar_archivo(char* archivo) {
-	FILE* fp = fopen(archivo, "r");
-
-	if (fp == NULL) {
-		error_de_archivo("Error en abrir el archivo.", EXIT_FAILURE);
-	}
-
-	loggear("Archivo abierto correctamente.");
-
-	return fp;
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
@@ -113,7 +95,7 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 	char* mensajePlanificador =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
 	char* mensajeESI = "A wild ESI has appeared!";
-	char* mensajeESI_lista = "Hilo de ESI agregado a la lista de ESIs";
+	char* mensajeESI_lista = "Gotcha! Wild ESI was added to the list!";
 	char* mensajeInstancia = "It's ya boi, instancia!";
 
 	if (strcmp(mensaje, mensajePlanificador) == 0) {
@@ -141,52 +123,31 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 	return;
 }
 
-char* siguiente_linea(FILE* archivo) {
-	char* line = NULL;
-	size_t len = 40;
-	ssize_t read;
-
-	read = getline(&line, &len, archivo);
-
-	if (read == (-1)) {
-		loggear("No hay mas lineas para parsear.");
-		free(line);
-		exit_gracefully(EXIT_SUCCESS);
-	}
-
-	return line;
-}
-
 void* atender_ESI(void* sockfd) {
 	int socket_ESI = (int) sockfd;
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	char* line = siguiente_linea(archivo_de_parseo);
-
 	loggear("Enviando orden de parseo.");
 
-	che_parsea(socket_ESI, line);
+	che_parsea(socket_ESI);
 
 	fclose(archivo_de_parseo);
 
 	return NULL;
 }
 
-void error_de_archivo(char* mensaje_de_error, int retorno) {
-	log_error(logger, mensaje_de_error);
-	exit_gracefully(retorno);
-}
 
-void che_parsea(int socket_cliente, char* line) {
-	int packageSize = strlen(line) + 1;
-	char *message = malloc(packageSize);
 
-	package_line linea = {
-			.line = line
+void che_parsea(int socket_cliente) {
+	package_pedido pedido_parseo = {
+			.pedido = 1
 	};
 
-	serializar_linea(linea, &message);
+	int packageSize = sizeof(pedido_parseo.pedido);
+	char* message = malloc(packageSize);
+
+	serializar_pedido(pedido_parseo, &message);
 
 	int envio = send(socket_cliente, message, packageSize, 0);
 
@@ -194,7 +155,7 @@ void che_parsea(int socket_cliente, char* line) {
 		salir_con_error("Fallo el envio de parseo.", socket_cliente);
 	}
 
-	loggear("Linea a parsear enviada.");
+	loggear("Orden de parseo enviada.");
 
 	return;
 }

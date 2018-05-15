@@ -101,12 +101,12 @@ void* atender_ESI(void* un_socket) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	package_permiso pedido;
-	package_permiso respuesta ={
-			.permiso = 1
+	package_pedido pedido;
+	package_pedido respuesta ={
+			.pedido = 1
 	};
 
-	int packageSize = sizeof(pedido.permiso);
+	int packageSize = sizeof(pedido.pedido);
 	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
 
@@ -121,17 +121,17 @@ void* atender_ESI(void* un_socket) {
 		salir_con_error("Fallo la peticion de parseo.", socket_cliente);
 	}
 
-	deserializar_permiso(&(pedido), &(package));
+	deserializar_pedido(&(pedido), &(package));
 
-	if(pedido.permiso != 1){
+	if(pedido.pedido != 1){
 		loggear("Peticion erronea.");
 	}
 
 	if(!puede_parsear()){
-		respuesta.permiso = 0;
+		respuesta.pedido = 0;
 	}
 
-	serializar_permiso(respuesta, &message);
+	serializar_pedido(respuesta, &message);
 
 	send(socket_cliente, message, packageSize, 0);
 
