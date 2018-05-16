@@ -14,14 +14,12 @@
 int main(int argc, char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 
-	char mensaje[] = "Coordinador: taringuero profesional.";
-
 	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
 	int socketCliente;
 
 	while (1) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
-				mensaje);
+				mensajeCoordinador);
 	}
 
 	loggear("Cerrando sesion...");
@@ -101,10 +99,16 @@ void* atender_ESI(void* un_socket) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
+	while(1){
+		chequear_solicitud(socket_cliente);
+	}
+
+	return NULL;
+}
+
+void chequear_solicitud(int socket_cliente) {
 	package_pedido pedido;
-	package_pedido respuesta ={
-			.pedido = 1
-	};
+	package_pedido respuesta = { .pedido = 1 };
 
 	int packageSize = sizeof(pedido.pedido);
 	char *message = malloc(packageSize);
@@ -114,31 +118,28 @@ void* atender_ESI(void* un_socket) {
 
 	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
-	if (res != 0){
+	if (res != 0) {
 		loggear("Peticion de parseo recibida.");
-	}
-	else{
+	} else {
 		salir_con_error("Fallo la peticion de parseo.", socket_cliente);
 	}
 
 	deserializar_pedido(&(pedido), &(package));
 
-	if(pedido.pedido != 1){
+	if (pedido.pedido != 1) {
 		loggear("Peticion erronea.");
 	}
 
-	if(!puede_parsear()){
+	if (!puede_parsear()) {
 		respuesta.pedido = 0;
 	}
 
 	serializar_pedido(respuesta, &message);
 
 	send(socket_cliente, message, packageSize, 0);
-
-	return NULL;
 }
 
-bool puede_parsear(){
+bool puede_parsear() {
 	return true;
 
 	//Para que una funcion que devuelva true? Porque por ahora queremos testear

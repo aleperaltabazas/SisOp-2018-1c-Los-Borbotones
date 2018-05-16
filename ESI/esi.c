@@ -15,26 +15,29 @@
 int main(int argc, char** argv) {
 	iniciar_log("ESI", "ESI on duty!");
 
-	char mensaje[] = "A wild ESI has appeared!";
-
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensaje);
+			mensajeESI);
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
-			mensaje);
+			mensajeESI);
 
 	FILE* archivo_de_parseo = levantar_archivo("script.esi");
 
-	esperar_orden_de_parseo(socket_planificador, socket_coordinador, archivo_de_parseo);
+	while (1) {
+		esperar_orden_de_parseo(socket_planificador,
+				socket_coordinador, archivo_de_parseo);
+	}
+
+	loggear("Parseo exitoso. Cerrando sesion");
 
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
 }
 
-FILE* levantar_archivo(char* archivo){
+FILE* levantar_archivo(char* archivo) {
 	FILE* fp = fopen(archivo, "r");
 
-	if(fp == NULL){
+	if (fp == NULL) {
 		error_de_archivo("Error en abrir el archivo.", EXIT_FAILURE);
 	}
 
@@ -43,7 +46,8 @@ FILE* levantar_archivo(char* archivo){
 	return fp;
 }
 
-void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador, FILE* archivo_de_parseo) {
+void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
+		FILE* archivo_de_parseo) {
 	loggear("Esperando orden de parseo del planificador");
 
 	package_pedido pedido_parseo;
@@ -59,8 +63,7 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador, FI
 		loggear("Orden recibida. Solicitando permiso al coordinador.");
 	} else {
 		close(socket_coordinador);
-		salir_con_error("Fallo la entrega de orden.",
-				socket_planificador);
+		salir_con_error("Fallo la entrega de orden.", socket_planificador);
 	}
 
 	if (!solicitar_permiso(socket_coordinador)) {
@@ -69,20 +72,23 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador, FI
 	}
 
 	loggear("Parseando...");
+
 	t_esi_operacion parseo = parsear(siguiente_linea(archivo_de_parseo));
 
 	loggear("Parseo terminado.");
+
+	return;
 }
 
-char* siguiente_linea(FILE* fp){
+char* siguiente_linea(FILE* fp) {
 	char* line = NULL;
 	size_t len = 0;
 	ssize_t read;
 
 	read = getline(&line, &len, fp);
 
-	if(read == -1){
-		loggear("No hay mas lineas para parsear");
+	if (read == -1) {
+		loggear("No hay mas lineas para parsear.");
 		free(line);
 	}
 
@@ -124,14 +130,13 @@ t_esi_operacion parsear(char* line) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
-			loggear(strcat("GET <CLAVE>: ", parsed.argumentos.GET.clave));
+			loggear("GET.");
 			break;
 		case SET:
-			loggear(strcat("SET <CLAVE>: ", parsed.argumentos.SET.clave));
-			loggear(strcat("SET <VALOR>: ", parsed.argumentos.SET.valor));
+			loggear("SET.");
 			break;
 		case STORE:
-			loggear(strcat("STORE <CLAVE>: ", parsed.argumentos.STORE.clave));
+			loggear("STORE.");
 			break;
 		default:
 			log_error(logger, "No se puedo parsear la linea.");

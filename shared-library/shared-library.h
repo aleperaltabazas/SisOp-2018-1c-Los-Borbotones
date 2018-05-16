@@ -30,7 +30,13 @@
 #define PACKAGE_SIZE 1024
 #define LINE_MAX 40
 
+//Variables super globales
 t_log * logger;
+char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";
+char* mensajeESI = "A wild ESI has appeared!";
+char* mensajeESILista = "Gotcha! Wild ESI was added to the list!";
+char* mensajeInstancia = "It's ya boi, instancia!";
+char* mensajeCoordinador = "Coordinador: taringuero profesional.";
 
 //Estructuras
 typedef struct package_permiso {
@@ -44,7 +50,7 @@ int levantar_servidor(char* puerto);
 int conectar_a(char* ip, char* puerto, char* mensaje);
 void chequear_servidor(char* id, int server_socket);
 void serializar_pedido(package_pedido pedido, char** message);
-void deserializar_permiso(package_pedido *pedido, char **package);
+void deserializar_pedido(package_pedido *pedido, char **package);
 
 //Misc
 void salir_con_error(char* mensaje, int socket);

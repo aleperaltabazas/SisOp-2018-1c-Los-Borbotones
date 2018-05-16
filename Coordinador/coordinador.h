@@ -28,7 +28,7 @@ void *atender_Instancia(void* un_socket);
 void *atender_Planificador(void* un_socket);
 
 //Funciones
-
+void chequear_solicitud(int socket_cliente);
 bool puede_parsear(void);
 
 #endif /* COORDINADOR_H_ */

@@ -10,9 +10,7 @@
 int main(int argc, char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 
-	char mensaje[] = "It's ya boi, instancia!";
-
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensaje);
+	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, mensajeInstancia);
 
 	loggear("Cerrando conexion con servidor y terminando.");
 

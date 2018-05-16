@@ -10,11 +10,30 @@
 //Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int main(int argc, char** argv) {
-	pthread_create( hiloDeConsola, NULL, consola, NULL );
-	pthread_detach ( hiloDeConsola );
+	iniciar();
+
+	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+			mensajePlanificador);
+	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
+	int socketCliente;
+
+	while (1) {
+		socketCliente = manejar_cliente(listening_socket, socketCliente,
+				mensajePlanificador);
+	}
+
+	loggear("Cerrando sesion...");
+
+	close(listening_socket);
+	close(socketCliente);
+	close(socket_coordinador);
+	return EXIT_SUCCESS;
+}
+
+void iniciar() {
+	/*pthread_create(hiloDeConsola, NULL, consola, NULL);
+	 pthread_detach(hiloDeConsola);*/
 	iniciar_log("Planificador", "Nace el planificador...");
-	char mensaje[] =
-			"My name is Planificador.c and I'm the fastest planifier alive...";
 
 	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
 	ESIs = list_create();
@@ -22,38 +41,6 @@ int main(int argc, char** argv) {
 	ESIs_en_ejecucion = list_create();
 	ESIs_listos = list_create();
 	ESIs_finalizados = list_create();
-
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensaje);
-	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
-	int socketCliente;
-
-	while (1) {
-		socketCliente = manejar_cliente(listening_socket, socketCliente,
-				mensaje);
-	}
-
-	loggear("Cerrando sesion...");
-
-	//Borro todos los datos de las listas...
-	//Habria que liberar la memoria por cada elemento que fue agregado o con el clean ya alcanza?
-	list_clean(ESIs);
-	list_clean(ESIs_bloqueados);
-	list_clean(ESIs_en_ejecucion);
-	list_clean(ESIs_listos);
-	list_clean(ESIs_finalizados);
-
-	//Libero las cabezas de las listas...
-	free(ESIs);
-	free(ESIs_bloqueados);
-	free(ESIs_en_ejecucion);
-	free(ESIs_listos);
-	free(ESIs_bloqueados);
-
-	close(listening_socket);
-	close(socketCliente);
-	close(socket_coordinador);
-	return EXIT_SUCCESS;
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
@@ -94,11 +81,6 @@ int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
 }
 
 void identificar_cliente(char* mensaje, int socket_cliente) {
-	char* mensajePlanificador =
-			"My name is Planificador.c and I'm the fastest planifier alive...";
-	char* mensajeESI = "A wild ESI has appeared!";
-	char* mensajeESI_lista = "Gotcha! Wild ESI was added to the list!";
-	char* mensajeInstancia = "It's ya boi, instancia!";
 
 	if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
@@ -110,7 +92,7 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 
 		//Esto me agrega el hilo de ESI a la lista y me devuelve su posicion, la cual podria usarse como id
 		ESI_id = list_add(ESIs, (void*) hilo_ESI);
-		loggear(mensajeESI_lista);
+		loggear(mensajeESILista);
 
 		//Creo que el detach no se haria de inmediato, en base al algoritmo se va a hacer detach a un ESI determinado
 		//Sino siempre que llegue un ESI mientras que se este ejecutando otro va a tomar prioridad el que llega
@@ -132,19 +114,16 @@ void* atender_ESI(void* sockfd) {
 
 	loggear("Enviando orden de parseo.");
 
-	che_parsea(socket_ESI);
-
-	fclose(archivo_de_parseo);
+	while(1){
+		che_parsea(socket_ESI);
+		sleep(10);
+	}
 
 	return NULL;
 }
 
-
-
 void che_parsea(int socket_cliente) {
-	package_pedido pedido_parseo = {
-			.pedido = 1
-	};
+	package_pedido pedido_parseo = { .pedido = 1 };
 
 	int packageSize = sizeof(pedido_parseo.pedido);
 	char* message = malloc(packageSize);
@@ -161,11 +140,35 @@ void che_parsea(int socket_cliente) {
 
 	return;
 }
-//---Funciones de la consola---
+
+void cerrar_listas() {
+	//Borro todos los datos de las listas...
+	//Habria que liberar la memoria por cada elemento que fue agregado o con el clean ya alcanza?
+	list_clean(ESIs);
+	list_clean(ESIs_bloqueados);
+	list_clean(ESIs_en_ejecucion);
+	list_clean(ESIs_listos);
+	list_clean(ESIs_finalizados);
+
+	//Libero las cabezas de las listas...
+	free(ESIs);
+	free(ESIs_bloqueados);
+	free(ESIs_en_ejecucion);
+	free(ESIs_listos);
+	free(ESIs_bloqueados);
+
+	cerrar_listas();
+}
+
+/*	=====================
+ *	===== CONSOLITA =====
+ *	=====================
+ */
+
 float recibirCodigo() {
-		float code = 0;
-		scanf("%f", &code);
-		return code;
+	float code = 0;
+	scanf("%f", &code);
+	return code;
 }
 void interpretarYEjecutarCodigo(float comando) {
 	int opcionElegida;
@@ -173,7 +176,7 @@ void interpretarYEjecutarCodigo(float comando) {
 	opcionElegida = comando / 1;
 	switch (opcionElegida) {
 	case 0:
-		pthread_cancel ( pthread_self() ); //Usar esto lo hace no portable, preguntarle a Lean
+		pthread_cancel(pthread_self()); //Usar esto lo hace no portable, preguntarle a Lean
 		break;
 	case 1:
 		pausarOContinuar();
@@ -201,7 +204,8 @@ void interpretarYEjecutarCodigo(float comando) {
 		deadlock();
 		break;
 	default:
-		printf("Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
+		printf(
+				"Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
 		break;
 	};
 }
@@ -216,14 +220,14 @@ void listarOpciones() {
 	printf("7 : Lista los ESI en deadlock \n");
 	printf("Introduzca la opcion deseada \n");
 }
-void * consola (void*) {
+void* consola(void) {
 	float comando;
-		printf( "Bienvenido a la consola interactiva para el planificador \n" );
-		while (1) {
-			listarOpciones();
-			comando = recibirCodigo();
-			interpretarYEjecutarCodigo(comando);
-		}
+	printf("Bienvenido a la consola interactiva para el planificador \n");
+	while (1) {
+		listarOpciones();
+		comando = recibirCodigo();
+		interpretarYEjecutarCodigo(comando);
+	}
 }
 void pausarOContinuar(void) {
 	printf("Eligio pausar o continuar \n");

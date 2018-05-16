@@ -18,15 +18,12 @@ t_list * ESIs_en_ejecucion;
 t_list * ESIs_listos;
 t_list * ESIs_finalizados;
 
-//Variables globales
-FILE* archivo_de_parseo;
-
 //Hilos
 pthread_t hilo_ESI;
 pthread_t hiloDeConsola;
 
 //Funciones de consola
-void * consolita(void *);
+void* consola(void);
 void listarOpciones(void);
 void pausarOContinuar(void);
 void bloquear(float codigo);
