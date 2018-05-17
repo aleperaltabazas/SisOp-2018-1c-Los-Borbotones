@@ -31,6 +31,7 @@
 #define LINE_MAX 40
 
 //Variables super globales
+
 t_log * logger;
 char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";
 char* mensajeESI = "A wild ESI has appeared!";
@@ -39,20 +40,24 @@ char* mensajeInstancia = "It's ya boi, instancia!";
 char* mensajeCoordinador = "Coordinador: taringuero profesional.";
 
 //Estructuras
+
 typedef struct package_permiso {
 	uint32_t pedido;
 } package_pedido;
 
 //Funciones servidor
+
 int levantar_servidor(char* puerto);
 
 //Funciones cliente
+
 int conectar_a(char* ip, char* puerto, char* mensaje);
 void chequear_servidor(char* id, int server_socket);
 void serializar_pedido(package_pedido pedido, char** message);
 void deserializar_pedido(package_pedido *pedido, char **package);
 
 //Misc
+
 void salir_con_error(char* mensaje, int socket);
 void exit_gracefully(int return_val);
 void iniciar_log(char* nombre, char* mensajeInicial);

@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void iniciar() {
+void iniciar(void) {
 	/*pthread_create(hiloDeConsola, NULL, consola, NULL);
 	 pthread_detach(hiloDeConsola);*/
 	iniciar_log("Planificador", "Nace el planificador...");

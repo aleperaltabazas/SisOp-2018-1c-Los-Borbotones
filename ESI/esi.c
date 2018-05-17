@@ -13,25 +13,44 @@
 //Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int main(int argc, char** argv) {
-	iniciar_log("ESI", "ESI on duty!");
+	iniciar(argv);
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			mensajeESI);
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
 			mensajeESI);
 
-	FILE* archivo_de_parseo = levantar_archivo("script.esi");
-
-	while (1) {
+	/*while (1) {
 		esperar_orden_de_parseo(socket_planificador,
 				socket_coordinador, archivo_de_parseo);
-	}
+	}*/
 
 	loggear("Parseo exitoso. Cerrando sesion");
 
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
+}
+
+void iniciar(char** argv){
+	iniciar_log("ESI", "ESI on duty!");
+	lineas_parseadas = list_create();
+
+	char* line = NULL;
+	size_t len = 0;
+	ssize_t read;
+
+	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
+	//FILE* archivo_de_parseo = levantar_archivo("script.esi");
+
+	t_esi_operacion* parsed = malloc(sizeof(t_esi_operacion));
+
+	while((read = getline(&line, &len, archivo_de_parseo)) != -1){
+		*parsed = parsear(line);
+		list_add(lineas_parseadas, parsed);
+	}
+
+	return;
 }
 
 FILE* levantar_archivo(char* archivo) {
@@ -46,7 +65,7 @@ FILE* levantar_archivo(char* archivo) {
 	return fp;
 }
 
-void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
+/*void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
 		FILE* archivo_de_parseo) {
 	loggear("Esperando orden de parseo del planificador");
 
@@ -78,22 +97,7 @@ void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
 	loggear("Parseo terminado.");
 
 	return;
-}
-
-char* siguiente_linea(FILE* fp) {
-	char* line = NULL;
-	size_t len = 0;
-	ssize_t read;
-
-	read = getline(&line, &len, fp);
-
-	if (read == -1) {
-		loggear("No hay mas lineas para parsear.");
-		free(line);
-	}
-
-	return line;
-}
+}*/
 
 bool solicitar_permiso(int socket_coordinador) {
 	package_pedido pedido_permiso = { .pedido = 1 };
@@ -139,7 +143,7 @@ t_esi_operacion parsear(char* line) {
 			loggear("STORE.");
 			break;
 		default:
-			log_error(logger, "No se puedo parsear la linea.");
+			log_error(logger, "No se pudo interpretar la linea.");
 			exit(EXIT_FAILURE);
 		}
 

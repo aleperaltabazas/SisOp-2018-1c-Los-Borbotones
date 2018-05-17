@@ -11,7 +11,11 @@
 #include <shared-library.h>
 //#include "shared-library.h"
 
+t_list* lineas_parseadas;
+
 //Funciones
+
+void iniciar(char** argv);
 t_esi_operacion parsear(char* line);
 char* siguiente_linea(FILE* fp);
 void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador, FILE* archivo_de_parseo);
