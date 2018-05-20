@@ -15,6 +15,35 @@ void deserializar_pedido(package_pedido *pedido, char** package) {
 	memcpy(&pedido->pedido, *package, sizeof(pedido->pedido));
 }
 
+void avisar_cierre(int server_socket) {
+	int status = 1;
+	package_pedido pedido_de_fin = { .pedido = 0 };
+
+	int packageSize = sizeof(pedido_de_fin.pedido);
+	char *message = malloc(packageSize);
+
+	serializar_pedido(pedido_de_fin, &message);
+
+	loggear("Enviando aviso de fin.");
+
+	while (status) {
+		int envio = send(server_socket, message, packageSize, 0);
+
+		status = 0;
+
+		if(envio < 0){
+			loggear("Fallo el envio. Intentando de nuevo en 5.");
+			status = 1;
+
+			sleep(5);
+
+			//HORRIBLE pero no se me ocurre mucho mas de como hacerlo
+		}
+	}
+
+	loggear("Aviso exitoso.");
+}
+
 int levantar_servidor(char* puerto) {
 	struct addrinfo hints;
 	struct addrinfo *server_info;

@@ -99,14 +99,16 @@ void* atender_ESI(void* un_socket) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	while(1){
-		chequear_solicitud(socket_cliente);
+	int status = 1;
+
+	while(status){
+		status = chequear_solicitud(socket_cliente);
 	}
 
 	return NULL;
 }
 
-void chequear_solicitud(int socket_cliente) {
+int chequear_solicitud(int socket_cliente) {
 	package_pedido pedido;
 	package_pedido respuesta = { .pedido = 1 };
 
@@ -119,32 +121,26 @@ void chequear_solicitud(int socket_cliente) {
 	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
 	if (res != 0) {
-		loggear("Peticion de parseo recibida.");
+		loggear("Mensaje recibido del ESI");
 	} else {
 		salir_con_error("Fallo la peticion de parseo.", socket_cliente);
 	}
 
 	deserializar_pedido(&(pedido), &(package));
 
-	if (pedido.pedido != 1) {
-		loggear("Peticion erronea.");
+	if(pedido.pedido == 0){
+		loggear("Fin de ESI.");
+		return 0;
 	}
-
-	if (!puede_parsear()) {
-		respuesta.pedido = 0;
+	else if (pedido.pedido != 1) {
+			loggear("Peticion erronea.");
 	}
 
 	serializar_pedido(respuesta, &message);
 
 	send(socket_cliente, message, packageSize, 0);
-}
 
-bool puede_parsear() {
-	return true;
-
-	//Para que una funcion que devuelva true? Porque por ahora queremos testear
-	//Que el envio de mensajes de parseo y funcione
-	//Mas adelante tendremos que ver si lo deja parsear o se bloquea
+	return 1;
 }
 
 void* atender_Planificador(void* un_socket) {

@@ -109,36 +109,39 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 
 void* atender_ESI(void* sockfd) {
 	int socket_ESI = (int) sockfd;
+	package_pedido pedido;
+
+	int packageSize = sizeof(pedido.pedido);
+	char* package = malloc(packageSize);
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	loggear("Enviando orden de parseo.");
-
 	while(1){
-		che_parsea(socket_ESI);
-		sleep(10);
+		recv(socket_ESI, package, packageSize, 0);
+
+		loggear("Mensaje recibidio del ESI numero: ");
+
+		//Tal vez la lista de ESIs nos convenga pensarla con un t_ESI que contenga un index
+		//asi podemos conocer por referencia a cada ESI, y en vez de pasar el socket a esta funcion
+		//Pasamos el t_ESI? No se, la verdad no se me esta ocurriendo mucho :s
+
+		deserializar_pedido(&(pedido), &(package));
+
+		if(pedido.pedido == 0){
+			loggear("ESI terminado.");
+			//Sacamos al ESI de la lista y lo ponemos en terminados
+			break;
+		}
+
+		loggear("Pedido de ejecucion recibido.");
+		planificar();
 	}
 
 	return NULL;
 }
 
-void che_parsea(int socket_cliente) {
-	package_pedido pedido_parseo = { .pedido = 1 };
+void planificar(void){
 
-	int packageSize = sizeof(pedido_parseo.pedido);
-	char* message = malloc(packageSize);
-
-	serializar_pedido(pedido_parseo, &message);
-
-	int envio = send(socket_cliente, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Fallo el envio de parseo.", socket_cliente);
-	}
-
-	loggear("Orden de parseo enviada.");
-
-	return;
 }
 
 void cerrar_listas() {

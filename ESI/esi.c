@@ -27,6 +27,9 @@ int main(int argc, char** argv) {
 
 	loggear("Parseo exitoso. Cerrando sesion");
 
+	avisar_cierre(socket_coordinador);
+	avisar_cierre(socket_planificador);
+
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
@@ -64,40 +67,6 @@ FILE* levantar_archivo(char* archivo) {
 
 	return fp;
 }
-
-/*void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
-		FILE* archivo_de_parseo) {
-	loggear("Esperando orden de parseo del planificador");
-
-	package_pedido pedido_parseo;
-	int packageSize = sizeof(pedido_parseo.pedido);
-
-	char *package = malloc(packageSize);
-
-	int res = recv(socket_planificador, (void*) package, packageSize, 0);
-
-	deserializar_pedido(&(pedido_parseo), &(package));
-
-	if (res != 0) {
-		loggear("Orden recibida. Solicitando permiso al coordinador.");
-	} else {
-		close(socket_coordinador);
-		salir_con_error("Fallo la entrega de orden.", socket_planificador);
-	}
-
-	if (!solicitar_permiso(socket_coordinador)) {
-		close(socket_coordinador);
-		salir_con_error("Permiso denegado.", socket_planificador);
-	}
-
-	loggear("Parseando...");
-
-	t_esi_operacion parseo = parsear(siguiente_linea(archivo_de_parseo));
-
-	loggear("Parseo terminado.");
-
-	return;
-}*/
 
 bool solicitar_permiso(int socket_coordinador) {
 	package_pedido pedido_permiso = { .pedido = 1 };
