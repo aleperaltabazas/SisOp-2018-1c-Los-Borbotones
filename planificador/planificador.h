@@ -10,6 +10,19 @@
 
 #include <shared-library.h>
 
+//Estructuras
+typedef struct algoritmo {
+	enum {
+		FIFO, SJF, HRRN,
+	} tipo;
+	bool desalojo;
+} algoritmo;
+
+typedef struct ESI {
+	int id;
+	pthread_t hilo;
+} ESI;
+
 //Variables locales
 
 int ESI_id;
@@ -19,9 +32,15 @@ t_list * ESIs_en_ejecucion;
 t_list * ESIs_listos;
 t_list * ESIs_finalizados;
 
+ESI* executing_ESI;
+
+algoritmo algoritmo_planificacion;
+
+pthread_spinlock_t sem_ESIs;
+pthread_spinlock_t sem_id;
+
 //Hilos
 
-pthread_t hilo_ESI;
 pthread_t hiloDeConsola;
 
 //Funciones de consola
@@ -31,12 +50,12 @@ void listarOpciones(void);
 void pausarOContinuar(void);
 void bloquear(float codigo);
 void desbloquear(float codigo);
-void listar (void);
-void kill (float codigo);
-void status (float codigo);
-void deadlock (void);
-float recibirCodigo (void);
-void interpretarYEjecutarCodigo (float comando);
+void listar(void);
+void kill(float codigo);
+void status(float codigo);
+void deadlock(void);
+float recibirCodigo(void);
+void interpretarYEjecutarCodigo(float comando);
 
 //Funciones de servidor
 
@@ -50,8 +69,15 @@ void* atender_ESI(void* a_parsear);
 //Funciones
 
 void iniciar(void);
-FILE* levantar_archivo(char* archivo);
-void error_de_archivo(char* mensaje, int retorno);
-void che_parsea(int socket_cliente);
+void planificar(int sockfd);
+void desalojar(void);
+void ejecutar(int sockfd);
+void copiar_a(void* esi_copiado, ESI* esi_receptor);
+void cerrar(void);
+void cerrar_listas(void);
+
+ESI* cabeza(t_list* lista);
+ESI* shortest(t_list* lista);
+ESI* highest_RR(t_list* lista);
 
 #endif /* PLANIFICADOR_H_ */

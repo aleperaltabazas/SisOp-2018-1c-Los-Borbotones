@@ -10,3 +10,10 @@
 -Pseudo intento de parseo, hay que arreglarlo
 -Hay que empezar a ver serializacion
 
+26/5 - 21:09 - Ale
+-Agregue un struct de planificador y de ESI
+-Cambie una lista para que sea de los ESIs
+-Puse un FIFO que no estaria funcionando, creo que se esta rompiendo en head(), pero habria que verlo un poco mas
+-Meti un par de cosas de semaforos que ahora estan comentadas para que no molesten mucho
+-Falta hacer algunas cosas con procesar_cierre() y asignar_ID(). asignar_ID() nos seriviria para saber que ESI va muriendo y asi sacarlo de la lista.
+

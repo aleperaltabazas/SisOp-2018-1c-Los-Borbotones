@@ -101,7 +101,7 @@ void* atender_ESI(void* un_socket) {
 
 	int status = 1;
 
-	while(status){
+	while (status) {
 		status = chequear_solicitud(socket_cliente);
 	}
 
@@ -121,19 +121,18 @@ int chequear_solicitud(int socket_cliente) {
 	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
 	if (res != 0) {
-		loggear("Mensaje recibido del ESI");
+		loggear("Mensaje recibido del ESI.");
 	} else {
-		salir_con_error("Fallo la peticion de parseo.", socket_cliente);
+		salir_con_error("Fallo la peticion.", socket_cliente);
 	}
 
 	deserializar_pedido(&(pedido), &(package));
 
-	if(pedido.pedido == 0){
+	if (pedido.pedido == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	}
-	else if (pedido.pedido != 1) {
-			loggear("Peticion erronea.");
+	} else if (pedido.pedido != 1) {
+		loggear("Peticion erronea.");
 	}
 
 	serializar_pedido(respuesta, &message);

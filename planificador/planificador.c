@@ -27,6 +27,9 @@ int main(int argc, char** argv) {
 	close(listening_socket);
 	close(socketCliente);
 	close(socket_coordinador);
+
+	cerrar();
+
 	return EXIT_SUCCESS;
 }
 
@@ -34,6 +37,19 @@ void iniciar(void) {
 	/*pthread_create(hiloDeConsola, NULL, consola, NULL);
 	 pthread_detach(hiloDeConsola);*/
 	iniciar_log("Planificador", "Nace el planificador...");
+
+	algoritmo_planificacion.desalojo = false;
+	algoritmo_planificacion.tipo = FIFO;
+
+	executing_ESI = malloc(sizeof(executing_ESI));
+	executing_ESI->id = -1;
+
+	/*
+	 pthread_spin_init(&sem_ESIs, NULL);
+	 pthread_spin_init(&sem_id, NULL);
+	 */
+
+	ESI_id = 0;
 
 	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
 	ESIs = list_create();
@@ -81,6 +97,8 @@ int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
 }
 
 void identificar_cliente(char* mensaje, int socket_cliente) {
+	pthread_t hilo_ESI;
+	ESI esi = { .hilo = hilo_ESI };
 
 	if (strcmp(mensaje, mensajePlanificador) == 0) {
 		loggear(mensajePlanificador);
@@ -88,15 +106,24 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 	} else if (strcmp(mensaje, mensajeESI) == 0) {
 		loggear(mensajeESI);
 
-		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
+		/*
+		 pthread_spin_lock(&sem_id);
+		 pthread_spin_lock(&sem_ESIs);
+		 */
+		esi.id = ESI_id;
 
-		//Esto me agrega el hilo de ESI a la lista y me devuelve su posicion, la cual podria usarse como id
-		ESI_id = list_add(ESIs, (void*) hilo_ESI);
+		pthread_create(&esi.hilo, NULL, atender_ESI, (void*) socket_cliente);
+
+		list_add(ESIs, (void*) &esi);
+
+		/*
+		 pthread_spin_unlock(&sem_id);
+		 pthread_spin_unlock(&sem_ESIs);
+		 */
+
 		loggear(mensajeESILista);
 
-		//Creo que el detach no se haria de inmediato, en base al algoritmo se va a hacer detach a un ESI determinado
-		//Sino siempre que llegue un ESI mientras que se este ejecutando otro va a tomar prioridad el que llega
-		pthread_detach(hilo_ESI);
+		pthread_detach(esi.hilo);
 	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
 		loggear(mensajeInstancia);
 	} else {
@@ -116,32 +143,191 @@ void* atender_ESI(void* sockfd) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	while(1){
+	/*
+	 pthread_spin_lock(&sem_id);
+	 asignar_ID(socket_ESI);
+	 pthread_spin_unlock(&sem_id);
+	 */
+
+	while (1) {
 		recv(socket_ESI, package, packageSize, 0);
 
-		loggear("Mensaje recibidio del ESI numero: ");
+		loggear("Mensaje recibido de un ESI.");
 
-		//Tal vez la lista de ESIs nos convenga pensarla con un t_ESI que contenga un index
-		//asi podemos conocer por referencia a cada ESI, y en vez de pasar el socket a esta funcion
-		//Pasamos el t_ESI? No se, la verdad no se me esta ocurriendo mucho :s
+		//log_trace(logger, "Mensaje recibidio del ESI numero: %i", ESI_id);
 
 		deserializar_pedido(&(pedido), &(package));
 
-		if(pedido.pedido == 0){
+		if (pedido.pedido == 0) {
 			loggear("ESI terminado.");
-			//Sacamos al ESI de la lista y lo ponemos en terminados
+
+			//procesar_cierre(socket_ESI);
+
+			list_remove(ESIs, 0);
+
 			break;
 		}
 
-		loggear("Pedido de ejecucion recibido.");
-		planificar();
+		loggear("ESI listo para ejecutar.");
+
+		//log_trace(logger, "ESI numero %i listo para ejecutar.", 1);
+
+		planificar(socket_ESI);
 	}
 
 	return NULL;
 }
 
-void planificar(void){
+void asignar_ID(int socket_ESI) {
+	package_pedido id = { .pedido = ESI_id };
 
+	int packageSize = sizeof(id.pedido);
+	char* message = malloc(packageSize);
+
+	serializar_pedido(id, &message);
+
+	send(socket_ESI, message, packageSize, 0);
+
+	free(message);
+}
+
+void procesar_cierre(int socket_ESI) {
+	loggear("Esperando id de ejecucion del planificador.");
+
+	package_pedido id;
+
+	int packageSize = sizeof(id.pedido);
+	char *package = malloc(packageSize);
+
+	int res = recv(socket_ESI, (void*) package, packageSize, 0);
+
+	if (res != 0) {
+		loggear("Solicitud confirmada.");
+	} else {
+		salir_con_error("Fallo la solicitud.", socket_ESI);
+	}
+
+	deserializar_pedido(&(id), &(package));
+
+	int id_as_int = (int) id.pedido;
+
+	list_remove(ESIs, id_as_int);
+
+	//pthread_spin_lock(&sem_id);
+	ESI_id--;
+	//pthread_spin_unlock(&sem_id);
+}
+
+void planificar(int socket_ESI) {
+	if (executing_ESI->id == -1) {
+		executing_ESI = cabeza(ESIs);
+
+		list_remove(ESIs, 0);
+
+		ejecutar(socket_ESI);
+		return;
+	}
+
+	loggear("ESI elegido.");
+
+	if (algoritmo_planificacion.desalojo) {
+		desalojar();
+	}
+
+	switch (algoritmo_planificacion.tipo) {
+	case FIFO:
+		executing_ESI = cabeza(ESIs);
+		break;
+	case SJF:
+		executing_ESI = shortest(ESIs);
+		break;
+	case HRRN:
+		executing_ESI = highest_RR(ESIs);
+		break;
+	default:
+		loggear("FALLO EN EL ALGORITMO.");
+		break;
+	}
+
+	loggear("d");
+
+	ejecutar(socket_ESI);
+
+}
+
+void desalojar(void) {
+	list_add(ESIs, (void*) &executing_ESI);
+	executing_ESI = NULL;
+}
+
+ESI* cabeza(t_list* lista) {
+	void* elem = list_get(lista, 0);
+	ESI* return_ESI = malloc(sizeof(ESI));
+
+	copiar_a(elem, return_ESI);
+
+	return return_ESI;
+}
+
+ESI* shortest(t_list* lista) {
+	//void* elem = list_find(lista, );
+	void* elem = list_get(lista, 1);
+	ESI* return_ESI = malloc(sizeof(ESI));
+
+	copiar_a(elem, return_ESI);
+
+	return return_ESI;
+}
+
+ESI* highest_RR(t_list* lista) {
+	//void* elem = list_find(lista, );
+	void* elem = list_get(lista, 1);
+	ESI* return_ESI = malloc(sizeof(ESI));
+
+	copiar_a(elem, return_ESI);
+
+	return return_ESI;
+}
+
+void cerrar(void) {
+	cerrar_listas();
+	free(executing_ESI);
+
+	/*
+	 pthread_spin_destroy(&sem_ESIs);
+	 pthread_spin_destroy(&sem_id);
+	 */
+}
+
+void ejecutar(int socket_ESI) {
+	loggear("Enviando orden de ejecucion.");
+	package_pedido listo = { .pedido = 1 };
+
+	int packageSize = sizeof(listo.pedido);
+	char* message = malloc(packageSize);
+
+	serializar_pedido(listo, &message);
+
+	int envio = send(socket_ESI, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Fallo el envio.", socket_ESI);
+	}
+
+	loggear("Orden enviada.");
+
+	free(message);
+}
+
+void copiar_a(void* esi_copiado, ESI* esi_receptor) {
+	int offset = 0;
+
+	memcpy(&esi_receptor->id, esi_copiado, sizeof(esi_receptor->id));
+
+	offset = sizeof(esi_receptor->id);
+
+	memcpy(&esi_receptor->hilo, esi_copiado + offset,
+			sizeof(esi_receptor->hilo));
 }
 
 void cerrar_listas() {
