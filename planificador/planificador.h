@@ -20,6 +20,7 @@ typedef struct algoritmo {
 
 typedef struct ESI {
 	int id;
+	int socket;
 	pthread_t hilo;
 } ESI;
 
@@ -60,28 +61,122 @@ void interpretarYEjecutarCodigo(float comando);
 //Funciones de servidor
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje);
+	/*
+	 * Descripción: determina qué hacer cuando recibe una nueva conexión a través del
+	 * 		socket cliente.
+	 * Argumentos:
+	 * 		int listening_socket: socket del servidor local.
+	 * 		int socket_cliente: socket del cliente.
+	 * 		char* mensaje: mensaje para enviar como identificacióna a los nuevos clientes.
+	 */
+
 void identificar_cliente(char* mensaje, int socket_cliente);
+	/*
+	 * Descripción: identifica a un cliente y crea un hilo para el mismo, o llama a salir_con_error().
+	 * 		en caso de ser un cliente desconocido.
+	 * Argumentos:
+	 * 		char* mensaje: el mensaje enviado por el cliente.
+	 * 		int socket_cliente: socket del cliente.
+	 */
 
 //Funciones de hilos
 
-void* atender_ESI(void* a_parsear);
+void* atender_ESI(void* sockfd);
+	/*
+	 * Descripción: atiende los mensajes enviados de un ESI y le avisa que ejecute
+	 * 		cuando se le indique.
+	 * Argumentos:
+	 * 		void* sockfd: descriptor de socket que luego se castea a int.
+	 */
 
 //Funciones
 
 void iniciar(void);
+	/*
+	 * Descripción: crea el logger y las listas de ESIs, y carga los datos del archivo
+	 * 		de configuración en variables globales.
+	 * Argumentos:
+	 * 		void
+	 */
+
 void planificar(int sockfd);
+	/*
+	 * Descripción: decide cuál es el siguiente ESI a ejecutar, dependiendo del algoritmo
+	 * 		que se use en el momento.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso a ejecutar.
+	 */
+
 void desalojar(void);
+	/*
+	 * Descripción: avisa al hilo que está ejecutando actualmente que su ESI asociado ya no ejecuta más.
+	 * Argumentos:
+	 * 		void
+	 */
+
 void ejecutar(int sockfd);
+	/*
+	 * Descripción: avisa a un proceso ESI que ejecute a través de su socket.
+	 * Argumentos:
+	 * 		int sockfd: socket del cliente.
+	 */
+
 void copiar_a(void* esi_copiado, ESI* esi_receptor);
+	/*
+	 * Descripción: copia un buffer de memoria a un tipo ESI*.
+	 * Argumentos:
+	 * 		void* esi_copiado: el buffer de memoria donde se contiene la información.
+	 * 		ESI* esi_receptor: el recipiente de la información del buffer.
+	 */
+
 void cerrar(void);
+	/*
+	 * Descripción: llama a cerrar_listas() y libera la variable executing_ESI.
+	 * Argumentos:
+	 * 		void
+	 */
+
 void cerrar_listas(void);
+	/*
+	 * Descripción: cierra las distintas listas de ESIs y libera su memoria.
+	 * Argumentos:
+	 * 		void
+	 */
 
 int asignar_ID(int socket_ESI);
+	/*
+	 * Descripción: asigna un ID a un proceso ESI y devuelve el mismo valor como identificador.
+	 * Argugmentos:
+	 * 		int socket_ESI: socket del proceso ESI a asignar.
+	 */
 
 void kill_ESI(int socket_ESI);
+	/*
+	 * Descripción: le indica a un ESI que termine.
+	 * Argumentos:
+	 * 		int socket_ESI: socket del proceso ESI a terminar.
+	 */
 
 ESI* first(t_list* lista);
+	/*
+	 * Descripción: devuelve el primer elemento de la lista.
+	 * Argumentos:
+	 * 		t_list* lista: lista a obtener el elemento.
+	 */
+
 ESI* shortest(t_list* lista);
+	/*
+	 * Descripción: devuelve el elemento cuyo tiempo de ejecución es menor.
+	 * Argumentos:
+	 * 		t_list* lista: lista a obtener el elemento.
+	 */
+
 ESI* highest_RR(t_list* lista);
+	/*
+	 * Descripción: devuelve el elemento cuyo RR es mayor.
+	 * Argumentos:
+	 * 		t_list* lista: lista a obtener el elemento.
+	 */
+
 
 #endif /* PLANIFICADOR_H_ */

@@ -192,7 +192,9 @@ int asignar_ID(int socket_ESI){
 	return aviso.id;
 }
 
-void kill_ESI(int sockfd){}
+void kill_ESI(int sockfd){
+
+}
 
 void procesar_cierre(int socket_ESI) {
 	loggear("Esperando id de ejecucion del planificador.");
@@ -251,8 +253,6 @@ void planificar(int socket_ESI) {
 		loggear("FALLO EN EL ALGORITMO.");
 		break;
 	}
-
-	loggear("d");
 
 	ejecutar(socket_ESI);
 
@@ -344,7 +344,6 @@ void cerrar_listas() {
 	free(ESIs_listos);
 	free(ESIs_bloqueados);
 
-	cerrar_listas();
 }
 
 /*	=====================

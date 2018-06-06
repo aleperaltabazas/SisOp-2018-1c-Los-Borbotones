@@ -150,7 +150,7 @@ FILE* levantar_archivo(char* archivo) {
 	FILE* fp = fopen(archivo, "r");
 
 	if (fp == NULL) {
-		error_de_archivo("Error en abrir el archivo.", EXIT_FAILURE);
+		error_de_archivo("Error en abrir el archivo.", 2);
 	}
 
 	loggear("Archivo abierto correctamente.");
