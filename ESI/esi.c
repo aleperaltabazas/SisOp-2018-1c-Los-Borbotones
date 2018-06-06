@@ -12,17 +12,21 @@
 #define PACKAGE_SIZE 1024
 //Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
+int this_id;
+
 int main(int argc, char** argv) {
 	iniciar(argv);
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajeESI);
+	int socket_coordinador /*= conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+			mensajeESI)*/;
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
 			mensajeESI);
 
 	//asignar_ID(socket_planificador);
 
 	loggear("Parseo exitoso.");
+
+	this_id = recibir_ID(socket_planificador);
 
 	ready(socket_planificador);
 
@@ -38,37 +42,41 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void asignar_ID(int socket_planificador) {
-	package_pedido ESI_id;
+int recibir_ID(int server_socket){
+	aviso_ESI aviso;
+	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
+	char* package = malloc(packageSize);
 
-	int packageSize = sizeof(ESI_id.pedido);
-	char *package = malloc(packageSize);
+	int res = recv(server_socket, (void*) package, packageSize, 0);
 
-	int res = recv(socket_planificador, (void*) package, packageSize, 0);
+	deserializar_aviso(&(aviso), &(package));
 
-	if (res != 0) {
-		loggear("ID recibido.");
-	} else {
-		salir_con_error("Fallo la solicitud.", socket_planificador);
+	if(aviso.aviso == 0){
+		salir_con_error("Fin de este ESI por parte del planificador", server_socket);
+	}
+	else if(aviso.aviso != 1){
+		salir_con_error("Orden desconocida.", server_socket);
 	}
 
-	deserializar_pedido(&(ESI_id), &(package));
+	if (res != 0){
+		log_trace(logger, "ID: %i", aviso.id);
+	}
 
-	int id_as_int = (int) ESI_id.pedido;
+	free(package);
 
-	id = id_as_int;
-
-	log_trace(logger, "ID numero %i", id);
+	return aviso.id;
 }
 
 void ready(int socket_planificador) {
+	aviso_ESI aviso = {
+		.aviso = 42,
+		.id = this_id
+	};
 
-	package_pedido listo = { .pedido = 42 };
-
-	int packageSize = sizeof(listo.pedido);
+	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
-	serializar_pedido(listo, &message);
+	serializar_aviso(aviso, &message);
 
 	int envio = send(socket_planificador, message, packageSize, 0);
 
@@ -76,7 +84,9 @@ void ready(int socket_planificador) {
 		salir_con_error("Fallo el envio", socket_planificador);
 	}
 
-	loggear("Preparado");
+	free(message);
+
+	loggear("Preparado.");
 }
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {

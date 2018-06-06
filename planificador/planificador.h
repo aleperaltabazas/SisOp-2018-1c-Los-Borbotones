@@ -59,7 +59,7 @@ void interpretarYEjecutarCodigo(float comando);
 
 //Funciones de servidor
 
-int manjear_cliente(int listening_socket, int socket_cliente, char* mensaje);
+int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje);
 void identificar_cliente(char* mensaje, int socket_cliente);
 
 //Funciones de hilos
@@ -76,7 +76,11 @@ void copiar_a(void* esi_copiado, ESI* esi_receptor);
 void cerrar(void);
 void cerrar_listas(void);
 
-ESI* cabeza(t_list* lista);
+int asignar_ID(int socket_ESI);
+
+void kill_ESI(int socket_ESI);
+
+ESI* first(t_list* lista);
 ESI* shortest(t_list* lista);
 ESI* highest_RR(t_list* lista);
 

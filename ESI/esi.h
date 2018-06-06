@@ -13,16 +13,37 @@
 
 //Variables locales
 
-int id;
 t_list* lineas_parseadas;
 
 //Funciones
 
 void iniciar(char** argv);
+	/*
+	 * Descripción: inicia el log y llama a parsear() para guardar las lineas en la lista de parseadas.
+	 * Argumentos:
+	 * 		char** argv: vector de char*, que se usa con levantar_archivo() en la posición 1.
+	 */
 
 t_esi_operacion parsear(char* line);
+	/*
+	 * Descripción: parsea una línea y devuelve el resultado en un t_esi_operacion.
+	 * Argumentos:
+	 * 		char* line: linea a parsear.
+	 */
+
+int recibir_ID(int server_socket);
+	/*
+	 * Descripción: recibe un aviso del servidor y en caso de ser un id, lo almacena en this_id.
+	 * Argumentos:
+	 * 		int server_socket: socket del cual se hace el recv().
+	 */
 
 char* siguiente_linea(FILE* fp);
+	/*
+	 * Descripción: devuelve la siguiente línea de un archivo.
+	 * Argumentos:
+	 * 		FILE* fp: archivo del cual se quiere la línea.
+	 */
 
 void esperar_orden_de_parseo(int socket_planificador, int socket_coordinador,
 		FILE* archivo_de_parseo);

@@ -41,6 +41,11 @@ char* mensajeCoordinador = "Coordinador: taringuero profesional.";
 
 //Estructuras
 
+typedef struct aviso_ESI{
+	int aviso;
+	int id;
+} __attribute__((packed)) aviso_ESI;
+
 typedef struct package_permiso {
 	uint32_t pedido;
 } package_pedido;
@@ -55,6 +60,8 @@ int conectar_a(char* ip, char* puerto, char* mensaje);
 void chequear_servidor(char* id, int server_socket);
 void serializar_pedido(package_pedido pedido, char** message);
 void deserializar_pedido(package_pedido *pedido, char **package);
+void serializar_aviso(aviso_ESI aviso, char** message);
+void deserializar_aviso(aviso_ESI *aviso, char** package);
 
 //Misc
 

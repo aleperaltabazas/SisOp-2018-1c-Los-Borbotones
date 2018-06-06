@@ -15,6 +15,26 @@ void deserializar_pedido(package_pedido *pedido, char** package) {
 	memcpy(&pedido->pedido, *package, sizeof(pedido->pedido));
 }
 
+void serializar_aviso(aviso_ESI aviso, char** message){
+	int offset = 0;
+
+	memcpy(*message, &(aviso.aviso), sizeof(aviso.aviso));
+
+	offset = sizeof(aviso.aviso);
+
+	memcpy(*message + offset, &(aviso.id),sizeof(aviso.id));
+}
+
+void deserializar_aviso(aviso_ESI *aviso, char** package){
+	int offset = 0;
+
+	memcpy(&aviso->aviso, *package, sizeof(aviso->aviso));
+
+	offset = sizeof(aviso->aviso);
+
+	memcpy(&aviso->id, *package + offset, sizeof(aviso->id));
+}
+
 void avisar_cierre(int server_socket) {
 	int status = 1;
 	package_pedido pedido_de_fin = { .pedido = 0 };

@@ -12,8 +12,8 @@
 int main(int argc, char** argv) {
 	iniciar();
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajePlanificador);
+	//int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+	//		mensajePlanificador);
 	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
 	int socketCliente;
 
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 
 	close(listening_socket);
 	close(socketCliente);
-	close(socket_coordinador);
+	//close(socket_coordinador);
 
 	cerrar();
 
@@ -44,12 +44,7 @@ void iniciar(void) {
 	executing_ESI = malloc(sizeof(executing_ESI));
 	executing_ESI->id = -1;
 
-	/*
-	 pthread_spin_init(&sem_ESIs, NULL);
-	 pthread_spin_init(&sem_id, NULL);
-	 */
-
-	ESI_id = 0;
+	ESI_id = 1;
 
 	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
 	ESIs = list_create();
@@ -136,29 +131,25 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 
 void* atender_ESI(void* sockfd) {
 	int socket_ESI = (int) sockfd;
-	package_pedido pedido;
+	aviso_ESI aviso;
 
-	int packageSize = sizeof(pedido.pedido);
+	int packageSize = sizeof(aviso);
 	char* package = malloc(packageSize);
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	/*
-	 pthread_spin_lock(&sem_id);
-	 asignar_ID(socket_ESI);
-	 pthread_spin_unlock(&sem_id);
-	 */
+	int this_id = asignar_ID(socket_ESI);
 
 	while (1) {
 		recv(socket_ESI, package, packageSize, 0);
 
 		loggear("Mensaje recibido de un ESI.");
 
-		//log_trace(logger, "Mensaje recibidio del ESI numero: %i", ESI_id);
+		log_trace(logger, "Mensaje recibidio del ESI numero: %i", this_id);
 
-		deserializar_pedido(&(pedido), &(package));
+		deserializar_aviso(&(aviso), &(package));
 
-		if (pedido.pedido == 0) {
+		if (aviso.aviso == 0) {
 			loggear("ESI terminado.");
 
 			//procesar_cierre(socket_ESI);
@@ -168,28 +159,40 @@ void* atender_ESI(void* sockfd) {
 			break;
 		}
 
-		loggear("ESI listo para ejecutar.");
+		loggear("ESI listo para ejecutar añadido a la cola.");
 
-		//log_trace(logger, "ESI numero %i listo para ejecutar.", 1);
-
-		planificar(socket_ESI);
+		//planificar(socket_ESI);
 	}
 
 	return NULL;
 }
 
-void asignar_ID(int socket_ESI) {
-	package_pedido id = { .pedido = ESI_id };
+int asignar_ID(int socket_ESI){
+	aviso_ESI aviso = {
+			.aviso = 1,
+			.id = ESI_id
+	};
 
-	int packageSize = sizeof(id.pedido);
-	char* message = malloc(packageSize);
+	ESI_id++;
 
-	serializar_pedido(id, &message);
+	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
+	char* package = malloc(packageSize);
 
-	send(socket_ESI, message, packageSize, 0);
+	serializar_aviso(aviso, &package);
 
-	free(message);
+	int envio = send(socket_ESI, package, packageSize, 0);
+
+	if(envio < 0){
+		loggear("Fallo el envio de identificacion. Terminando ESI.");
+		kill_ESI(socket_ESI);
+	}
+
+	free(package);
+
+	return aviso.id;
 }
+
+void kill_ESI(int sockfd){}
 
 void procesar_cierre(int socket_ESI) {
 	loggear("Esperando id de ejecucion del planificador.");
@@ -220,7 +223,7 @@ void procesar_cierre(int socket_ESI) {
 
 void planificar(int socket_ESI) {
 	if (executing_ESI->id == -1) {
-		executing_ESI = cabeza(ESIs);
+		executing_ESI = first(ESIs);
 
 		list_remove(ESIs, 0);
 
@@ -236,7 +239,7 @@ void planificar(int socket_ESI) {
 
 	switch (algoritmo_planificacion.tipo) {
 	case FIFO:
-		executing_ESI = cabeza(ESIs);
+		executing_ESI = first(ESIs);
 		break;
 	case SJF:
 		executing_ESI = shortest(ESIs);
@@ -260,7 +263,7 @@ void desalojar(void) {
 	executing_ESI = NULL;
 }
 
-ESI* cabeza(t_list* lista) {
+ESI* first(t_list* lista) {
 	void* elem = list_get(lista, 0);
 	ESI* return_ESI = malloc(sizeof(ESI));
 
@@ -292,11 +295,6 @@ ESI* highest_RR(t_list* lista) {
 void cerrar(void) {
 	cerrar_listas();
 	free(executing_ESI);
-
-	/*
-	 pthread_spin_destroy(&sem_ESIs);
-	 pthread_spin_destroy(&sem_id);
-	 */
 }
 
 void ejecutar(int socket_ESI) {
