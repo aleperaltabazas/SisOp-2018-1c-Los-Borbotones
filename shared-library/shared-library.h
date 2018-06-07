@@ -29,6 +29,7 @@
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 #define LINE_MAX 40
+#define ESTIMACION_INICIAL 3
 
 //Variables super globales
 
@@ -148,11 +149,11 @@ void loggear(char* mensaje);
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
-void kill_ESI(int socket_cliente);
+void terminar_conexion(int sockfd);
 	/*
-	 * Descripción: envia una orden de terminación a un ESI.
+	 * Descripción: envía un mensaje de terminación a un proceso a través de un socket.
 	 * Argumentos:
-	 * 		int socket_cliente: el socket del ESI.
+	 * 		int sockfd: el socket por el cual se envía el mensaje.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

@@ -45,8 +45,8 @@ void iniciar(void) {
 	algoritmo_planificacion.desalojo = false;
 	algoritmo_planificacion.tipo = FIFO;
 
-	executing_ESI = malloc(sizeof(executing_ESI));
-	executing_ESI->id = -1;
+	//executing_ESI = malloc(sizeof(executing_ESI));
+	executing_ESI.id = -1;
 
 	ESI_id = 1;
 
@@ -131,9 +131,12 @@ void* atender_ESI(void* buffer) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	int this_id = asignar_ID(socket_ESI);
+	ESI esi = { .socket = socket_ESI, .rafaga_estimada =
+	ESTIMACION_INICIAL };
 
-	ESI esi = { .id = this_id, .socket = socket_ESI };
+	int this_id = asignar_ID(esi);
+
+	esi.id = this_id;
 
 	while (1) {
 		recv(socket_ESI, package, packageSize, 0);
@@ -141,8 +144,6 @@ void* atender_ESI(void* buffer) {
 		log_trace(logger, "Mensaje recibidio del ESI numero: %i", this_id);
 
 		deserializar_aviso(&(aviso), &(package));
-
-		loggear("Deserialice bien.");
 
 		if (aviso.aviso == 0) {
 			loggear("ESI terminado.");
@@ -155,14 +156,18 @@ void* atender_ESI(void* buffer) {
 		}
 
 		else if (aviso.aviso == 1) {
-			list_add_in_index(ESIs, this_id, (void*) &esi);
+			esi.tiempo_arribo = tiempo;
+
+			agregar_ESI(&new_ESIs, esi);
+
 			loggear("ESI listo para ejecutar añadido a la cola.");
 
-			test = esi;
 		}
 
 		else {
-			log_trace(logger, "%i", aviso.aviso);
+			cerrar();
+			loggear("El ESI se volvió loco. Terminando.");
+			kill_ESI(esi);
 		}
 
 		planificar();
@@ -171,7 +176,28 @@ void* atender_ESI(void* buffer) {
 	return NULL;
 }
 
-int asignar_ID(int socket_ESI) {
+void kill_ESI(ESI esi) {
+	int socket_ESI = esi.socket;
+
+	aviso_ESI aviso = { .aviso = -1, .id = esi.id };
+
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
+
+	serializar_aviso(aviso, &package);
+
+	int envio = send(socket_ESI, package, packageSize, 0);
+
+	if (envio < 0) {
+		loggear("Fallo la terminación. Intentando de vuelta.");
+		kill_ESI(esi);
+	}
+
+	log_trace(logger, "ESI número %i has fainted!", esi.id);
+}
+
+int asignar_ID(ESI esi) {
+	int socket_ESI = esi.socket;
 	aviso_ESI aviso = { .aviso = 1, .id = ESI_id };
 
 	ESI_id++;
@@ -185,7 +211,7 @@ int asignar_ID(int socket_ESI) {
 
 	if (envio < 0) {
 		loggear("Fallo el envio de identificacion. Terminando ESI.");
-		kill_ESI(socket_ESI);
+		kill_ESI(esi);
 	}
 
 	free(package);
@@ -219,14 +245,14 @@ void procesar_cierre(int socket_ESI) {
 }
 
 void planificar(void) {
-	if (executing_ESI->id == -1) {
-		//log_trace(logger, "%i", executing_ESI->id);
-		executing_ESI = first(ESIs);
+	if (executing_ESI.id == -1) {
+		executing_ESI = first(new_ESIs);
 		//*executing_ESI = test;
 
-		//log_trace(logger, "%i", executing_ESI->id);
-		list_remove(ESIs, 0);
-		loggear("ESI elegido.");
+		//list_remove(ESIs, 0);
+
+		log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+
 		ejecutar(executing_ESI);
 
 		return;
@@ -238,74 +264,128 @@ void planificar(void) {
 
 	switch (algoritmo_planificacion.tipo) {
 	case FIFO:
-		executing_ESI = first(ESIs);
+		executing_ESI = first(new_ESIs);
 		//*executing_ESI = test;
 		break;
 	case SJF:
-		executing_ESI = shortest(ESIs);
+		executing_ESI = shortest(new_ESIs);
 		break;
 	case HRRN:
-		executing_ESI = highest_RR(ESIs);
+		executing_ESI = highest_RR(new_ESIs);
 		break;
 	default:
 		loggear("FALLO EN EL ALGORITMO.");
 		break;
 	}
 
-	loggear("ESI elegido.");
+	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
 
 	ejecutar(executing_ESI);
 
 }
 
 void desalojar(void) {
-	list_add(ESIs, (void*) &executing_ESI);
-	executing_ESI = NULL;
+	//list_add(ESIs, (void*) &executing_ESI);
+	executing_ESI = esi_vacio;
 }
 
-ESI* first(t_list* lista) {
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
+t_esi_node* crear_nodo(ESI esi) {
+	t_esi_node* nodo = (t_esi_node*) malloc(sizeof(t_esi_node));
+	nodo->esi = esi;
+	nodo->sgte = NULL;
 
-	loggear("Saque bien el buffer");
-
-	deserializar_esi(elem, return_ESI);
-
-	loggear("Copie bien.");
-
-	return return_ESI;
+	return nodo;
 }
 
-ESI* shortest(t_list* lista) {
-	//void* elem = list_find(lista, );
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
+void agregar_ESI(t_esi_list* lista, ESI esi) {
+	t_esi_node* nodo = crear_nodo(esi);
 
-	deserializar_esi(&(elem), return_ESI);
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_esi_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
 
-	return return_ESI;
+		puntero->sgte = nodo;
+	}
+
+	return;
 }
 
-ESI* highest_RR(t_list* lista) {
-	//void* elem = list_find(lista, );
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
+void destruir_nodo(t_esi_node* nodo) {
+	free(nodo);
+}
 
-	deserializar_esi(&(elem), return_ESI);
+ESI first(t_esi_list lista) {
+	ESI esi = lista.head->esi;
 
-	return return_ESI;
+	return esi;
+
+}
+
+ESI shortest(t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	ESI esi = first(lista);
+
+	while (puntero->sgte != NULL) {
+		if (es_mas_corto(esi, puntero->esi)) {
+			esi = puntero->esi;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return esi;
+}
+
+ESI highest_RR(t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	ESI esi = first(lista);
+
+	while (puntero->sgte != NULL) {
+		if (tiene_mas_RR(esi, puntero->esi)) {
+			esi = puntero->esi;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return esi;
+}
+
+bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI) {
+	return estimated_time(segundo_ESI) < estimated_time(primer_ESI);
+}
+
+bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI) {
+	int primer_RR = 1 + wait_time(primer_ESI) / estimated_time(primer_ESI);
+	int segundo_RR = 1 + wait_time(segundo_ESI) / estimated_time(segundo_ESI);
+
+	return segundo_RR > primer_RR;
+}
+
+int wait_time(ESI esi) {
+	return tiempo - esi.tiempo_arribo;
+}
+
+int estimated_time(ESI esi) {
+	return esi.rafaga_real * (ALFA / 100)
+			+ esi.rafaga_estimada * ((100 - ALFA) / 100);
 }
 
 void cerrar(void) {
 	cerrar_listas();
-	free(executing_ESI);
 }
 
-void ejecutar(ESI* esi_a_ejecutar) {
-	int socket_ESI = executing_ESI->socket;
+void ejecutar(ESI esi_a_ejecutar) {
+	int socket_ESI = esi_a_ejecutar.socket;
 
 	loggear("Enviando orden de ejecucion.");
-	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar->id };
+	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
 
 	int packageSize = sizeof(orden_ejecucion.aviso)
 			+ sizeof(orden_ejecucion.id);
@@ -319,7 +399,7 @@ void ejecutar(ESI* esi_a_ejecutar) {
 		cerrar();
 		log_error(logger, "Fallo el envio. Terminando ESI.");
 
-		kill_ESI(esi_a_ejecutar->socket);
+		kill_ESI(esi_a_ejecutar);
 
 		free(message);
 		return;
@@ -327,7 +407,7 @@ void ejecutar(ESI* esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
-	list_remove(ESIs, esi_a_ejecutar->id);
+	list_remove(ESIs, esi_a_ejecutar.id);
 
 	free(message);
 }

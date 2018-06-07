@@ -125,7 +125,7 @@ int chequear_solicitud(int socket_cliente) {
 	} else {
 		log_error(logger, "Fallo la peticion. Terminando ESI.");
 
-		kill_ESI(socket_cliente);
+		terminar_conexion(socket_cliente);
 	}
 
 	deserializar_aviso(&(aviso_cliente), &(package));

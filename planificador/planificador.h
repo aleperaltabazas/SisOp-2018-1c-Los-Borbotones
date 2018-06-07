@@ -10,6 +10,8 @@
 
 #include <shared-library.h>
 
+#define ALFA 50
+
 //Estructuras
 typedef struct algoritmo {
 	enum {
@@ -21,23 +23,40 @@ typedef struct algoritmo {
 typedef struct ESI {
 	int id;
 	int socket;
+	int rafaga_estimada;
+	int rafaga_real;
+	int tiempo_arribo;
 } ESI;
 
-typedef struct esi_mem{
+typedef struct t_esi_node{
+	int index;
 	ESI esi;
-	int sockfd;
-} esi_thread_buffer;
+	struct t_esi_node* sgte;
+} t_esi_node;
+
+typedef struct t_esi_list{
+	t_esi_node* head;
+} t_esi_list;
 
 //Variables locales
 
 int ESI_id;
+ESI esi_vacio = {
+		.id = 0,
+		.socket = 0
+};
+
+int tiempo;
+
 t_list * ESIs;
 t_list * ESIs_bloqueados;
 t_list * ESIs_en_ejecucion;
 t_list * ESIs_listos;
 t_list * ESIs_finalizados;
 
-ESI* executing_ESI;
+ESI executing_ESI;
+
+t_esi_list new_ESIs;
 
 algoritmo algoritmo_planificacion;
 
@@ -118,7 +137,7 @@ void desalojar(void);
 	 * 		void
 	 */
 
-void ejecutar(ESI* esi_a_ejecutar);
+void ejecutar(ESI esi_a_ejecutar);
 	/*
 	 * Descripción: avisa a un proceso ESI que ejecute a través de su socket.
 	 * Argumentos:
@@ -147,39 +166,78 @@ void cerrar_listas(void);
 	 * 		void
 	 */
 
-int asignar_ID(int socket_ESI);
+int asignar_ID(ESI esi);
 	/*
 	 * Descripción: asigna un ID a un proceso ESI y devuelve el mismo valor como identificador.
 	 * Argugmentos:
-	 * 		int socket_ESI: socket del proceso ESI a asignar.
+	 * 		ESI esi: proceso ESI a asignar.
 	 */
 
-void kill_ESI(int socket_ESI);
+void kill_ESI(ESI esi);
 	/*
 	 * Descripción: le indica a un ESI que termine.
 	 * Argumentos:
-	 * 		int socket_ESI: socket del proceso ESI a terminar.
+	 * 		ESI esi: esi a terminar.
 	 */
 
-ESI* first(t_list* lista);
+ESI first(t_esi_list lista);
 	/*
 	 * Descripción: devuelve el primer elemento de la lista.
 	 * Argumentos:
-	 * 		t_list* lista: lista a obtener el elemento.
+	 * 		t_esi_list* lista: lista a obtener el elemento.
 	 */
 
-ESI* shortest(t_list* lista);
+ESI shortest(t_esi_list lista);
 	/*
 	 * Descripción: devuelve el elemento cuyo tiempo de ejecución es menor.
 	 * Argumentos:
-	 * 		t_list* lista: lista a obtener el elemento.
+	 * 		t_esi_list* lista: lista a obtener el elemento.
 	 */
 
-ESI* highest_RR(t_list* lista);
+ESI highest_RR(t_esi_list lista);
 	/*
 	 * Descripción: devuelve el elemento cuyo RR es mayor.
 	 * Argumentos:
-	 * 		t_list* lista: lista a obtener el elemento.
+	 * 		t_esi_list* lista: lista a obtener el elemento.
+	 */
+
+void agregar_ESI(t_esi_list* lista, ESI esi);
+	/*
+	 * Descripción: agrega un ESI a la lista.
+	 * Argumentos:
+	 * 		t_esi_list* lista: lista a agregar el elemento.
+	 * 		ESI esi: esi a agregar a la lista.
+	 */
+
+bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);
+	/*
+	 * Descripción: devuelve si el segundo ESI tiene mayor RR que el primero.
+	 * Argumentos:
+	 * 		ESI primer_ESI: ESI a comparar.
+	 * 		ESI segundo_ESI: ESI a comparar.
+	 */
+
+bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI);
+	/*
+	 * Descripción: devuelve si el segundo ESI tiene una duración de ráfaga estimada
+	 * 		menor al primero.
+	 * Argumentos:
+	 * 		ESI primer_ESI: ESI a comparar.
+	 * 		ESI segundo_ESI: ESI a comparar.
+	 */
+
+int wait_time(ESI esi);
+	/*
+	 * Descripción: devuelve el tiempo de espera de un ESI.
+	 * Argumentos:
+	 * 		ESI esi: el ESI a obtener su tiempo de espera.
+	 */
+
+int estimated_time(ESI esi);
+	/*
+	 * Descripción: devuelve la duración estimada de ráfaga de un ESI.
+	 * Arguentos:
+	 * 		ESI esi: el ESI a obtener su duración de ráfaga.
 	 */
 
 #endif /* PLANIFICADOR_H_ */

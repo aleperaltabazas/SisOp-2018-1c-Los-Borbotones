@@ -7,31 +7,25 @@
 
 #include "shared-library.h"
 
-void kill_ESI(int socket_cliente) {
-	int status = 1;
-	aviso_ESI orden_cierre = { .aviso = -1 };
+void terminar_conexion(int sockfd) {
 
-	int packageSize = sizeof(orden_cierre.aviso) + sizeof(orden_cierre.id);
-	char* message = malloc(packageSize);
+	aviso_ESI aviso = {
+			.aviso = -1
+	};
 
-	serializar_aviso(orden_cierre, &message);
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
 
-	loggear("Terminando...");
+	serializar_aviso(aviso, &package);
 
-	while (status) {
-		int envio = send(socket_cliente, message, packageSize, 0);
+	int envio = send(sockfd, package, packageSize, 0);
 
-		status = 0;
-
-		if (envio < 0) {
-			loggear("Fallo el envio. Intentando de nuevo en 5.");
-			status = 1;
-
-			sleep(5);
-		}
+	if (envio < 0) {
+		loggear("Fallo la terminación. Intentando de vuelta.");
+		terminar_conexion(sockfd);
 	}
 
-	loggear("Aviso exitoso.");
+	loggear("Terminación exitosa.");
 }
 
 void serializar_pedido(package_pedido pedido, char** message) {
