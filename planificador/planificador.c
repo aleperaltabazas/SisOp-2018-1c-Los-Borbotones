@@ -107,7 +107,7 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 
-		loggear(mensajeESILista);
+		//loggear(mensajeESILista);
 
 		pthread_detach(hilo_ESI);
 	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
