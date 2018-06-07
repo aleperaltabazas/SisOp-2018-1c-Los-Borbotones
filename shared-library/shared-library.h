@@ -148,5 +148,11 @@ void loggear(char* mensaje);
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
+void kill_ESI(int socket_cliente);
+	/*
+	 * Descripción: envia una orden de terminación a un ESI.
+	 * Argumentos:
+	 * 		int socket_cliente: el socket del ESI.
+	 */
 
 #endif /* SHARED_LIBRARY_H_ */

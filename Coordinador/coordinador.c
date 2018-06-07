@@ -109,35 +109,40 @@ void* atender_ESI(void* un_socket) {
 }
 
 int chequear_solicitud(int socket_cliente) {
-	package_pedido pedido;
-	package_pedido respuesta = { .pedido = 1 };
+	aviso_ESI aviso_cliente;
+	aviso_ESI aviso_servidor = { .aviso = 1 };
 
-	int packageSize = sizeof(pedido.pedido);
+	int packageSize = sizeof(aviso_cliente.aviso) + sizeof(aviso_cliente.id);
 	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
 
-	//Me gustaria mas que la respuesta se envie como bool
+	//Me gustaria mas que la aviso_servidor se envie como bool
 
 	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
 	if (res != 0) {
 		loggear("Mensaje recibido del ESI.");
 	} else {
-		salir_con_error("Fallo la peticion.", socket_cliente);
+		log_error(logger, "Fallo la peticion. Terminando ESI.");
+
+		kill_ESI(socket_cliente);
 	}
 
-	deserializar_pedido(&(pedido), &(package));
+	deserializar_aviso(&(aviso_cliente), &(package));
 
-	if (pedido.pedido == 0) {
+	if (aviso_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	} else if (pedido.pedido != 1) {
+	} else if (aviso_cliente.aviso != 1) {
 		loggear("Peticion erronea.");
 	}
 
-	serializar_pedido(respuesta, &message);
+	serializar_aviso(aviso_servidor, &message);
 
 	send(socket_cliente, message, packageSize, 0);
+
+	free(message);
+	free(package);
 
 	return 1;
 }

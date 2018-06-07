@@ -17,8 +17,8 @@ int this_id;
 int main(int argc, char** argv) {
 	iniciar(argv);
 
-	int socket_coordinador /*= conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajeESI)*/;
+	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+			mensajeESI);
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
 			mensajeESI);
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-int recibir_ID(int server_socket){
+int recibir_ID(int server_socket) {
 	aviso_ESI aviso;
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* package = malloc(packageSize);
@@ -51,14 +51,14 @@ int recibir_ID(int server_socket){
 
 	deserializar_aviso(&(aviso), &(package));
 
-	if(aviso.aviso == 0){
-		salir_con_error("Fin de este ESI por parte del planificador", server_socket);
-	}
-	else if(aviso.aviso != 1){
+	if (aviso.aviso == 0) {
+		salir_con_error("Fin de este ESI por parte del planificador",
+				server_socket);
+	} else if (aviso.aviso != 1) {
 		salir_con_error("Orden desconocida.", server_socket);
 	}
 
-	if (res != 0){
+	if (res != 0) {
 		log_trace(logger, "ID: %i", aviso.id);
 	}
 
@@ -68,19 +68,18 @@ int recibir_ID(int server_socket){
 }
 
 void ready(int socket_planificador) {
-	aviso_ESI aviso = {
-		.aviso = 42,
-		.id = this_id
-	};
+	aviso_ESI aviso = { .aviso = 1, .id = this_id };
 
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
 	serializar_aviso(aviso, &message);
 
+	loggear("Serialice bien.");
+
 	int envio = send(socket_planificador, message, packageSize, 0);
 
-	if (envio < 0){
+	if (envio < 0) {
 		salir_con_error("Fallo el envio", socket_planificador);
 	}
 
@@ -92,9 +91,9 @@ void ready(int socket_planificador) {
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 	loggear("Esperando orden de ejecucion del planificador.");
 
-	package_pedido orden;
+	aviso_ESI orden;
 
-	int packageSize = sizeof(orden.pedido);
+	int packageSize = sizeof(orden.aviso) + sizeof(orden.id);
 	char *package = malloc(packageSize);
 
 	int res = recv(socket_planificador, (void*) package, packageSize, 0);
@@ -106,11 +105,18 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		salir_con_error("Fallo la orden.", socket_planificador);
 	}
 
-	deserializar_pedido(&(orden), &(package));
+	deserializar_aviso(&(orden), &(package));
 
-	if (orden.pedido != 1) {
+	if (orden.aviso == -1) {
 		close(socket_coordinador);
-		salir_con_error("Orden invalida.", socket_planificador);
+		loggear("Orden de terminación.");
+		exit(1);
+	} else if (orden.aviso == 2) {
+		loggear(
+				"Orden de ejecucion recibida. Solicitando permiso al coordinador.");
+	} else {
+		close(socket_coordinador);
+		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 
 	if (solicitar_permiso(socket_coordinador)) {
@@ -123,6 +129,8 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 void ejecutar(void) {
 	list_remove(lineas_parseadas, 0);
+
+	sleep(5);
 }
 
 void iniciar(char** argv) {

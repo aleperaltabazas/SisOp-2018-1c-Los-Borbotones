@@ -21,8 +21,12 @@ typedef struct algoritmo {
 typedef struct ESI {
 	int id;
 	int socket;
-	pthread_t hilo;
 } ESI;
+
+typedef struct esi_mem{
+	ESI esi;
+	int sockfd;
+} esi_thread_buffer;
 
 //Variables locales
 
@@ -99,12 +103,12 @@ void iniciar(void);
 	 * 		void
 	 */
 
-void planificar(int sockfd);
+void planificar(void);
 	/*
 	 * Descripción: decide cuál es el siguiente ESI a ejecutar, dependiendo del algoritmo
 	 * 		que se use en el momento.
 	 * Argumentos:
-	 * 		int sockfd: socket del proceso a ejecutar.
+	 * 		void
 	 */
 
 void desalojar(void);
@@ -114,14 +118,14 @@ void desalojar(void);
 	 * 		void
 	 */
 
-void ejecutar(int sockfd);
+void ejecutar(ESI* esi_a_ejecutar);
 	/*
 	 * Descripción: avisa a un proceso ESI que ejecute a través de su socket.
 	 * Argumentos:
-	 * 		int sockfd: socket del cliente.
+	 * 		ESI* esi_a_ejecutar: proximo ESI a ejecutar.
 	 */
 
-void copiar_a(void* esi_copiado, ESI* esi_receptor);
+void deserializar_esi(void* esi_copiado, ESI* esi_receptor);
 	/*
 	 * Descripción: copia un buffer de memoria a un tipo ESI*.
 	 * Argumentos:
@@ -177,6 +181,5 @@ ESI* highest_RR(t_list* lista);
 	 * Argumentos:
 	 * 		t_list* lista: lista a obtener el elemento.
 	 */
-
 
 #endif /* PLANIFICADOR_H_ */

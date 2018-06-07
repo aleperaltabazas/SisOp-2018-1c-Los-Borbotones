@@ -7,6 +7,33 @@
 
 #include "shared-library.h"
 
+void kill_ESI(int socket_cliente) {
+	int status = 1;
+	aviso_ESI orden_cierre = { .aviso = -1 };
+
+	int packageSize = sizeof(orden_cierre.aviso) + sizeof(orden_cierre.id);
+	char* message = malloc(packageSize);
+
+	serializar_aviso(orden_cierre, &message);
+
+	loggear("Terminando...");
+
+	while (status) {
+		int envio = send(socket_cliente, message, packageSize, 0);
+
+		status = 0;
+
+		if (envio < 0) {
+			loggear("Fallo el envio. Intentando de nuevo en 5.");
+			status = 1;
+
+			sleep(5);
+		}
+	}
+
+	loggear("Aviso exitoso.");
+}
+
 void serializar_pedido(package_pedido pedido, char** message) {
 	memcpy(*message, &(pedido.pedido), sizeof(pedido.pedido));
 }
@@ -15,17 +42,17 @@ void deserializar_pedido(package_pedido *pedido, char** package) {
 	memcpy(&pedido->pedido, *package, sizeof(pedido->pedido));
 }
 
-void serializar_aviso(aviso_ESI aviso, char** message){
+void serializar_aviso(aviso_ESI aviso, char** message) {
 	int offset = 0;
 
 	memcpy(*message, &(aviso.aviso), sizeof(aviso.aviso));
 
 	offset = sizeof(aviso.aviso);
 
-	memcpy(*message + offset, &(aviso.id),sizeof(aviso.id));
+	memcpy(*message + offset, &(aviso.id), sizeof(aviso.id));
 }
 
-void deserializar_aviso(aviso_ESI *aviso, char** package){
+void deserializar_aviso(aviso_ESI *aviso, char** package) {
 	int offset = 0;
 
 	memcpy(&aviso->aviso, *package, sizeof(aviso->aviso));
@@ -37,12 +64,12 @@ void deserializar_aviso(aviso_ESI *aviso, char** package){
 
 void avisar_cierre(int server_socket) {
 	int status = 1;
-	package_pedido pedido_de_fin = { .pedido = 0 };
+	aviso_ESI aviso_de_fin = { .aviso = 0 };
 
-	int packageSize = sizeof(pedido_de_fin.pedido);
+	int packageSize = sizeof(aviso_de_fin.aviso) + sizeof(aviso_de_fin.id);
 	char *message = malloc(packageSize);
 
-	serializar_pedido(pedido_de_fin, &message);
+	serializar_aviso(aviso_de_fin, &message);
 
 	loggear("Enviando aviso de fin.");
 
@@ -51,7 +78,7 @@ void avisar_cierre(int server_socket) {
 
 		status = 0;
 
-		if(envio < 0){
+		if (envio < 0) {
 			loggear("Fallo el envio. Intentando de nuevo en 5.");
 			status = 1;
 
