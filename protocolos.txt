@@ -4,8 +4,12 @@ En este .txt guardamos los protocolos de conexión que tengamos para tenerlo cen
 
 package_pedido
 aviso_ESI
+orden_del_coordinador
 
 # ESTRUCTURAS CON SERIALIZACIÓN DINÁMICA
+
+valores_set
+valores_store (sin implementar)
 
 # MANEJO DE MENSAJES
 

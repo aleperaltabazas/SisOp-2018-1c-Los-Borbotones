@@ -24,7 +24,17 @@ int main(int argc, char** argv) {
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
 
-	caso_de_prueba_5();
+	while(disponibilidad_de_conexion){
+			orden_del_coordinador orden;
+			orden = recibir_orden_coordinador(socket_coordinador);
+			switch(orden.codigo_operacion){
+			case 11: loggear("SET"); /*set(orden.tamanio_a_enviar, socket_coordinador);*/ break;
+			//case 12: loggear("STORE"); store(orden.tamanio_a_enviar, socket_coordinador); break;
+			default: loggear("ERROR"); break;
+		}
+	}
+
+	//caso_de_prueba_5();
 
 	leer_valores_almacenados();
 
@@ -49,6 +59,61 @@ void inicializar(int cantidad_entradas, int tamanio_entrada){
 			entradas_disponibles[i] = 0;
 			tamanios_de_valor_de_entradas_ocupadas[i] = 0;
 	}
+
+	list_create(entradas);
+}
+
+orden_del_coordinador recibir_orden_coordinador(int socket_coordinador){
+
+	orden_del_coordinador orden;
+	orden_del_coordinador * buffer_orden = malloc(2 * sizeof(uint32_t));
+
+	recv(socket_coordinador, (void*) buffer_orden, 2 * sizeof(uint32_t), MSG_WAITALL);
+
+	memcpy(&orden.codigo_operacion, buffer_orden, sizeof(orden.codigo_operacion));
+	memcpy(&orden.tamanio_a_enviar, buffer_orden + sizeof(orden.codigo_operacion), sizeof(orden.tamanio_a_enviar));
+
+	log_trace(logger, "tamanio: %d", orden.tamanio_a_enviar);
+
+	return orden;
+}
+
+void set(uint32_t longitud_parametros, int socket_coordinador){
+	/*
+
+	valores_set valores;
+	valores_set * buffer_valores = malloc(longitud_parametros);
+
+	loggear("Esperando valores");
+
+	recv(socket_coordinador, (void*) buffer_valores, longitud_parametros, MSG_WAITALL);
+
+	loggear("Valor recibido, deserializando...");
+
+	int offset = 0;
+
+	memcpy(&valores.tamanio_clave, buffer_valores, sizeof(uint32_t));
+
+	offset += sizeof(uint32_t);
+
+	memcpy(&valores.clave, buffer_valores + offset, valores.tamanio_clave);
+
+	offset += valores.tamanio_clave;
+
+	memcpy(&valores.tamanio_valor, buffer_valores + offset, sizeof(uint32_t));
+
+	offset += sizeof(uint32_t);
+
+	memcpy(&valores.valor, buffer_valores + offset, valores.tamanio_valor);
+
+	log_trace(logger, "Clave: %s Valor: %s", valores.clave, valores.valor);
+
+	*/
+
+	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
+	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar la clave (veo si entra)
+	//Si puedo almacenar creo un struct entrada con los valores que me dieron y dandole una posicion por la cual acceder
+
 }
 
 int almacenar_valor(){
@@ -124,6 +189,8 @@ void actualizar_entradas(int pos_entrada, int entradas_que_ocupa){
 		entradas_disponibles[siguiente] = 2;
 		siguiente ++;
 	}
+
+	return;
 }
 
 char * leer_valor(int posicion){

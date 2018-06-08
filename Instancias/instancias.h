@@ -46,6 +46,19 @@ char * leer_valor(int posicion);
 void leer_valores_almacenados();
 int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa, int entrada);
 
+//Aca guardo todos los structs entrada para poder referenciarlos
+t_list * entradas;
+
+//Estructura de las entradas
+typedef struct entrada{
+	char clave[40];
+	uint32_t pos_valor;
+	uint32_t tamanio_valor;
+} entrada;
+
+//Funciones para el coordinador
+orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);
+
 //Casos de prueba
 void caso_de_prueba_1();
 void caso_de_prueba_2();
