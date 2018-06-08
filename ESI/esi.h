@@ -80,7 +80,7 @@ FILE* levantar_archivo(char* archivo);
 	 * 		char* archivo: el archivo a abrir.
 	 */
 
-bool solicitar_permiso(int socket_coordinador);
+bool solicitar_permiso(int socket_coordinador, aviso_ESI aviso);
 	/*
 	 * Descripción: devuelve un booleano si puede ejecutar la próxima instrucción o no.
 	 * Argumentos:
@@ -116,9 +116,17 @@ aviso_ESI ejecutar(int socket_planificador, int socket_coordinador);
 	/*
 	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
 	 * 		e informa el resultado al coordinador.
-	 * Arumgnetos:
+	 * Argumentos:
 	 * 		int socket_planificador: socket del planificador.
 	 * 		int socket_coordinador: socket del coordinador.
+	 */
+
+aviso_ESI determinar_operacion(void);
+	/*
+	 * Descripción: devuelve un aviso_ESI con el código de aviso según el tipo de instrucción
+	 * 		correspondiente (11 GET, 12 SET, 13 STORE).
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* ESI_H_ */

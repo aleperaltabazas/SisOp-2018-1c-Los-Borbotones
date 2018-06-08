@@ -179,7 +179,6 @@ void* atender_ESI(void* buffer) {
 		}
 
 		else if (aviso.aviso == 1) {
-			pthread_mutex_unlock(&semaforo_ejecucion);
 			esi.tiempo_arribo = tiempo;
 
 			esi.rafaga_estimada = estimated_time(esi);
@@ -306,7 +305,6 @@ void planificar(void) {
 
 		log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
 
-		pthread_mutex_lock(&semaforo_ejecucion);
 		ejecutar(executing_ESI);
 
 		return;

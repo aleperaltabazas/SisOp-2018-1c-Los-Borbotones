@@ -108,41 +108,86 @@ void* atender_ESI(void* un_socket) {
 	return NULL;
 }
 
+aviso_ESI revisar_clave(char* clave) {
+	aviso_ESI ret_aviso = { .aviso = 1 };
+
+	loggear("Clave disponible.");
+
+	return ret_aviso;
+}
+
+aviso_ESI settear_valor(char* clave, char* valor) {
+	aviso_ESI ret_aviso = { .aviso = 1 };
+
+	loggear("Valor asignado.");
+
+	return ret_aviso;
+}
+
+aviso_ESI hacer_store(char* clave) {
+	aviso_ESI ret_aviso = { .aviso = 1 };
+
+	loggear("Clave guardada.");
+
+	return ret_aviso;
+}
+
 int chequear_solicitud(int socket_cliente) {
-	aviso_ESI aviso_cliente;
 	aviso_ESI aviso_servidor = { .aviso = 1 };
+	aviso_ESI pedido_cliente;
 
-	int packageSize = sizeof(aviso_cliente.aviso) + sizeof(aviso_cliente.id);
-	char *message = malloc(packageSize);
+	package_ESI package_cliente;
+
+	int packageSize = sizeof(aviso_servidor.aviso) + sizeof(aviso_servidor.id);
 	char *package = malloc(packageSize);
+	char *message = malloc(packageSize);
 
-	//Me gustaria mas que la aviso_servidor se envie como bool
+	/*int status = recibir_y_deserializar(&package_cliente, socket_cliente);
 
-	int res = recv(socket_cliente, (void*) package, packageSize, 0);
+	 if (!status) {
+	 loggear("Recepción fallida. Abortando ESI.");
+	 terminar_conexion(socket_cliente);
+	 return 0;
+	 }*/
+
+	int res = recv(socket_cliente, package, packageSize, 0);
 
 	if (res != 0) {
-		loggear("Mensaje recibido del ESI.");
-	} else {
-		log_error(logger, "Fallo la peticion. Terminando ESI.");
+		loggear("Mensaje recibido desde el ESI.");
+	}
+
+	else {
+		loggear("Mensaje erróneo. Abortando ESI.");
 
 		terminar_conexion(socket_cliente);
 	}
 
-	deserializar_aviso(&(aviso_cliente), &(package));
+	deserializar_aviso(&(pedido_cliente), &(package));
 
-	if (aviso_cliente.aviso == 0) {
+	if (package_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	} else if (aviso_cliente.aviso != 1) {
-		loggear("Peticion erronea.");
+	}
+
+	else if (package_cliente.aviso == 11) {
+		loggear("Hizo GET.");
+	}
+
+	else if (package_cliente.aviso == 12) {
+		loggear("Hizo SET.");
+	}
+
+	else if (package_cliente.aviso == 13) {
+		loggear("Hizo STORE.");
 	}
 
 	serializar_aviso(aviso_servidor, &message);
 
 	send(socket_cliente, message, packageSize, 0);
 
+	loggear("Solicitud confirmada.");
+
 	free(message);
-	free(package);
 
 	return 1;
 }

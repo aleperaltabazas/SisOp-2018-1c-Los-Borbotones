@@ -30,6 +30,7 @@
 #define PACKAGE_SIZE 1024
 #define LINE_MAX 40
 #define ESTIMACION_INICIAL 3
+#define MAX_MESSAGE_SIZE 300
 
 //Variables super globales
 
@@ -50,6 +51,15 @@ typedef struct aviso_ESI{
 typedef struct package_permiso {
 	uint32_t pedido;
 } package_pedido;
+
+typedef struct package_ESI{
+	int aviso;
+	char* clave;
+	int long_clave;
+	char* valor;
+	int long_valor;
+	int size;
+} __attribute__((packed)) package_ESI;
 
 //Funciones servidor
 

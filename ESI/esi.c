@@ -167,31 +167,11 @@ t_esi_operacion first(t_parsed_list lista) {
 }
 
 aviso_ESI ejecutar(int socket_planificador, int socket_coordinador) {
-	//list_remove(lineas_parseadas, 0);
+	aviso_ESI ret_aviso = determinar_operacion();
+	ret_aviso.id = this_id;
 
-	t_esi_operacion parsed = first(parsed_ops);
-	aviso_ESI ret_aviso = {
-			.id = this_id
-	};
-
-	if(!solicitar_permiso(socket_coordinador)){
+	if (!solicitar_permiso(socket_coordinador, ret_aviso)) {
 		return aviso_bloqueo;
-	}
-
-	if (parsed.valido) {
-		switch (parsed.keyword) {
-		case GET:
-			ret_aviso.aviso = 11;
-			break;
-		case SET:
-			ret_aviso.aviso = 12;
-			break;
-		case STORE:
-			ret_aviso.aviso = 13;
-			break;
-		default:
-			break;
-		}
 	}
 
 	eliminar_parseo(&parsed_ops);
@@ -235,19 +215,76 @@ FILE* levantar_archivo(char* archivo) {
 	return fp;
 }
 
-bool solicitar_permiso(int socket_coordinador) {
-	aviso_ESI pedido_permiso = { .aviso = 1 };
+aviso_ESI determinar_operacion(void) {
+	aviso_ESI ret_aviso;
+	t_esi_operacion parsed = first(parsed_ops);
+
+	switch (parsed.keyword) {
+	case GET:
+		ret_aviso.aviso = 11;
+		break;
+	case SET:
+		ret_aviso.aviso = 12;
+		break;
+	case STORE:
+		ret_aviso.aviso = 13;
+		break;
+	default:
+		break;
+	}
+
+	return ret_aviso;
+}
+
+void get_clave(char* clave) {
+	t_esi_operacion parsed = first(parsed_ops);
+
+	switch (parsed.keyword) {
+	case GET:
+		strcpy(clave, parsed.argumentos.GET.clave);
+		break;
+	case SET:
+		strcpy(clave, parsed.argumentos.SET.clave);
+		break;
+	case STORE:
+		strcpy(clave, parsed.argumentos.STORE.clave);
+		break;
+	}
+}
+
+void get_valor(char* valor) {
+	t_esi_operacion parsed = first(parsed_ops);
+
+	strcpy(valor, parsed.argumentos.SET.valor);
+}
+
+bool es_set(aviso_ESI solicitud) {
+	return solicitud.aviso == 12;
+}
+
+bool solicitar_permiso(int socket_coordinador, aviso_ESI aviso) {
 	aviso_ESI respuesta;
 
+	package_ESI package_pedido;
+
 	int packageSize = sizeof(aviso_ESI);
-	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
+	char *message = malloc(packageSize);
 
-	serializar_aviso(pedido_permiso, &message);
+	/*char* serialized_package = serializar_package(&package_pedido);
 
-	send(socket_coordinador, message, packageSize, 0);
+	int envio = send(socket_coordinador, serialized_package,
+			package_pedido.size, 0);*/
 
-	loggear("Solicitud enviada.");
+	serializar_aviso(aviso, &message);
+
+	int envio = send(socket_coordinador, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Fallo la solicitud", socket_coordinador);
+	}
+
+	loggear("Se envió correctamente la solicitud. Esperando respuesta.");
 
 	int res = recv(socket_coordinador, (void*) package, packageSize, 0);
 
@@ -260,6 +297,7 @@ bool solicitar_permiso(int socket_coordinador) {
 	deserializar_aviso(&(respuesta), &(package));
 
 	free(package);
+	free(message);
 
 	return respuesta.aviso == 1;
 }
