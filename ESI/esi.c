@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 
 	this_id = recibir_ID(socket_planificador);
 
-	ready(socket_planificador);
+	ready(socket_planificador, aviso_ready);
 
 	while (parsed_ops.head->sgte != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
@@ -104,9 +104,7 @@ int recibir_ID(int server_socket) {
 	return aviso.id;
 }
 
-void ready(int socket_planificador) {
-	aviso_ESI aviso = { .aviso = 1, .id = this_id };
-
+void ready(int socket_planificador, aviso_ESI aviso) {
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
@@ -156,10 +154,9 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 
-	if (solicitar_permiso(socket_coordinador)) {
-		ejecutar(socket_planificador, socket_coordinador);
-	}
-	ready(socket_planificador);
+	aviso_ESI aviso = ejecutar(socket_planificador, socket_coordinador);
+
+	ready(socket_planificador, aviso);
 
 }
 
@@ -169,18 +166,28 @@ t_esi_operacion first(t_parsed_list lista) {
 	return parsed;
 }
 
-void ejecutar(int socket_planificador, int socket_coordinador) {
+aviso_ESI ejecutar(int socket_planificador, int socket_coordinador) {
 	//list_remove(lineas_parseadas, 0);
 
 	t_esi_operacion parsed = first(parsed_ops);
+	aviso_ESI ret_aviso = {
+			.id = this_id
+	};
+
+	if(!solicitar_permiso(socket_coordinador)){
+		return aviso_bloqueo;
+	}
 
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
+			ret_aviso.aviso = 11;
 			break;
 		case SET:
+			ret_aviso.aviso = 12;
 			break;
 		case STORE:
+			ret_aviso.aviso = 13;
 			break;
 		default:
 			break;
@@ -189,7 +196,9 @@ void ejecutar(int socket_planificador, int socket_coordinador) {
 
 	eliminar_parseo(&parsed_ops);
 
-	sleep(10);
+	sleep(5);
+
+	return ret_aviso;
 }
 
 void iniciar(char** argv) {
@@ -227,14 +236,14 @@ FILE* levantar_archivo(char* archivo) {
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	package_pedido pedido_permiso = { .pedido = 1 };
-	package_pedido respuesta;
+	aviso_ESI pedido_permiso = { .aviso = 1 };
+	aviso_ESI respuesta;
 
-	int packageSize = sizeof(pedido_permiso.pedido);
+	int packageSize = sizeof(aviso_ESI);
 	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
 
-	serializar_pedido(pedido_permiso, &message);
+	serializar_aviso(pedido_permiso, &message);
 
 	send(socket_coordinador, message, packageSize, 0);
 
@@ -248,11 +257,11 @@ bool solicitar_permiso(int socket_coordinador) {
 		salir_con_error("Fallo la solicitud.", socket_coordinador);
 	}
 
-	deserializar_pedido(&(respuesta), &(package));
+	deserializar_aviso(&(respuesta), &(package));
 
 	free(package);
 
-	return respuesta.pedido == 1;
+	return respuesta.aviso == 1;
 }
 
 t_esi_operacion parsear(char* line) {

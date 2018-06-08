@@ -1,0 +1,31 @@
+En este .txt guardamos los protocolos de conexión que tengamos para tenerlo centralizado en algún lugar y poder recordar para qué es cada cosa.
+
+# ESTRUCTURAS CON SERIALIZACIÓN ESTÁTICA
+
+package_pedido
+aviso_ESI
+
+# ESTRUCTURAS CON SERIALIZACIÓN DINÁMICA
+
+# MANEJO DE MENSAJES
+
+ESIs a Planificador:
+	0: fin de ESI
+	1: ready
+	5: bloqueado
+	11: hizo GET
+	12: hizo SET
+	13: hizo STORE
+
+ESIs a Coordinador:
+	1: solicitar recurso
+
+Coordinador a ESI:
+	1: petición de recurso aceptada
+
+Planificador a ESI:
+	-1: terminar ESI
+	2: ejecución
+	2: bloqueado
+
+		

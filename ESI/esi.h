@@ -13,6 +13,14 @@
 
 //Variables locales
 
+aviso_ESI aviso_ready = {
+		.aviso = 1
+};
+
+aviso_ESI aviso_bloqueo = {
+		.aviso = 5
+};
+
 typedef struct t_parsed_node{
 	int index;
 	t_esi_operacion esi_op;
@@ -87,11 +95,12 @@ void avisar_cierre(int sockfd);
 	 * 		int sockfd: socket al cuál se enviará el mensaje de cierre.
 	 */
 
-void ready(int sockfd);
+void ready(int sockfd, aviso_ESI aviso);
 	/*
 	 * Descripción: le informa al planificador que se encuentra listo para ejecutarse.
 	 * Argumentos:
-	 * 		int socket_planificador: socket del planificador.
+	 * 		int sockfd: socket del planificador.
+	 * 		aviso_ESI aviso: el aviso a enviar.
 	 */
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador);
@@ -103,7 +112,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	 * 		int socket_planificador: socket del planificador.
 	 */
 
-void ejecutar(int socket_planificador, int socket_coordinador);
+aviso_ESI ejecutar(int socket_planificador, int socket_coordinador);
 	/*
 	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
 	 * 		e informa el resultado al coordinador.

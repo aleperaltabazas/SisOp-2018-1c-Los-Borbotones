@@ -191,6 +191,25 @@ void* atender_ESI(void* buffer) {
 
 		}
 
+		else if (aviso.aviso == 5) {
+			log_trace(logger, "ESI número %i bloqueado", this_id);
+		}
+
+		else if (aviso.aviso == 11) {
+			agregar_ESI(&new_ESIs, esi);
+			loggear("Hizo GET.");
+		}
+
+		else if (aviso.aviso == 12) {
+			agregar_ESI(&new_ESIs, esi);
+			loggear("Hizo SET.");
+		}
+
+		else if (aviso.aviso == 13) {
+			agregar_ESI(&new_ESIs, esi);
+			loggear("Hizo STORE.");
+		}
+
 		else {
 			cerrar();
 			loggear("El ESI se volvió loco. Terminando.");
@@ -319,7 +338,6 @@ void planificar(void) {
 
 	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
 
-	pthread_mutex_lock(&semaforo_ejecucion);
 	ejecutar(executing_ESI);
 
 }
