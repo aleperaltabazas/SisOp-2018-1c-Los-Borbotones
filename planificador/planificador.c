@@ -146,11 +146,20 @@ void* atender_ESI(void* buffer) {
 		deserializar_aviso(&(aviso), &(package));
 
 		if (aviso.aviso == 0) {
-			loggear("ESI terminado.");
+			loggear(
+					"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
 
 			//procesar_cierre(socket_ESI);
 
-			list_remove(ESIs, this_id);
+			//list_remove(ESIs, this_id);
+
+			agregar_ESI(&finished_ESIs, esi);
+
+			loggear("Agregado correctamente a la cola de terminados.");
+
+			eliminar_ESI(&new_ESIs, esi);
+
+			loggear("Eliminado correctamente de la cola de listos.");
 
 			break;
 		}
@@ -172,6 +181,8 @@ void* atender_ESI(void* buffer) {
 
 		planificar();
 	}
+
+	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
 
 	return NULL;
 }
@@ -325,6 +336,26 @@ ESI first(t_esi_list lista) {
 
 }
 
+void eliminar_ESI(t_esi_list* lista, ESI esi) {
+	if (lista->head != NULL) {
+		ESI head = first(*lista);
+		if (esi.id == head.id) {
+			t_esi_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_nodo(eliminado);
+		} else {
+			t_esi_node* puntero = lista->head;
+			while (puntero->esi.id != esi.id) {
+				puntero = puntero->sgte;
+			}
+
+			t_esi_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_nodo(eliminado);
+		}
+	}
+}
+
 ESI shortest(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 
@@ -407,7 +438,11 @@ void ejecutar(ESI esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
-	list_remove(ESIs, esi_a_ejecutar.id);
+	//list_remove(ESIs, esi_a_ejecutar.id);
+
+	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
+
+	loggear("ESI eliminado de la cola de la listos.");
 
 	free(message);
 }
