@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
 	ready(socket_planificador);
 
-	while (lineas_parseadas->head != NULL) {
+	while (parsed_ops.head->sgte != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
 	}
 
@@ -40,6 +40,43 @@ int main(int argc, char** argv) {
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
+}
+
+t_parsed_node* crear_nodo(t_esi_operacion parsed) {
+	t_parsed_node* nodo = (t_parsed_node*) malloc(sizeof(t_parsed_node));
+	nodo->esi_op = parsed;
+	nodo->sgte = NULL;
+
+	return nodo;
+}
+
+void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
+	t_parsed_node* nodo = crear_nodo(parsed);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_parsed_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+	return;
+}
+
+void destruir_nodo(t_parsed_node* nodo) {
+	free(nodo);
+}
+
+void eliminar_parseo(t_parsed_list* lista) {
+	if (lista->head != NULL) {
+		t_parsed_node* eliminado = lista->head;
+		lista->head = lista->head->sgte;
+		destruir_nodo(eliminado);
+	}
 }
 
 int recibir_ID(int server_socket) {
@@ -120,17 +157,39 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 	}
 
 	if (solicitar_permiso(socket_coordinador)) {
-		ejecutar();
+		ejecutar(socket_planificador, socket_coordinador);
 	}
-
 	ready(socket_planificador);
 
 }
 
-void ejecutar(void) {
-	list_remove(lineas_parseadas, 0);
+t_esi_operacion first(t_parsed_list lista) {
+	t_esi_operacion parsed = lista.head->esi_op;
 
-	sleep(5);
+	return parsed;
+}
+
+void ejecutar(int socket_planificador, int socket_coordinador) {
+	//list_remove(lineas_parseadas, 0);
+
+	t_esi_operacion parsed = first(parsed_ops);
+
+	if (parsed.valido) {
+		switch (parsed.keyword) {
+		case GET:
+			break;
+		case SET:
+			break;
+		case STORE:
+			break;
+		default:
+			break;
+		}
+	}
+
+	eliminar_parseo(&parsed_ops);
+
+	sleep(10);
 }
 
 void iniciar(char** argv) {
@@ -144,11 +203,12 @@ void iniciar(char** argv) {
 	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
 	//FILE* archivo_de_parseo = levantar_archivo("script.esi");
 
-	t_esi_operacion* parsed = malloc(sizeof(t_esi_operacion));
+	t_esi_operacion parsed;
 
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
-		*parsed = parsear(line);
-		list_add(lineas_parseadas, parsed);
+		parsed = parsear(line);
+		//list_add(lineas_parseadas, parsed);
+		agregar_parseo(&parsed_ops, parsed);
 	}
 
 	return;

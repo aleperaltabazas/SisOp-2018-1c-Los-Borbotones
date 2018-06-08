@@ -13,6 +13,18 @@
 
 //Variables locales
 
+typedef struct t_parsed_node{
+	int index;
+	t_esi_operacion esi_op;
+	struct t_parsed_node* sgte;
+} t_parsed_node;
+
+typedef struct t_parsed_list{
+	t_parsed_node* head;
+} t_parsed_list;
+
+t_parsed_list parsed_ops;
+
 t_list* lineas_parseadas;
 
 //Funciones
@@ -91,12 +103,13 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	 * 		int socket_planificador: socket del planificador.
 	 */
 
-void ejecutar(void);
+void ejecutar(int socket_planificador, int socket_coordinador);
 	/*
 	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
 	 * 		e informa el resultado al coordinador.
 	 * Arumgnetos:
-	 * 		void
+	 * 		int socket_planificador: socket del planificador.
+	 * 		int socket_coordinador: socket del coordinador.
 	 */
 
 #endif /* ESI_H_ */

@@ -61,6 +61,8 @@ t_esi_list finished_ESIs;
 
 algoritmo algoritmo_planificacion;
 
+pthread_mutex_t semaforo_ejecucion;
+
 pthread_spinlock_t sem_ESIs;
 pthread_spinlock_t sem_id;
 
@@ -247,6 +249,14 @@ int estimated_time(ESI esi);
 	 * Descripción: devuelve la duración estimada de ráfaga de un ESI.
 	 * Arguentos:
 	 * 		ESI esi: el ESI a obtener su duración de ráfaga.
+	 */
+
+void charlar_con_el_coordi(void);
+	/*
+	 * Descripción: mantiene una conexión con el coordinador y envia y recibe un mensaje cada
+	 * 		15 segundos para asegurarse que el otro proceso se encuentre en ejecución.
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* PLANIFICADOR_H_ */
