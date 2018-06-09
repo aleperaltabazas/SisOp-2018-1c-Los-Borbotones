@@ -29,8 +29,11 @@
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 #define LINE_MAX 40
+<<<<<<< HEAD
 #define ESTIMACION_INICIAL 3
 #define MAX_MESSAGE_SIZE 300
+=======
+>>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
 
 //Variables super globales
 
@@ -174,11 +177,11 @@ void loggear(char* mensaje);
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
-void terminar_conexion(int sockfd);
+void kill_ESI(int socket_cliente);
 	/*
-	 * Descripción: envía un mensaje de terminación a un proceso a través de un socket.
+	 * Descripción: envia una orden de terminación a un ESI.
 	 * Argumentos:
-	 * 		int sockfd: el socket por el cual se envía el mensaje.
+	 * 		int socket_cliente: el socket del ESI.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

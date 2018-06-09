@@ -7,6 +7,7 @@
 
 #include "shared-library.h"
 
+<<<<<<< HEAD
 void fill_package(t_esi_operacion parsed, package_ESI* solicitud) {
 	int long_clave;
 	int long_valor;
@@ -125,20 +126,33 @@ int recibir_y_deserializar(package_ESI* package, int sockfd) {
 void terminar_conexion(int sockfd) {
 
 	aviso_ESI aviso = { .aviso = -1 };
+=======
+void kill_ESI(int socket_cliente) {
+	int status = 1;
+	aviso_ESI orden_cierre = { .aviso = -1 };
 
-	int packageSize = sizeof(aviso_ESI);
-	char* package = malloc(packageSize);
+	int packageSize = sizeof(orden_cierre.aviso) + sizeof(orden_cierre.id);
+	char* message = malloc(packageSize);
 
-	serializar_aviso(aviso, &package);
+	serializar_aviso(orden_cierre, &message);
+>>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
 
-	int envio = send(sockfd, package, packageSize, 0);
+	loggear("Terminando...");
 
-	if (envio < 0) {
-		loggear("Fallo la terminación. Intentando de vuelta.");
-		terminar_conexion(sockfd);
+	while (status) {
+		int envio = send(socket_cliente, message, packageSize, 0);
+
+		status = 0;
+
+		if (envio < 0) {
+			loggear("Fallo el envio. Intentando de nuevo en 5.");
+			status = 1;
+
+			sleep(5);
+		}
 	}
 
-	loggear("Terminación exitosa.");
+	loggear("Aviso exitoso.");
 }
 
 void serializar_pedido(package_pedido pedido, char** message) {
