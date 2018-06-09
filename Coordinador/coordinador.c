@@ -131,63 +131,41 @@ aviso_ESI hacer_store(char* clave) {
 
 	return ret_aviso;
 }
-
 int chequear_solicitud(int socket_cliente) {
+	aviso_ESI aviso_cliente;
 	aviso_ESI aviso_servidor = { .aviso = 1 };
-	aviso_ESI pedido_cliente;
 
-	package_ESI package_cliente;
-
-	int packageSize = sizeof(aviso_servidor.aviso) + sizeof(aviso_servidor.id);
-	char *package = malloc(packageSize);
+	int packageSize = sizeof(aviso_cliente.aviso) + sizeof(aviso_cliente.id);
 	char *message = malloc(packageSize);
+	char *package = malloc(packageSize);
 
-	/*int status = recibir_y_deserializar(&package_cliente, socket_cliente);
+	//Me gustaria mas que la aviso_servidor se envie como bool
 
-	 if (!status) {
-	 loggear("Recepción fallida. Abortando ESI.");
-	 terminar_conexion(socket_cliente);
-	 return 0;
-	 }*/
-
-	int res = recv(socket_cliente, package, packageSize, 0);
+	int res = recv(socket_cliente, (void*) package, packageSize, 0);
 
 	if (res != 0) {
-		loggear("Mensaje recibido desde el ESI.");
+		loggear("Mensaje recibido del ESI.");
+	} else {
+		log_error(logger, "Fallo la peticion. Terminando ESI.");
+
+		kill_ESI(socket_cliente);
 	}
 
-	else {
-		loggear("Mensaje erróneo. Abortando ESI.");
+	deserializar_aviso(&(aviso_cliente), &(package));
 
-		terminar_conexion(socket_cliente);
-	}
-
-	deserializar_aviso(&(pedido_cliente), &(package));
-
-	if (package_cliente.aviso == 0) {
+	if (aviso_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	}
-
-	else if (package_cliente.aviso == 11) {
-		loggear("Hizo GET.");
-	}
-
-	else if (package_cliente.aviso == 12) {
-		loggear("Hizo SET.");
-	}
-
-	else if (package_cliente.aviso == 13) {
-		loggear("Hizo STORE.");
+	} else if (aviso_cliente.aviso != 1) {
+		loggear("Peticion erronea.");
 	}
 
 	serializar_aviso(aviso_servidor, &message);
 
 	send(socket_cliente, message, packageSize, 0);
 
-	loggear("Solicitud confirmada.");
-
 	free(message);
+	free(package);
 
 	return 1;
 }
