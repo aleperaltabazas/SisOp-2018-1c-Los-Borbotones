@@ -41,6 +41,8 @@ ESI* executing_ESI;
 
 algoritmo algoritmo_planificacion;
 
+pthread_mutex_t semaforo_ejecucion;
+
 pthread_spinlock_t sem_ESIs;
 pthread_spinlock_t sem_id;
 
@@ -180,6 +182,14 @@ ESI* highest_RR(t_list* lista);
 	 * Descripción: devuelve el elemento cuyo RR es mayor.
 	 * Argumentos:
 	 * 		t_list* lista: lista a obtener el elemento.
+	 */
+
+void charlar_con_el_coordi(void);
+	/*
+	 * Descripción: mantiene una conexión con el coordinador y envia y recibe un mensaje cada
+	 * 		15 segundos para asegurarse que el otro proceso se encuentre en ejecución.
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* PLANIFICADOR_H_ */

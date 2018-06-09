@@ -28,9 +28,9 @@ int main(int argc, char** argv) {
 
 	loggear("Cerrando sesion...");
 
+	close(socket_coordinador);
 	close(listening_socket);
 	close(socketCliente);
-	close(socket_coordinador);
 
 	cerrar();
 
@@ -50,6 +50,12 @@ void iniciar(void) {
 
 	ESI_id = 1;
 
+	pthread_mutex_init(&semaforo_ejecucion, NULL);
+
+	/*pthread_t hilo_coordinador;
+	 pthread_create(&hilo_coordinador, NULL, charlar_con_el_coordi, NULL);
+	 pthread_detach(hilo_coordinador);*/
+
 	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
 	ESIs = list_create();
 	ESIs_bloqueados = list_create();
@@ -58,6 +64,13 @@ void iniciar(void) {
 	ESIs_finalizados = list_create();
 
 }
+
+/*void charlar_con_el_coordi(void) {
+ int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+ mensajePlanificador);
+
+ return;
+ }*/
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
 
@@ -136,6 +149,7 @@ void* atender_ESI(void* buffer) {
 	ESI esi = { .id = this_id, .socket = socket_ESI };
 
 	while (1) {
+
 		recv(socket_ESI, package, packageSize, 0);
 
 		log_trace(logger, "Mensaje recibidio del ESI numero: %i", this_id);
@@ -155,8 +169,19 @@ void* atender_ESI(void* buffer) {
 		}
 
 		else if (aviso.aviso == 1) {
+<<<<<<< HEAD
 			list_add_in_index(ESIs, this_id, (void*) &esi);
 			loggear("ESI listo para ejecutar añadido a la cola.");
+=======
+			esi.tiempo_arribo = tiempo;
+
+			esi.rafaga_estimada = estimated_time(esi);
+			esi.rafaga_real = 0;
+
+			agregar_ESI(&new_ESIs, esi);
+
+			log_trace(logger, "ESI número %i preparado.", this_id);
+>>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 
 			test = esi;
 		}
@@ -185,6 +210,7 @@ void* atender_ESI(void* buffer) {
 		}
 
 		planificar();
+
 	}
 
 	return NULL;
@@ -238,9 +264,18 @@ void procesar_cierre(int socket_ESI) {
 }
 
 void planificar(void) {
+<<<<<<< HEAD
 	if (executing_ESI->id == -1) {
 		//log_trace(logger, "%i", executing_ESI->id);
 		executing_ESI = first(ESIs);
+=======
+	if (executing_ESI.id == -1) {
+		executing_ESI = first(new_ESIs);
+
+		eliminar_ESI(&new_ESIs, executing_ESI);
+
+		loggear("ESI eliminado de la cola de la listos.");
+>>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 		//*executing_ESI = test;
 
 		//log_trace(logger, "%i", executing_ESI->id);
@@ -271,7 +306,15 @@ void planificar(void) {
 		break;
 	}
 
+<<<<<<< HEAD
 	loggear("ESI elegido.");
+=======
+	eliminar_ESI(&new_ESIs, executing_ESI);
+
+	loggear("ESI eliminado de la cola de la listos.");
+
+	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+>>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 
 	ejecutar(executing_ESI);
 
@@ -313,16 +356,6 @@ void destruir_nodo(t_esi_node* nodo) {
 }
 
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
-ESI first(t_esi_list lista) {
-	ESI esi = lista.head->esi;
-
-	return esi;
-
-}
-
->>>>>>> parent of 722a936... agrego esqueleto al esi para sus operaciones
 void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	if (lista->head != NULL) {
 		ESI head = first(*lista);
@@ -343,7 +376,6 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	}
 }
 
-<<<<<<< HEAD
 =======
 >>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 ESI first(t_esi_list lista) {
@@ -353,8 +385,6 @@ ESI first(t_esi_list lista) {
 
 }
 
-=======
->>>>>>> parent of 722a936... agrego esqueleto al esi para sus operaciones
 ESI shortest(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 =======
@@ -371,7 +401,13 @@ ESI* first(t_list* lista) {
 
 	deserializar_esi(elem, return_ESI);
 
+<<<<<<< HEAD
 	loggear("Copie bien.");
+=======
+		puntero->esi.rafaga_estimada = estimated_time(puntero->esi);
+		puntero = puntero->sgte;
+	}
+>>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 
 	return return_ESI;
 }
@@ -434,6 +470,7 @@ void ejecutar(ESI* esi_a_ejecutar) {
 	list_remove(ESIs, esi_a_ejecutar.id);
 >>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
+<<<<<<< HEAD
 	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
 
 	loggear("ESI eliminado de la cola de la listos.");
@@ -441,6 +478,8 @@ void ejecutar(ESI* esi_a_ejecutar) {
 	list_remove(ESIs, esi_a_ejecutar->id);
 >>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
 
+=======
+>>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 	free(message);
 }
 
