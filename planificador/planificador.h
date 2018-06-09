@@ -57,7 +57,6 @@ t_list * ESIs_finalizados;
 ESI executing_ESI;
 
 t_esi_list new_ESIs;
-t_esi_list finished_ESIs;
 
 algoritmo algoritmo_planificacion;
 
@@ -210,14 +209,6 @@ void agregar_ESI(t_esi_list* lista, ESI esi);
 	 * Argumentos:
 	 * 		t_esi_list* lista: lista a agregar el elemento.
 	 * 		ESI esi: esi a agregar a la lista.
-	 */
-
-void eliminar_ESI(t_esi_list* lista, ESI esi);
-	/*
-	 * Descripción: elimina un ESI de una lista.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista de la cual se eliminará el elemento.
-	 * 		ESI esi: elemento a eliminar de la lista.
 	 */
 
 bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);

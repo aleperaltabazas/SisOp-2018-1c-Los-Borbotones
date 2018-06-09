@@ -160,20 +160,11 @@ void* atender_ESI(void* buffer) {
 		deserializar_aviso(&(aviso), &(package));
 
 		if (aviso.aviso == 0) {
-			loggear(
-					"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
+			loggear("ESI terminado.");
 
 			//procesar_cierre(socket_ESI);
 
-			//list_remove(ESIs, this_id);
-
-			agregar_ESI(&finished_ESIs, esi);
-
-			loggear("Agregado correctamente a la cola de terminados.");
-
-			eliminar_ESI(&new_ESIs, esi);
-
-			loggear("Eliminado correctamente de la cola de listos.");
+			list_remove(ESIs, this_id);
 
 			break;
 		}
@@ -218,8 +209,6 @@ void* atender_ESI(void* buffer) {
 		planificar();
 
 	}
-
-	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
 
 	return NULL;
 }
@@ -374,6 +363,7 @@ void destruir_nodo(t_esi_node* nodo) {
 	free(nodo);
 }
 
+<<<<<<< HEAD
 void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	if (lista->head != NULL) {
 		ESI head = first(*lista);
@@ -394,6 +384,8 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	}
 }
 
+=======
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 ESI first(t_esi_list lista) {
 	ESI esi = lista.head->esi;
 
@@ -484,7 +476,11 @@ void ejecutar(ESI esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
+<<<<<<< HEAD
 	//list_remove(ESIs, esi_a_ejecutar.id);
+=======
+	list_remove(ESIs, esi_a_ejecutar.id);
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 	free(message);
 }
