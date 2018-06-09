@@ -13,6 +13,7 @@
 
 //Variables locales
 
+<<<<<<< HEAD
 aviso_ESI aviso_ready = {
 		.aviso = 1
 };
@@ -33,6 +34,8 @@ typedef struct t_parsed_list{
 
 t_parsed_list parsed_ops;
 
+=======
+>>>>>>> parent of 722a936... agrego esqueleto al esi para sus operaciones
 t_list* lineas_parseadas;
 
 //Funciones
@@ -112,6 +115,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	 * 		int socket_planificador: socket del planificador.
 	 */
 
+<<<<<<< HEAD
 aviso_ESI ejecutar(int socket_planificador, int socket_coordinador);
 	/*
 	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
@@ -119,6 +123,14 @@ aviso_ESI ejecutar(int socket_planificador, int socket_coordinador);
 	 * Argumentos:
 	 * 		int socket_planificador: socket del planificador.
 	 * 		int socket_coordinador: socket del coordinador.
+=======
+void ejecutar(void);
+	/*
+	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
+	 * 		e informa el resultado al coordinador.
+	 * Arumgnetos:
+	 * 		void
+>>>>>>> parent of 722a936... agrego esqueleto al esi para sus operaciones
 	 */
 
 aviso_ESI determinar_operacion(void);
