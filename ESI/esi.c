@@ -10,7 +10,7 @@
 #define IP "127.0.0.1"
 #define PUERTO "6667"
 #define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
+//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaï¿½o no fijo
 
 int this_id;
 
@@ -109,7 +109,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	if (orden.aviso == -1) {
 		close(socket_coordinador);
-		loggear("Orden de terminación.");
+		loggear("Orden de terminaciï¿½n.");
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(
@@ -167,14 +167,18 @@ FILE* levantar_archivo(char* archivo) {
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	package_pedido pedido_permiso = { .pedido = 1 };
-	package_pedido respuesta;
+	aviso_ESI pedido_permiso = {
+			.aviso = 1,
+			.id = this_id
+	};
 
-	int packageSize = sizeof(pedido_permiso.pedido);
+	aviso_ESI respuesta;
+
+	int packageSize = sizeof(pedido_permiso.aviso) + sizeof(pedido_permiso.id);
 	char *message = malloc(packageSize);
 	char *package = malloc(packageSize);
 
-	serializar_pedido(pedido_permiso, &message);
+	serializar_aviso(pedido_permiso, &message);
 
 	send(socket_coordinador, message, packageSize, 0);
 
@@ -188,11 +192,11 @@ bool solicitar_permiso(int socket_coordinador) {
 		salir_con_error("Fallo la solicitud.", socket_coordinador);
 	}
 
-	deserializar_pedido(&(respuesta), &(package));
+	deserializar_aviso(&(respuesta), &(package));
 
 	free(package);
 
-	return respuesta.pedido == 1;
+	return respuesta.aviso == 1;
 }
 
 t_esi_operacion parsear(char* line) {

@@ -133,8 +133,12 @@ int chequear_solicitud(int socket_cliente) {
 	if (aviso_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	} else if (aviso_cliente.aviso != 1) {
-		loggear("Peticion erronea.");
+	} else if (aviso_cliente.aviso == 1) {
+		loggear("Ejecución de ESI.");
+	}
+	else{
+		loggear("Mensaje erróneo. Abortando ESI.");
+		terminar_conexion(socket_cliente);
 	}
 
 	serializar_aviso(aviso_servidor, &message);
