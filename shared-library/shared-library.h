@@ -29,11 +29,7 @@
 #define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
 #define PACKAGE_SIZE 1024
 #define LINE_MAX 40
-<<<<<<< HEAD
 #define ESTIMACION_INICIAL 3
-#define MAX_MESSAGE_SIZE 300
-=======
->>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
 
 //Variables super globales
 
@@ -55,35 +51,11 @@ typedef struct package_permiso {
 	uint32_t pedido;
 } package_pedido;
 
-typedef struct package_ESI{
-	int aviso;
-	char* clave;
-	int long_clave;
-	char* valor;
-	int long_valor;
-	int size;
-} __attribute__((packed)) package_ESI;
-
-//Estructura de la orden que le manda el coordinador a la instancia
-typedef struct orden_del_coordinador{
-	uint32_t codigo_operacion;
-	uint32_t tamanio_a_enviar;
-} __attribute__((packed)) orden_del_coordinador;
-
-//Valores de set
-typedef struct parametros_set{
-	uint32_t tamanio_clave;
-	char * clave;
-	uint32_t tamanio_valor;
-	char * valor;
-} __attribute__((packed)) parametros_set;
-
-
 //Funciones servidor
 
 int levantar_servidor(char* puerto);
 	/*
-	 * DescripciÃ³n: crea un socket escuchante y llama a bind() para atarlo al puerto y crear
+	 * Descripción: crea un socket escuchante y llama a bind() para atarlo al puerto y crear
 	 * 		un servidor en dicho puerto.
 	 * Argumentos:
 	 * 		char* puerto: puerto en el que se encuentra el servidor.
@@ -93,8 +65,8 @@ int levantar_servidor(char* puerto);
 
 int conectar_a(char* ip, char* puerto, char* mensaje);
 	/*
-	 * DescripciÃ³n: establece una conexiÃ³n con un servidor y le envÃ­a un mensaje, y devuelve
-	 * 		el socket servidor. En caso que falle la conexiÃ³n con el servidor o el envÃ­o
+	 * Descripción: establece una conexión con un servidor y le envía un mensaje, y devuelve
+	 * 		el socket servidor. En caso que falle la conexión con el servidor o el envío
 	 * 		de mensajes, llama a salir_con_error().
 	 * Argumentos:
 	 * 		char* ip: ip del servidor.
@@ -104,16 +76,16 @@ int conectar_a(char* ip, char* puerto, char* mensaje);
 
 void chequear_servidor(char* id, int server_socket);
 	/*
-	 * DescripciÃ³n: revisa el mensaje devuelto por el servidor para saber de quÃ© servidor se trata.
+	 * Descripción: revisa el mensaje devuelto por el servidor para saber de qué servidor se trata.
 	 * 		En caso de que sea un servidor desconocido, llama a salir_con_error().
 	 * Argumentos:
-	 * 		char* id: identificaciÃ³n enviada por el servidor.
+	 * 		char* id: identificación enviada por el servidor.
 	 * 		int server_socket: socket del servidor.
 	 */
 
 void serializar_pedido(package_pedido pedido, char** message);
 	/*
-	 * DescripciÃ³n: serializa un mensaje del tipo package_pedido.
+	 * Descripción: serializa un mensaje del tipo package_pedido.
 	 * Argumentos:
 	 * 		package_pedido pedido: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
@@ -121,7 +93,7 @@ void serializar_pedido(package_pedido pedido, char** message);
 
 void deserializar_pedido(package_pedido *pedido, char **package);
 	/*
-	 * DescripciÃ³n: deserializa un mensaje del tipo package_pedido.
+	 * Descripción: deserializa un mensaje del tipo package_pedido.
 	 * Argumentos:
 	 * 		package_pedido *pedido: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
@@ -129,7 +101,7 @@ void deserializar_pedido(package_pedido *pedido, char **package);
 
 void serializar_aviso(aviso_ESI aviso, char** message);
 	/*
-	 * DescripciÃ³n: serializa un mensaje del tipo aviso_ESI.
+	 * Descripción: serializa un mensaje del tipo aviso_ESI.
 	 * Argumentos:
 	 * 		aviso_ESI aviso: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
@@ -137,7 +109,7 @@ void serializar_aviso(aviso_ESI aviso, char** message);
 
 void deserializar_aviso(aviso_ESI *aviso, char** package);
 	/*
-	 * DescripciÃ³n: deserializa un mensaje del tipo aviso_ESI.
+	 * Descripción: deserializa un mensaje del tipo aviso_ESI.
 	 * Argumentos:
 	 * 		aviso_ESI aviso: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
@@ -147,7 +119,7 @@ void deserializar_aviso(aviso_ESI *aviso, char** package);
 
 void salir_con_error(char* mensaje, int socket);
 	/*
-	 * DescripciÃ³n: llama a exit_gracefully() para terminar el proceso con error (1), loggea
+	 * Descripción: llama a exit_gracefully() para terminar el proceso con error (1), loggea
 	 * 		un mensaje de error y cierra el descriptor de archivo del socket.
 	 * Argumentos:
 	 * 		char* mensaje: el mensaje a loggear.
@@ -156,15 +128,15 @@ void salir_con_error(char* mensaje, int socket);
 
 void exit_gracefully(int return_val);
 	/*
-	 * DescripciÃ³n: llama a exit() para terminar el proceso con un valor determinado.
+	 * Descripción: llama a exit() para terminar el proceso con un valor determinado.
 	 * Argumentos:
 	 * 		int return_val: el valor con el que se llama a exit().
 	 */
 
 void iniciar_log(char* nombre, char* mensajeInicial);
 	/*
-	 * DescripciÃ³n: crea un log con un nombre pasado por parÃ¡metro y se loggea
-	 * 		un mensaje inicial pasado por parÃ¡metro.
+	 * Descripción: crea un log con un nombre pasado por parámetro y se loggea
+	 * 		un mensaje inicial pasado por parámetro.
 	 * Argumentos:
 	 * 		char* nombre: nombre del logger.
 	 * 		char* mensajeInicial: mensaje a loggear al principio.
@@ -172,16 +144,16 @@ void iniciar_log(char* nombre, char* mensajeInicial);
 
 void loggear(char* mensaje);
 	/*
-	 * DescripciÃ³n: loggea un mensaje en la variable global logger.
+	 * Descripción: loggea un mensaje en la variable global logger.
 	 * Argumentos:
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
-void kill_ESI(int socket_cliente);
+void terminar_conexion(int sockfd);
 	/*
-	 * DescripciÃ³n: envia una orden de terminaciÃ³n a un ESI.
+	 * Descripción: envía un mensaje de terminación a un proceso a través de un socket.
 	 * Argumentos:
-	 * 		int socket_cliente: el socket del ESI.
+	 * 		int sockfd: el socket por el cual se envía el mensaje.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

@@ -7,152 +7,25 @@
 
 #include "shared-library.h"
 
-<<<<<<< HEAD
-void fill_package(t_esi_operacion parsed, package_ESI* solicitud) {
-	int long_clave;
-	int long_valor;
-	char* clave;
-	char* valor;
-
-	switch (parsed.keyword) {
-	case GET:
-		strcpy(clave, parsed.argumentos.GET.clave);
-
-		long_clave = strlen(clave);
-		long_valor = 0;
-
-		solicitud->aviso = 11;
-		solicitud->long_clave = long_clave;
-		strcpy(solicitud->clave, clave);
-		solicitud->long_valor = long_valor;
-
-		break;
-
-	case SET:
-		strcpy(clave, parsed.argumentos.GET.clave);
-		strcpy(valor, parsed.argumentos.GET.clave);
-
-		long_clave = strlen(clave);
-		long_valor = strlen(valor);
-
-		solicitud->aviso = 12;
-		strcpy(solicitud->clave, clave);
-		solicitud->long_clave = long_clave;
-		strcpy(solicitud->valor, valor);
-		solicitud->long_valor = long_valor;
-
-		break;
-
-	case STORE:
-		strcpy(clave, parsed.argumentos.GET.clave);
-
-		long_clave = strlen(clave);
-		long_valor = 0;
-
-		solicitud->aviso = 13;
-		strcpy(solicitud->clave, clave);
-		solicitud->long_clave = long_clave;
-		solicitud->long_valor = long_valor;
-
-		break;
-	default:
-		break;
-	}
-
-	solicitud->size = sizeof(solicitud->aviso) + sizeof(solicitud->clave) + long_clave + sizeof(solicitud->long_valor) + long_valor;
-}
-
-char* serializar_package(package_ESI *package) {
-	char* serialized_package = malloc(package->size);
-
-	int offset = 0;
-	int size_to_send;
-
-	size_to_send = sizeof(package->aviso);
-	memcpy(serialized_package + offset, &(package->aviso), size_to_send);
-
-	offset += size_to_send;
-
-	size_to_send = sizeof(package->long_clave);
-	memcpy(serialized_package + offset, &(package->long_clave), size_to_send);
-
-	offset += size_to_send;
-
-	size_to_send = package->long_clave;
-	memcpy(serialized_package + offset, &package->clave, size_to_send);
-
-	size_to_send = sizeof(package->long_valor);
-	memcpy(serialized_package + offset, &(package->long_valor), size_to_send);
-
-	offset += size_to_send;
-
-	size_to_send = package->long_valor;
-	memcpy(serialized_package + offset, &package->valor, size_to_send);
-
-	return serialized_package;
-}
-
-int recibir_y_deserializar(package_ESI* package, int sockfd) {
-	int buffer_size = sizeof(int);
-	int status;
-	char* buffer = malloc(buffer_size);
-
-	int aviso;
-	status = recv(sockfd, buffer, sizeof(package->aviso), 0);
-	memcpy(&(aviso), buffer, buffer_size);
-	if(!status) return 0;
-
-	int long_clave;
-	status = recv(sockfd, buffer, sizeof(package->long_clave), 0);
-	memcpy(&(long_clave), buffer, buffer_size);
-	if(!status) return 0;
-
-	status = recv(sockfd, package->clave, long_clave, 0);
-	if(!status) return 0;
-
-	int long_valor;
-	status = recv(sockfd, buffer, sizeof(package->long_valor), 0);
-	memcpy(&(long_valor), buffer, buffer_size);
-	if(!status) return 0;
-
-	status = recv(sockfd, package->valor, long_valor, 0);
-	if(!status) return 0;
-
-	free(buffer);
-
-	return status;
-}
-
 void terminar_conexion(int sockfd) {
 
-	aviso_ESI aviso = { .aviso = -1 };
-=======
-void kill_ESI(int socket_cliente) {
-	int status = 1;
-	aviso_ESI orden_cierre = { .aviso = -1 };
+	aviso_ESI aviso = {
+			.aviso = -1
+	};
 
-	int packageSize = sizeof(orden_cierre.aviso) + sizeof(orden_cierre.id);
-	char* message = malloc(packageSize);
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
 
-	serializar_aviso(orden_cierre, &message);
->>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
+	serializar_aviso(aviso, &package);
 
-	loggear("Terminando...");
+	int envio = send(sockfd, package, packageSize, 0);
 
-	while (status) {
-		int envio = send(socket_cliente, message, packageSize, 0);
-
-		status = 0;
-
-		if (envio < 0) {
-			loggear("Fallo el envio. Intentando de nuevo en 5.");
-			status = 1;
-
-			sleep(5);
-		}
+	if (envio < 0) {
+		loggear("Fallo la terminación. Intentando de vuelta.");
+		terminar_conexion(sockfd);
 	}
 
-	loggear("Aviso exitoso.");
+	loggear("Terminación exitosa.");
 }
 
 void serializar_pedido(package_pedido pedido, char** message) {
@@ -251,7 +124,7 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 		salir_con_error("Fallo la conexion con el servidor.", server_socket);
 	}
 
-	loggear("ConectÃ³ sin problemas");
+	loggear("Conectó sin problemas");
 
 	freeaddrinfo(serverInfo);
 

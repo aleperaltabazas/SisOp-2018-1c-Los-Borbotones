@@ -108,29 +108,6 @@ void* atender_ESI(void* un_socket) {
 	return NULL;
 }
 
-aviso_ESI revisar_clave(char* clave) {
-	aviso_ESI ret_aviso = { .aviso = 1 };
-
-	loggear("Clave disponible.");
-
-	return ret_aviso;
-}
-
-aviso_ESI settear_valor(char* clave, char* valor) {
-	aviso_ESI ret_aviso = { .aviso = 1 };
-
-	loggear("Valor asignado.");
-
-	return ret_aviso;
-}
-
-aviso_ESI hacer_store(char* clave) {
-	aviso_ESI ret_aviso = { .aviso = 1 };
-
-	loggear("Clave guardada.");
-
-	return ret_aviso;
-}
 int chequear_solicitud(int socket_cliente) {
 	aviso_ESI aviso_cliente;
 	aviso_ESI aviso_servidor = { .aviso = 1 };
@@ -148,7 +125,7 @@ int chequear_solicitud(int socket_cliente) {
 	} else {
 		log_error(logger, "Fallo la peticion. Terminando ESI.");
 
-		kill_ESI(socket_cliente);
+		terminar_conexion(socket_cliente);
 	}
 
 	deserializar_aviso(&(aviso_cliente), &(package));
@@ -182,55 +159,6 @@ void* atender_Instancia(void* un_socket) {
 	int socket_cliente = (int) un_socket;
 
 	loggear("Hilo de instancia inicializado correctamente.");
-
-	parametros_set valor_set;
-
-	valor_set.tamanio_clave = 5;
-	valor_set.clave = "Clave";
-	valor_set.tamanio_valor = 7;
-	valor_set.valor = "UnValor";
-
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + strlen(valor_set.clave) + strlen(valor_set.valor);
-
-	parametros_set * buffer_parametros = malloc(tamanio_parametros_set);
-
-	//---------
-
-	orden_del_coordinador orden;
-	orden.codigo_operacion = 11;
-	orden.tamanio_a_enviar = tamanio_parametros_set;
-
-	//Quiero mandar dos uint32_t
-	orden_del_coordinador * buffer_orden = malloc(2 * sizeof(uint32_t));
-
-	memcpy(buffer_orden, &orden.codigo_operacion, sizeof(orden.codigo_operacion));
-	memcpy(buffer_orden + sizeof(orden.codigo_operacion), &orden.tamanio_a_enviar, sizeof(orden.tamanio_a_enviar));
-
-	send(socket_cliente, (void*) buffer_orden, 2*sizeof(uint32_t), MSG_WAITALL);
-
-	int offset = 0;
-
-	/*
-
-	memcpy(buffer_valor, &valor_set.tamanio_clave, sizeof(uint32_t));
-
-	offset += sizeof(uint32_t);
-
-	memcpy(buffer_valor + offset, &valor_set.clave, strlen(valor_set.clave));
-
-	offset += strlen(valor_set.clave);
-
-	memcpy(buffer_valor + offset, &valor_set.tamanio_valor, sizeof(uint32_t));
-
-	offset += sizeof(uint32_t);
-
-	memcpy(buffer_valor + offset, &valor_set.valor, strlen(valor_set.valor));
-
-	loggear("Enviando parametros a la instancia");
-
-	send(socket_cliente, (void*) buffer_valor, sizeof(valor_set), MSG_WAITALL);
-
-	*/
 
 	return NULL;
 }

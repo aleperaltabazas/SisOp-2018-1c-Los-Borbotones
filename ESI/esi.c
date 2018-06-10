@@ -10,7 +10,7 @@
 #define IP "127.0.0.1"
 #define PUERTO "6667"
 #define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaÃ±o no fijo
+//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int this_id;
 
@@ -28,9 +28,9 @@ int main(int argc, char** argv) {
 
 	this_id = recibir_ID(socket_planificador);
 
-	ready(socket_planificador, aviso_ready);
+	ready(socket_planificador);
 
-	while (parsed_ops.head->sgte != NULL) {
+	while (lineas_parseadas->head != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
 	}
 
@@ -40,43 +40,6 @@ int main(int argc, char** argv) {
 	close(socket_planificador);
 	close(socket_coordinador);
 	return EXIT_SUCCESS;
-}
-
-t_parsed_node* crear_nodo(t_esi_operacion parsed) {
-	t_parsed_node* nodo = (t_parsed_node*) malloc(sizeof(t_parsed_node));
-	nodo->esi_op = parsed;
-	nodo->sgte = NULL;
-
-	return nodo;
-}
-
-void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
-	t_parsed_node* nodo = crear_nodo(parsed);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_parsed_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-
-	return;
-}
-
-void destruir_nodo(t_parsed_node* nodo) {
-	free(nodo);
-}
-
-void eliminar_parseo(t_parsed_list* lista) {
-	if (lista->head != NULL) {
-		t_parsed_node* eliminado = lista->head;
-		lista->head = lista->head->sgte;
-		destruir_nodo(eliminado);
-	}
 }
 
 int recibir_ID(int server_socket) {
@@ -104,7 +67,9 @@ int recibir_ID(int server_socket) {
 	return aviso.id;
 }
 
-void ready(int socket_planificador, aviso_ESI aviso) {
+void ready(int socket_planificador) {
+	aviso_ESI aviso = { .aviso = 1, .id = this_id };
+
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
@@ -144,7 +109,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	if (orden.aviso == -1) {
 		close(socket_coordinador);
-		loggear("Orden de terminaciÃ³n.");
+		loggear("Orden de terminación.");
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(
@@ -154,31 +119,18 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 
-	aviso_ESI aviso = ejecutar(socket_planificador, socket_coordinador);
-
-	ready(socket_planificador, aviso);
-
-}
-
-t_esi_operacion first(t_parsed_list lista) {
-	t_esi_operacion parsed = lista.head->esi_op;
-
-	return parsed;
-}
-
-aviso_ESI ejecutar(int socket_planificador, int socket_coordinador) {
-	aviso_ESI ret_aviso = determinar_operacion();
-	ret_aviso.id = this_id;
-
-	if (!solicitar_permiso(socket_coordinador, ret_aviso)) {
-		return aviso_bloqueo;
+	if (solicitar_permiso(socket_coordinador)) {
+		ejecutar();
 	}
 
-	eliminar_parseo(&parsed_ops);
+	ready(socket_planificador);
+
+}
+
+void ejecutar(void) {
+	list_remove(lineas_parseadas, 0);
 
 	sleep(5);
-
-	return ret_aviso;
 }
 
 void iniciar(char** argv) {
@@ -192,12 +144,11 @@ void iniciar(char** argv) {
 	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
 	//FILE* archivo_de_parseo = levantar_archivo("script.esi");
 
-	t_esi_operacion parsed;
+	t_esi_operacion* parsed = malloc(sizeof(t_esi_operacion));
 
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
-		parsed = parsear(line);
-		//list_add(lineas_parseadas, parsed);
-		agregar_parseo(&parsed_ops, parsed);
+		*parsed = parsear(line);
+		list_add(lineas_parseadas, parsed);
 	}
 
 	return;
@@ -215,76 +166,19 @@ FILE* levantar_archivo(char* archivo) {
 	return fp;
 }
 
-aviso_ESI determinar_operacion(void) {
-	aviso_ESI ret_aviso;
-	t_esi_operacion parsed = first(parsed_ops);
+bool solicitar_permiso(int socket_coordinador) {
+	package_pedido pedido_permiso = { .pedido = 1 };
+	package_pedido respuesta;
 
-	switch (parsed.keyword) {
-	case GET:
-		ret_aviso.aviso = 11;
-		break;
-	case SET:
-		ret_aviso.aviso = 12;
-		break;
-	case STORE:
-		ret_aviso.aviso = 13;
-		break;
-	default:
-		break;
-	}
-
-	return ret_aviso;
-}
-
-void get_clave(char* clave) {
-	t_esi_operacion parsed = first(parsed_ops);
-
-	switch (parsed.keyword) {
-	case GET:
-		strcpy(clave, parsed.argumentos.GET.clave);
-		break;
-	case SET:
-		strcpy(clave, parsed.argumentos.SET.clave);
-		break;
-	case STORE:
-		strcpy(clave, parsed.argumentos.STORE.clave);
-		break;
-	}
-}
-
-void get_valor(char* valor) {
-	t_esi_operacion parsed = first(parsed_ops);
-
-	strcpy(valor, parsed.argumentos.SET.valor);
-}
-
-bool es_set(aviso_ESI solicitud) {
-	return solicitud.aviso == 12;
-}
-
-bool solicitar_permiso(int socket_coordinador, aviso_ESI aviso) {
-	aviso_ESI respuesta;
-
-	package_ESI package_pedido;
-
-	int packageSize = sizeof(aviso_ESI);
-	char *package = malloc(packageSize);
+	int packageSize = sizeof(pedido_permiso.pedido);
 	char *message = malloc(packageSize);
+	char *package = malloc(packageSize);
 
-	/*char* serialized_package = serializar_package(&package_pedido);
+	serializar_pedido(pedido_permiso, &message);
 
-	int envio = send(socket_coordinador, serialized_package,
-			package_pedido.size, 0);*/
+	send(socket_coordinador, message, packageSize, 0);
 
-	serializar_aviso(aviso, &message);
-
-	int envio = send(socket_coordinador, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Fallo la solicitud", socket_coordinador);
-	}
-
-	loggear("Se enviÃ³ correctamente la solicitud. Esperando respuesta.");
+	loggear("Solicitud enviada.");
 
 	int res = recv(socket_coordinador, (void*) package, packageSize, 0);
 
@@ -294,12 +188,11 @@ bool solicitar_permiso(int socket_coordinador, aviso_ESI aviso) {
 		salir_con_error("Fallo la solicitud.", socket_coordinador);
 	}
 
-	deserializar_aviso(&(respuesta), &(package));
+	deserializar_pedido(&(respuesta), &(package));
 
 	free(package);
-	free(message);
 
-	return respuesta.aviso == 1;
+	return respuesta.pedido == 1;
 }
 
 t_esi_operacion parsear(char* line) {

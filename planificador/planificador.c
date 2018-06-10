@@ -7,7 +7,7 @@
 #include "planificador.h"
 
 #define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaÃ±o no fijo
+//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int i;
 
@@ -28,9 +28,9 @@ int main(int argc, char** argv) {
 
 	loggear("Cerrando sesion...");
 
-	close(socket_coordinador);
 	close(listening_socket);
 	close(socketCliente);
+	close(socket_coordinador);
 
 	cerrar();
 
@@ -45,16 +45,10 @@ void iniciar(void) {
 	algoritmo_planificacion.desalojo = false;
 	algoritmo_planificacion.tipo = FIFO;
 
-	executing_ESI = malloc(sizeof(executing_ESI));
-	executing_ESI->id = -1;
+	//executing_ESI = malloc(sizeof(executing_ESI));
+	executing_ESI.id = -1;
 
 	ESI_id = 1;
-
-	pthread_mutex_init(&semaforo_ejecucion, NULL);
-
-	/*pthread_t hilo_coordinador;
-	 pthread_create(&hilo_coordinador, NULL, charlar_con_el_coordi, NULL);
-	 pthread_detach(hilo_coordinador);*/
 
 	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
 	ESIs = list_create();
@@ -64,13 +58,6 @@ void iniciar(void) {
 	ESIs_finalizados = list_create();
 
 }
-
-/*void charlar_con_el_coordi(void) {
- int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
- mensajePlanificador);
-
- return;
- }*/
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
 
@@ -144,90 +131,84 @@ void* atender_ESI(void* buffer) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	int this_id = asignar_ID(socket_ESI);
+	ESI esi = { .socket = socket_ESI, .rafaga_estimada =
+	ESTIMACION_INICIAL };
 
-	ESI esi = { .id = this_id, .socket = socket_ESI };
+	int this_id = asignar_ID(esi);
+
+	esi.id = this_id;
 
 	while (1) {
-
 		recv(socket_ESI, package, packageSize, 0);
 
 		log_trace(logger, "Mensaje recibidio del ESI numero: %i", this_id);
 
 		deserializar_aviso(&(aviso), &(package));
 
-		loggear("Deserialice bien.");
-
 		if (aviso.aviso == 0) {
-			loggear("ESI terminado.");
+			loggear(
+					"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
 
 			//procesar_cierre(socket_ESI);
 
-			list_remove(ESIs, this_id);
+			//list_remove(ESIs, this_id);
+
+			agregar_ESI(&finished_ESIs, esi);
+
+			loggear("Agregado correctamente a la cola de terminados.");
+
+			eliminar_ESI(&new_ESIs, esi);
+
+			loggear("Eliminado correctamente de la cola de listos.");
 
 			break;
 		}
 
 		else if (aviso.aviso == 1) {
-<<<<<<< HEAD
-			list_add_in_index(ESIs, this_id, (void*) &esi);
-			loggear("ESI listo para ejecutar aÃ±adido a la cola.");
-=======
 			esi.tiempo_arribo = tiempo;
 
-			esi.rafaga_estimada = estimated_time(esi);
-			esi.rafaga_real = 0;
-
 			agregar_ESI(&new_ESIs, esi);
 
-			log_trace(logger, "ESI nÃºmero %i preparado.", this_id);
->>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
+			loggear("ESI listo para ejecutar añadido a la cola.");
 
-			test = esi;
 		}
 
-		else if (aviso.aviso == 5) {
-			log_trace(logger, "ESI nÃºmero %i bloqueado", this_id);
+		else {
+			cerrar();
+			loggear("El ESI se volvió loco. Terminando.");
+			kill_ESI(esi);
 		}
 
-<<<<<<< HEAD
-		else if (aviso.aviso == 11) {
-			agregar_ESI(&new_ESIs, esi);
-			loggear("Hizo GET.");
-		}
-=======
 		planificar();
 	}
+
+	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
 
 	return NULL;
 }
 
 void kill_ESI(ESI esi) {
 	int socket_ESI = esi.socket;
->>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
-		else if (aviso.aviso == 12) {
-			agregar_ESI(&new_ESIs, esi);
-			loggear("Hizo SET.");
-		}
+	aviso_ESI aviso = { .aviso = -1, .id = esi.id };
 
-		else if (aviso.aviso == 13) {
-			agregar_ESI(&new_ESIs, esi);
-			loggear("Hizo STORE.");
-		}
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
 
-		else {
-			log_trace(logger, "%i", aviso.aviso);
-		}
+	serializar_aviso(aviso, &package);
 
-		planificar();
+	int envio = send(socket_ESI, package, packageSize, 0);
 
+	if (envio < 0) {
+		loggear("Fallo la terminación. Intentando de vuelta.");
+		kill_ESI(esi);
 	}
 
-	return NULL;
+	log_trace(logger, "ESI número %i has fainted!", esi.id);
 }
 
-int asignar_ID(int socket_ESI) {
+int asignar_ID(ESI esi) {
+	int socket_ESI = esi.socket;
 	aviso_ESI aviso = { .aviso = 1, .id = ESI_id };
 
 	ESI_id++;
@@ -241,7 +222,7 @@ int asignar_ID(int socket_ESI) {
 
 	if (envio < 0) {
 		loggear("Fallo el envio de identificacion. Terminando ESI.");
-		kill_ESI(socket_ESI);
+		kill_ESI(esi);
 	}
 
 	free(package);
@@ -275,23 +256,14 @@ void procesar_cierre(int socket_ESI) {
 }
 
 void planificar(void) {
-<<<<<<< HEAD
-	if (executing_ESI->id == -1) {
-		//log_trace(logger, "%i", executing_ESI->id);
-		executing_ESI = first(ESIs);
-=======
 	if (executing_ESI.id == -1) {
 		executing_ESI = first(new_ESIs);
-
-		eliminar_ESI(&new_ESIs, executing_ESI);
-
-		loggear("ESI eliminado de la cola de la listos.");
->>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 		//*executing_ESI = test;
 
-		//log_trace(logger, "%i", executing_ESI->id);
-		list_remove(ESIs, 0);
-		loggear("ESI elegido.");
+		//list_remove(ESIs, 0);
+
+		log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+
 		ejecutar(executing_ESI);
 
 		return;
@@ -303,36 +275,27 @@ void planificar(void) {
 
 	switch (algoritmo_planificacion.tipo) {
 	case FIFO:
-		executing_ESI = first(ESIs);
+		executing_ESI = first(new_ESIs);
 		//*executing_ESI = test;
 		break;
 	case SJF:
-		executing_ESI = shortest(ESIs);
+		executing_ESI = shortest(new_ESIs);
 		break;
 	case HRRN:
-		executing_ESI = highest_RR(ESIs);
+		executing_ESI = highest_RR(new_ESIs);
 		break;
 	default:
 		loggear("FALLO EN EL ALGORITMO.");
 		break;
 	}
 
-<<<<<<< HEAD
-	loggear("ESI elegido.");
-=======
-	eliminar_ESI(&new_ESIs, executing_ESI);
-
-	loggear("ESI eliminado de la cola de la listos.");
-
-	log_trace(logger, "ESI nÃºmero %i elegido.", executing_ESI.id);
->>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
+	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
 
 	ejecutar(executing_ESI);
 
 }
 
 void desalojar(void) {
-<<<<<<< HEAD
 	//list_add(ESIs, (void*) &executing_ESI);
 	executing_ESI = esi_vacio;
 }
@@ -366,8 +329,13 @@ void destruir_nodo(t_esi_node* nodo) {
 	free(nodo);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+ESI first(t_esi_list lista) {
+	ESI esi = lista.head->esi;
+
+	return esi;
+
+}
+
 void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	if (lista->head != NULL) {
 		ESI head = first(*lista);
@@ -388,18 +356,6 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	}
 }
 
-=======
->>>>>>> parent of e60b783... fix'd el tema de la cola de esis
-ESI first(t_esi_list lista) {
-	ESI esi = lista.head->esi;
-=======
-ESI first(t_esi_list lista) {
-	ESI esi = lista.head->esi;
-
-	return esi;
-
-}
-
 ESI shortest(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 
@@ -412,69 +368,55 @@ ESI shortest(t_esi_list lista) {
 
 		puntero = puntero->sgte;
 	}
->>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 	return esi;
-
 }
 
-ESI shortest(t_esi_list lista) {
+ESI highest_RR(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
-=======
-	list_add(ESIs, (void*) &executing_ESI);
-	executing_ESI = NULL;
-}
 
-ESI* first(t_list* lista) {
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
->>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
+	ESI esi = first(lista);
 
-	loggear("Saque bien el buffer");
+	while (puntero->sgte != NULL) {
+		if (tiene_mas_RR(esi, puntero->esi)) {
+			esi = puntero->esi;
+		}
 
-	deserializar_esi(elem, return_ESI);
-
-<<<<<<< HEAD
-	loggear("Copie bien.");
-=======
-		puntero->esi.rafaga_estimada = estimated_time(puntero->esi);
 		puntero = puntero->sgte;
 	}
->>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 
-	return return_ESI;
+	return esi;
 }
 
-ESI* shortest(t_list* lista) {
-	//void* elem = list_find(lista, );
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
-
-	deserializar_esi(&(elem), return_ESI);
-
-	return return_ESI;
+bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI) {
+	return estimated_time(segundo_ESI) < estimated_time(primer_ESI);
 }
 
-ESI* highest_RR(t_list* lista) {
-	//void* elem = list_find(lista, );
-	void* elem = list_get(lista, 1);
-	ESI* return_ESI = malloc(sizeof(ESI));
+bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI) {
+	int primer_RR = 1 + wait_time(primer_ESI) / estimated_time(primer_ESI);
+	int segundo_RR = 1 + wait_time(segundo_ESI) / estimated_time(segundo_ESI);
 
-	deserializar_esi(&(elem), return_ESI);
+	return segundo_RR > primer_RR;
+}
 
-	return return_ESI;
+int wait_time(ESI esi) {
+	return tiempo - esi.tiempo_arribo;
+}
+
+int estimated_time(ESI esi) {
+	return esi.rafaga_real * (ALFA / 100)
+			+ esi.rafaga_estimada * ((100 - ALFA) / 100);
 }
 
 void cerrar(void) {
 	cerrar_listas();
-	free(executing_ESI);
 }
 
-void ejecutar(ESI* esi_a_ejecutar) {
-	int socket_ESI = executing_ESI->socket;
+void ejecutar(ESI esi_a_ejecutar) {
+	int socket_ESI = esi_a_ejecutar.socket;
 
 	loggear("Enviando orden de ejecucion.");
-	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar->id };
+	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
 
 	int packageSize = sizeof(orden_ejecucion.aviso)
 			+ sizeof(orden_ejecucion.id);
@@ -488,7 +430,7 @@ void ejecutar(ESI* esi_a_ejecutar) {
 		cerrar();
 		log_error(logger, "Fallo el envio. Terminando ESI.");
 
-		kill_ESI(esi_a_ejecutar->socket);
+		kill_ESI(esi_a_ejecutar);
 
 		free(message);
 		return;
@@ -496,27 +438,12 @@ void ejecutar(ESI* esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	//list_remove(ESIs, esi_a_ejecutar.id);
-=======
-	list_remove(ESIs, esi_a_ejecutar.id);
->>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
-<<<<<<< HEAD
 	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
 
 	loggear("ESI eliminado de la cola de la listos.");
-=======
-	list_remove(ESIs, esi_a_ejecutar->id);
->>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
-=======
-	list_remove(ESIs, esi_a_ejecutar.id);
->>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
-=======
->>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"
 	free(message);
 }
 
@@ -604,7 +531,7 @@ void interpretarYEjecutarCodigo(float comando) {
 }
 void listarOpciones() {
 	printf("0 : Cancelar consola \n");
-	printf("1 : Pausar o reactivar la planificaciÃ³n \n");
+	printf("1 : Pausar o reactivar la planificación \n");
 	printf("2.<ESI ID> : Bloquea al ESI elegido \n");
 	printf("3.<ESI ID> : Desbloquea al ESI elegido \n");
 	printf("4.<Recurso> : Lista procesos esperando dicho recurso \n");
