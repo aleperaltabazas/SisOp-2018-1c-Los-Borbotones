@@ -190,10 +190,21 @@ void* atender_ESI(void* buffer) {
 			log_trace(logger, "ESI número %i bloqueado", this_id);
 		}
 
+<<<<<<< HEAD
 		else if (aviso.aviso == 11) {
 			agregar_ESI(&new_ESIs, esi);
 			loggear("Hizo GET.");
 		}
+=======
+		planificar();
+	}
+
+	return NULL;
+}
+
+void kill_ESI(ESI esi) {
+	int socket_ESI = esi.socket;
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 		else if (aviso.aviso == 12) {
 			agregar_ESI(&new_ESIs, esi);
@@ -356,6 +367,7 @@ void destruir_nodo(t_esi_node* nodo) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 void eliminar_ESI(t_esi_list* lista, ESI esi) {
 	if (lista->head != NULL) {
 		ESI head = first(*lista);
@@ -380,6 +392,27 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 >>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 ESI first(t_esi_list lista) {
 	ESI esi = lista.head->esi;
+=======
+ESI first(t_esi_list lista) {
+	ESI esi = lista.head->esi;
+
+	return esi;
+
+}
+
+ESI shortest(t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	ESI esi = first(lista);
+
+	while (puntero->sgte != NULL) {
+		if (es_mas_corto(esi, puntero->esi)) {
+			esi = puntero->esi;
+		}
+
+		puntero = puntero->sgte;
+	}
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 	return esi;
 
@@ -465,6 +498,7 @@ void ejecutar(ESI* esi_a_ejecutar) {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	//list_remove(ESIs, esi_a_ejecutar.id);
 =======
 	list_remove(ESIs, esi_a_ejecutar.id);
@@ -477,6 +511,9 @@ void ejecutar(ESI* esi_a_ejecutar) {
 =======
 	list_remove(ESIs, esi_a_ejecutar->id);
 >>>>>>> parent of 875678e... agregado t_esi_list y t_esi_nodo porque no puedo hacer andar las listas de las commons. agregue los dos algoritmos
+=======
+	list_remove(ESIs, esi_a_ejecutar.id);
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 =======
 >>>>>>> parent of 0d69e0d... Revert "agrego esqueleto al esi para sus operaciones"

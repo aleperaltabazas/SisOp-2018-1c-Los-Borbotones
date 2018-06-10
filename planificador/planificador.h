@@ -37,7 +37,13 @@ t_list * ESIs_en_ejecucion;
 t_list * ESIs_listos;
 t_list * ESIs_finalizados;
 
+<<<<<<< HEAD
 ESI* executing_ESI;
+=======
+ESI executing_ESI;
+
+t_esi_list new_ESIs;
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 
 algoritmo algoritmo_planificacion;
 
@@ -181,10 +187,25 @@ ESI* highest_RR(t_list* lista);
 	/*
 	 * Descripción: devuelve el elemento cuyo RR es mayor.
 	 * Argumentos:
+<<<<<<< HEAD
 	 * 		t_list* lista: lista a obtener el elemento.
 	 */
 
 void charlar_con_el_coordi(void);
+=======
+	 * 		t_esi_list* lista: lista a obtener el elemento.
+	 */
+
+void agregar_ESI(t_esi_list* lista, ESI esi);
+	/*
+	 * Descripción: agrega un ESI a la lista.
+	 * Argumentos:
+	 * 		t_esi_list* lista: lista a agregar el elemento.
+	 * 		ESI esi: esi a agregar a la lista.
+	 */
+
+bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);
+>>>>>>> parent of e60b783... fix'd el tema de la cola de esis
 	/*
 	 * Descripción: mantiene una conexión con el coordinador y envia y recibe un mensaje cada
 	 * 		15 segundos para asegurarse que el otro proceso se encuentre en ejecución.
