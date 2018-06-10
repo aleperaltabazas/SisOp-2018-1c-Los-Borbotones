@@ -24,13 +24,13 @@ int main(int argc, char** argv) {
 
 	//asignar_ID(socket_planificador);
 
-	loggear("Parseo exitoso.");
+
 
 	this_id = recibir_ID(socket_planificador);
 
 	ready(socket_planificador);
 
-	while (lineas_parseadas->head != NULL) {
+	while (parsed_ops.head->sgte != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
 	}
 
@@ -60,6 +60,8 @@ int recibir_ID(int server_socket) {
 
 	if (res != 0) {
 		log_trace(logger, "ID: %i", aviso.id);
+	} else {
+		salir_con_error("Fallo el envio de ID.", server_socket);
 	}
 
 	free(package);
@@ -128,7 +130,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 }
 
 void ejecutar(void) {
-	list_remove(lineas_parseadas, 0);
+	eliminar_parseo(&parsed_ops);
 
 	sleep(5);
 }
@@ -144,12 +146,14 @@ void iniciar(char** argv) {
 	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
 	//FILE* archivo_de_parseo = levantar_archivo("script.esi");
 
-	t_esi_operacion* parsed = malloc(sizeof(t_esi_operacion));
+	t_esi_operacion parsed;
 
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
-		*parsed = parsear(line);
-		list_add(lineas_parseadas, parsed);
+		parsed = parsear(line);
+		agregar_parseo(&parsed_ops, parsed);
 	}
+
+	loggear("Parseo exitoso.");
 
 	return;
 }
@@ -167,10 +171,7 @@ FILE* levantar_archivo(char* archivo) {
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	aviso_ESI pedido_permiso = {
-			.aviso = 1,
-			.id = this_id
-	};
+	aviso_ESI pedido_permiso = { .aviso = 1, .id = this_id };
 
 	aviso_ESI respuesta;
 
@@ -226,6 +227,50 @@ t_esi_operacion parsear(char* line) {
 
 	return parsed;
 }
+
+t_parsed_node* crear_nodo(t_esi_operacion parsed) {
+	t_parsed_node* nodo = (t_parsed_node*) malloc(sizeof(t_parsed_node));
+	nodo->esi_op = parsed;
+	nodo->sgte = NULL;
+
+	return nodo;
+}
+
+void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
+	t_parsed_node* nodo = crear_nodo(parsed);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_parsed_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+	return;
+}
+
+void destruir_nodo(t_parsed_node* nodo) {
+	free(nodo);
+}
+
+void eliminar_parseo(t_parsed_list* lista) {
+	if (lista->head != NULL) {
+		t_parsed_node* eliminado = lista->head;
+		lista->head = lista->head->sgte;
+		destruir_nodo(eliminado);
+	}
+}
+
+t_esi_operacion first(t_parsed_list lista) {
+	t_esi_operacion parsed = lista.head->esi_op;
+
+	return parsed;
+}
+
 
 void error_de_archivo(char* mensaje_de_error, int retorno) {
 	log_error(logger, mensaje_de_error);
