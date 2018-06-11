@@ -7,7 +7,7 @@
 #include "planificador.h"
 
 #define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
+//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaÃ±oo no fijo
 
 int i;
 
@@ -21,12 +21,14 @@ int main(int argc, char** argv) {
 	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
 	int socketCliente;
 
-	while (1) {
+	while (seguir_ejecucion) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
 				mensajePlanificador);
 	}
 
 	loggear("Cerrando sesion...");
+
+	avisar_cierre(socket_coordinador);
 
 	close(listening_socket);
 	close(socketCliente);
@@ -38,8 +40,11 @@ int main(int argc, char** argv) {
 }
 
 void iniciar(void) {
-	/*pthread_create(hiloDeConsola, NULL, consola, NULL);
-	 pthread_detach(hiloDeConsola);*/
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+
+	pthread_create(&hiloDeConsola, &attr, consola, NULL);
+	pthread_detach(hiloDeConsola);
 	iniciar_log("Planificador", "Nace el planificador...");
 
 	algoritmo_planificacion.desalojo = false;
@@ -149,10 +154,6 @@ void* atender_ESI(void* buffer) {
 			loggear(
 					"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
 
-			//procesar_cierre(socket_ESI);
-
-			//list_remove(ESIs, this_id);
-
 			agregar_ESI(&finished_ESIs, esi);
 
 			loggear("Agregado correctamente a la cola de terminados.");
@@ -169,20 +170,24 @@ void* atender_ESI(void* buffer) {
 
 			agregar_ESI(&new_ESIs, esi);
 
-			loggear("ESI listo para ejecutar añadido a la cola.");
+			loggear("ESI listo para ejecutar aÃ±adido a la cola.");
+
+		}
+
+		else if(aviso.aviso == 12){
 
 		}
 
 		else {
 			cerrar();
-			loggear("El ESI se volvió loco. Terminando.");
+			loggear("El ESI se volviÃ³ loco. Terminando.");
 			kill_ESI(esi);
 		}
 
 		planificar();
 	}
 
-	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
+	log_trace(logger, "Hilo de ESI nÃºmero %i terminado.", this_id);
 
 	return NULL;
 }
@@ -200,11 +205,11 @@ void kill_ESI(ESI esi) {
 	int envio = send(socket_ESI, package, packageSize, 0);
 
 	if (envio < 0) {
-		loggear("Fallo la terminación. Intentando de vuelta.");
+		loggear("Fallo la terminaciÃ³n. Intentando de vuelta.");
 		kill_ESI(esi);
 	}
 
-	log_trace(logger, "ESI número %i has fainted!", esi.id);
+	log_trace(logger, "ESI nÃºmero %i has fainted!", esi.id);
 }
 
 int asignar_ID(ESI esi) {
@@ -262,7 +267,7 @@ void planificar(void) {
 
 		//list_remove(ESIs, 0);
 
-		log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+		log_trace(logger, "ESI nÃºmero %i elegido.", executing_ESI.id);
 
 		ejecutar(executing_ESI);
 
@@ -289,7 +294,7 @@ void planificar(void) {
 		break;
 	}
 
-	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+	log_trace(logger, "ESI nÃºmero %i elegido.", executing_ESI.id);
 
 	ejecutar(executing_ESI);
 
@@ -493,7 +498,7 @@ float recibirCodigo() {
 void interpretarYEjecutarCodigo(float comando) {
 	int opcionElegida;
 	float codigoSubsiguiente;
-	opcionElegida = comando / 1;
+	opcionElegida = (int) comando;
 	switch (opcionElegida) {
 	case 0:
 		pthread_cancel(pthread_self()); //Usar esto lo hace no portable, preguntarle a Lean
@@ -523,15 +528,24 @@ void interpretarYEjecutarCodigo(float comando) {
 	case 7:
 		deadlock();
 		break;
+	case 8:
+		terminar();
+		break;
 	default:
 		printf(
 				"Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
 		break;
 	};
 }
+
+void terminar(void){
+	printf("Eligio cerrar el planificador \n");
+	seguir_ejecucion = false;
+}
+
 void listarOpciones() {
 	printf("0 : Cancelar consola \n");
-	printf("1 : Pausar o reactivar la planificación \n");
+	printf("1 : Pausar o reactivar la planificaciÃ³n \n");
 	printf("2.<ESI ID> : Bloquea al ESI elegido \n");
 	printf("3.<ESI ID> : Desbloquea al ESI elegido \n");
 	printf("4.<Recurso> : Lista procesos esperando dicho recurso \n");
@@ -540,14 +554,20 @@ void listarOpciones() {
 	printf("7 : Lista los ESI en deadlock \n");
 	printf("Introduzca la opcion deseada \n");
 }
-void* consola(void) {
+void* consola(void* nada) {
 	float comando;
 	printf("Bienvenido a la consola interactiva para el planificador \n");
 	while (1) {
 		listarOpciones();
 		comando = recibirCodigo();
 		interpretarYEjecutarCodigo(comando);
+
+		if(!seguir_ejecucion){
+			break;
+		}
 	}
+
+	return NULL;
 }
 void pausarOContinuar(void) {
 	printf("Eligio pausar o continuar \n");

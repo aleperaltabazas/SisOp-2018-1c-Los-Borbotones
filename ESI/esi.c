@@ -10,7 +10,7 @@
 #define IP "127.0.0.1"
 #define PUERTO "6667"
 #define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tama�o no fijo
+//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
 
 int this_id;
 
@@ -111,7 +111,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	if (orden.aviso == -1) {
 		close(socket_coordinador);
-		loggear("Orden de terminaci�n.");
+		loggear("Orden de terminación.");
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(

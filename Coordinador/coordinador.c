@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
 	int socketCliente;
 
-	while (1) {
+	while (seguir_ejecucion) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
 				mensajeCoordinador);
 	}
@@ -155,6 +155,32 @@ void* atender_Planificador(void* un_socket) {
 	int socket_cliente = (int) un_socket;
 
 	loggear("Hilo de planificador inicializado correctamente.");
+
+	aviso_ESI aviso_plani;
+
+	int packageSize = sizeof(aviso_ESI);
+	char* message = malloc(packageSize);
+
+	while(1){
+		int res = recv(socket_cliente, (void*) message, packageSize, 0);
+
+		if(res != 0){
+			loggear("Mensaje recibido del planificador.");
+		}
+		else{
+			salir_con_error("Fallo la recepción de mensaje del planificador.", socket_cliente);
+		}
+
+		deserializar_aviso(&(aviso_plani), &(message));
+
+		if(aviso_plani.aviso == 0){
+			loggear("Fin de Planificador. Cerrando sesión y terminando.");
+			break;
+		}
+
+	}
+
+	seguir_ejecucion = 0;
 
 	return NULL;
 }

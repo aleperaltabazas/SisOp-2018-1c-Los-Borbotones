@@ -55,7 +55,7 @@ typedef struct package_permiso {
 
 int levantar_servidor(char* puerto);
 	/*
-	 * Descripción: crea un socket escuchante y llama a bind() para atarlo al puerto y crear
+	 * DescripciÃ³n: crea un socket escuchante y llama a bind() para atarlo al puerto y crear
 	 * 		un servidor en dicho puerto.
 	 * Argumentos:
 	 * 		char* puerto: puerto en el que se encuentra el servidor.
@@ -65,8 +65,8 @@ int levantar_servidor(char* puerto);
 
 int conectar_a(char* ip, char* puerto, char* mensaje);
 	/*
-	 * Descripción: establece una conexión con un servidor y le envía un mensaje, y devuelve
-	 * 		el socket servidor. En caso que falle la conexión con el servidor o el envío
+	 * DescripciÃ³n: establece una conexiÃ³n con un servidor y le envï¿½a un mensaje, y devuelve
+	 * 		el socket servidor. En caso que falle la conexiÃ³n con el servidor o el envï¿½o
 	 * 		de mensajes, llama a salir_con_error().
 	 * Argumentos:
 	 * 		char* ip: ip del servidor.
@@ -76,16 +76,16 @@ int conectar_a(char* ip, char* puerto, char* mensaje);
 
 void chequear_servidor(char* id, int server_socket);
 	/*
-	 * Descripción: revisa el mensaje devuelto por el servidor para saber de qué servidor se trata.
+	 * DescripciÃ³n: revisa el mensaje devuelto por el servidor para saber de quï¿½ servidor se trata.
 	 * 		En caso de que sea un servidor desconocido, llama a salir_con_error().
 	 * Argumentos:
-	 * 		char* id: identificación enviada por el servidor.
+	 * 		char* id: identificaciï¿½n enviada por el servidor.
 	 * 		int server_socket: socket del servidor.
 	 */
 
 void serializar_pedido(package_pedido pedido, char** message);
 	/*
-	 * Descripción: serializa un mensaje del tipo package_pedido.
+	 * DescripciÃ³n: serializa un mensaje del tipo package_pedido.
 	 * Argumentos:
 	 * 		package_pedido pedido: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
@@ -93,7 +93,7 @@ void serializar_pedido(package_pedido pedido, char** message);
 
 void deserializar_pedido(package_pedido *pedido, char **package);
 	/*
-	 * Descripción: deserializa un mensaje del tipo package_pedido.
+	 * DescripciÃ³n: deserializa un mensaje del tipo package_pedido.
 	 * Argumentos:
 	 * 		package_pedido *pedido: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
@@ -101,7 +101,7 @@ void deserializar_pedido(package_pedido *pedido, char **package);
 
 void serializar_aviso(aviso_ESI aviso, char** message);
 	/*
-	 * Descripción: serializa un mensaje del tipo aviso_ESI.
+	 * DescripciÃ³n: serializa un mensaje del tipo aviso_ESI.
 	 * Argumentos:
 	 * 		aviso_ESI aviso: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
@@ -109,17 +109,22 @@ void serializar_aviso(aviso_ESI aviso, char** message);
 
 void deserializar_aviso(aviso_ESI *aviso, char** package);
 	/*
-	 * Descripción: deserializa un mensaje del tipo aviso_ESI.
+	 * DescripciÃ³n: deserializa un mensaje del tipo aviso_ESI.
 	 * Argumentos:
 	 * 		aviso_ESI aviso: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
-//Misc
+void avisar_cierre(int server_socket);
+	/*
+	 * DescripciÃ³n: manda un mensaje al servidor avisando su terminaciÃ³n.
+	 * Argumentos:
+	 * 		int server_socket: socket del servidor.
+	 */
 
 void salir_con_error(char* mensaje, int socket);
 	/*
-	 * Descripción: llama a exit_gracefully() para terminar el proceso con error (1), loggea
+	 * DescripciÃ³n: llama a exit_gracefully() para terminar el proceso con error (1), loggea
 	 * 		un mensaje de error y cierra el descriptor de archivo del socket.
 	 * Argumentos:
 	 * 		char* mensaje: el mensaje a loggear.
@@ -128,15 +133,15 @@ void salir_con_error(char* mensaje, int socket);
 
 void exit_gracefully(int return_val);
 	/*
-	 * Descripción: llama a exit() para terminar el proceso con un valor determinado.
+	 * DescripciÃ³n: llama a exit() para terminar el proceso con un valor determinado.
 	 * Argumentos:
 	 * 		int return_val: el valor con el que se llama a exit().
 	 */
 
 void iniciar_log(char* nombre, char* mensajeInicial);
 	/*
-	 * Descripción: crea un log con un nombre pasado por parámetro y se loggea
-	 * 		un mensaje inicial pasado por parámetro.
+	 * DescripciÃ³n: crea un log con un nombre pasado por parï¿½metro y se loggea
+	 * 		un mensaje inicial pasado por parï¿½metro.
 	 * Argumentos:
 	 * 		char* nombre: nombre del logger.
 	 * 		char* mensajeInicial: mensaje a loggear al principio.
@@ -144,16 +149,16 @@ void iniciar_log(char* nombre, char* mensajeInicial);
 
 void loggear(char* mensaje);
 	/*
-	 * Descripción: loggea un mensaje en la variable global logger.
+	 * DescripciÃ³n: loggea un mensaje en la variable global logger.
 	 * Argumentos:
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
 void terminar_conexion(int sockfd);
 	/*
-	 * Descripción: envía un mensaje de terminación a un proceso a través de un socket.
+	 * DescripciÃ³n: envï¿½a un mensaje de terminaciï¿½n a un proceso a travï¿½s de un socket.
 	 * Argumentos:
-	 * 		int sockfd: el socket por el cual se envía el mensaje.
+	 * 		int sockfd: el socket por el cual se envï¿½a el mensaje.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */
