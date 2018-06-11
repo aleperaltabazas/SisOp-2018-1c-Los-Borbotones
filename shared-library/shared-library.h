@@ -51,6 +51,20 @@ typedef struct package_permiso {
 	uint32_t pedido;
 } package_pedido;
 
+//Estructura de la orden que le manda el coordinador a la instancia
+typedef struct orden_del_coordinador{
+	uint32_t codigo_operacion;
+	uint32_t tamanio_a_enviar;
+} __attribute__((packed)) orden_del_coordinador;
+
+//Valores de set
+typedef struct parametros_set{
+	uint32_t tamanio_clave;
+	char * clave;
+	uint32_t tamanio_valor;
+	char * valor;
+} __attribute__((packed)) parametros_set;
+
 //Funciones servidor
 
 int levantar_servidor(char* puerto);
