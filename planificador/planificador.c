@@ -16,8 +16,6 @@ ESI test;
 int main(int argc, char** argv) {
 	iniciar();
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajePlanificador);
 	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
 	int socketCliente;
 
@@ -26,7 +24,7 @@ int main(int argc, char** argv) {
 				mensajePlanificador);
 	}
 
-	loggear("Cerrando sesion...");
+	loggear("Terminando proceso...");
 
 	avisar_cierre(socket_coordinador);
 
@@ -40,28 +38,62 @@ int main(int argc, char** argv) {
 }
 
 void iniciar(void) {
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-
-	pthread_create(&hiloDeConsola, &attr, consola, NULL);
-	pthread_detach(hiloDeConsola);
 	iniciar_log("Planificador", "Nace el planificador...");
 
-	algoritmo_planificacion.desalojo = false;
-	algoritmo_planificacion.tipo = FIFO;
+	cargar_configuracion();
+	iniciar_semaforos();
+	iniciar_hilos();
 
-	//executing_ESI = malloc(sizeof(executing_ESI));
-	executing_ESI.id = -1;
+}
+
+void iniciar_hilos(void) {
+	pthread_attr_t console_attr;
+	pthread_attr_init(&console_attr);
+
+	pthread_attr_t coordi_attr;
+	pthread_attr_init(&coordi_attr);
+
+	pthread_create(&hiloDeConsola, &console_attr, consola, NULL);
+	pthread_detach(hiloDeConsola);
+
+	pthread_create(&hilo_coordinador, &coordi_attr, atender_coordinador, NULL);
+}
+
+void cargar_configuracion(void) {
+	executing_ESI = esi_vacio;
 
 	ESI_id = 1;
 
-	//Por ahora intento hacer una lista con todos los hilos de ESIs sin discriminarlos para simplificar
-	ESIs = list_create();
-	ESIs_bloqueados = list_create();
-	ESIs_en_ejecucion = list_create();
-	ESIs_listos = list_create();
-	ESIs_finalizados = list_create();
+	ESIs_size = 0;
+	tiempo = 0;
 
+	algoritmo_planificacion.desalojo = false;
+	algoritmo_planificacion.tipo = FIFO;
+}
+
+void* atender_coordinador(void* nada) {
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+			mensajePlanificador);
+
+	int status = 1;
+
+	while (status) {
+		status = recibir_respuesta(socket_coordinador);
+	}
+
+	return NULL;
+}
+
+int recibir_respuesta(int server_socket) {
+	return 1;
+}
+
+void iniciar_semaforos() {
+	pthread_mutex_init(&mutex_consola_planificacion, NULL);
+	pthread_mutex_init(&sem_ESIs_size, NULL);
+	pthread_mutex_init(&sem_ID, NULL);
+	pthread_mutex_init(&sem_clock, NULL);
+	pthread_mutex_init(&sem_planificacion, NULL);
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
@@ -158,23 +190,33 @@ void* atender_ESI(void* buffer) {
 
 			loggear("Agregado correctamente a la cola de terminados.");
 
-			eliminar_ESI(&new_ESIs, esi);
-
 			loggear("Eliminado correctamente de la cola de listos.");
+
+			desalojar();
 
 			break;
 		}
 
 		else if (aviso.aviso == 1) {
+			//esi.ejecutando = false;
+			pthread_mutex_lock(&sem_clock);
 			esi.tiempo_arribo = tiempo;
+			pthread_mutex_unlock(&sem_clock);
 
+			pthread_mutex_lock(&sem_ESIs_size);
 			agregar_ESI(&new_ESIs, esi);
 
-			loggear("ESI listo para ejecutar añadido a la cola.");
+			ESIs_size++;
+			pthread_mutex_unlock(&sem_ESIs_size);
 
-		}
+			log_trace(logger,
+					"ESI número %i listo para ejecutar añadido a la cola.",
+					this_id);
 
-		else if(aviso.aviso == 12){
+			if (algoritmo_planificacion.desalojo) {
+				desalojar();
+				loggear("ESI desalojado.");
+			}
 
 		}
 
@@ -187,9 +229,19 @@ void* atender_ESI(void* buffer) {
 		planificar();
 	}
 
+	planificar();
+
 	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
 
 	return NULL;
+}
+
+void desalojar(void) {
+	executing_ESI = esi_vacio;
+}
+
+bool no_hay_ESI() {
+	return executing_ESI.id == esi_vacio.id;
 }
 
 void kill_ESI(ESI esi) {
@@ -214,9 +266,12 @@ void kill_ESI(ESI esi) {
 
 int asignar_ID(ESI esi) {
 	int socket_ESI = esi.socket;
+
+	pthread_mutex_lock(&sem_ID);
 	aviso_ESI aviso = { .aviso = 1, .id = ESI_id };
 
 	ESI_id++;
+	pthread_mutex_unlock(&sem_ID);
 
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* package = malloc(packageSize);
@@ -261,48 +316,37 @@ void procesar_cierre(int socket_ESI) {
 }
 
 void planificar(void) {
-	if (executing_ESI.id == -1) {
-		executing_ESI = first(new_ESIs);
-		//*executing_ESI = test;
+	if (consola_planificacion && ESIs_size > 0) {
 
-		//list_remove(ESIs, 0);
+		ESI next_esi = dame_proximo_ESI();
 
-		log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
+		log_trace(logger, "ESI número %i elegido.", next_esi.id);
 
-		ejecutar(executing_ESI);
-
-		return;
+		ejecutar(next_esi);
 	}
-
-	if (algoritmo_planificacion.desalojo) {
-		desalojar();
-	}
-
-	switch (algoritmo_planificacion.tipo) {
-	case FIFO:
-		executing_ESI = first(new_ESIs);
-		//*executing_ESI = test;
-		break;
-	case SJF:
-		executing_ESI = shortest(new_ESIs);
-		break;
-	case HRRN:
-		executing_ESI = highest_RR(new_ESIs);
-		break;
-	default:
-		loggear("FALLO EN EL ALGORITMO.");
-		break;
-	}
-
-	log_trace(logger, "ESI número %i elegido.", executing_ESI.id);
-
-	ejecutar(executing_ESI);
-
 }
 
-void desalojar(void) {
-	//list_add(ESIs, (void*) &executing_ESI);
-	executing_ESI = esi_vacio;
+ESI dame_proximo_ESI() {
+	ESI next_esi = executing_ESI;
+
+	//if (no_hay_ESI()) {
+		switch (algoritmo_planificacion.tipo) {
+		case FIFO:
+			next_esi = first(new_ESIs);
+			break;
+		case SJF:
+			next_esi = shortest(new_ESIs);
+			break;
+		case HRRN:
+			next_esi = highest_RR(new_ESIs);
+			break;
+		default:
+			loggear("FALLO EN EL ALGORITMO.");
+			break;
+	//	}
+	}
+
+	return next_esi;
 }
 
 t_esi_node* crear_nodo(ESI esi) {
@@ -350,6 +394,7 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 			destruir_nodo(eliminado);
 		} else {
 			t_esi_node* puntero = lista->head;
+
 			while (puntero->esi.id != esi.id) {
 				puntero = puntero->sgte;
 			}
@@ -419,6 +464,7 @@ void cerrar(void) {
 
 void ejecutar(ESI esi_a_ejecutar) {
 	int socket_ESI = esi_a_ejecutar.socket;
+	executing_ESI = esi_a_ejecutar;
 
 	loggear("Enviando orden de ejecucion.");
 	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
@@ -443,28 +489,19 @@ void ejecutar(ESI esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
-	//list_remove(ESIs, esi_a_ejecutar.id);
-
+	pthread_mutex_lock(&sem_ESIs_size);
 	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
+
+	ESIs_size--;
+	pthread_mutex_unlock(&sem_ESIs_size);
 
 	loggear("ESI eliminado de la cola de la listos.");
 
 	free(message);
-}
 
-void deserializar_esi(void* esi_copiado, ESI* esi_receptor) {
-	int offset = 0;
-
-	loggear("a");
-
-	memcpy(&esi_receptor->id, esi_copiado, sizeof(esi_receptor->id));
-
-	loggear("b");
-
-	offset = sizeof(esi_receptor->id);
-
-	memcpy(&esi_receptor->socket, esi_copiado + offset,
-			sizeof(esi_receptor->socket));
+	pthread_mutex_lock(&sem_clock);
+	tiempo++;
+	pthread_mutex_unlock(&sem_clock);
 }
 
 void cerrar_listas() {
@@ -531,6 +568,12 @@ void interpretarYEjecutarCodigo(float comando) {
 	case 8:
 		terminar();
 		break;
+	case 9:
+		mostrame_clock();
+		break;
+	case 10:
+		display_console();
+		break;
 	default:
 		printf(
 				"Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
@@ -538,31 +581,64 @@ void interpretarYEjecutarCodigo(float comando) {
 	};
 }
 
-void terminar(void){
+void display_console() {
+	display = !display;
+}
+
+void mostrame_clock(void) {
+	pthread_mutex_lock(&sem_clock);
+	printf("El clock de instrucciones va por %i. \n", tiempo);
+	pthread_mutex_unlock(&sem_clock);
+}
+
+void terminar(void) {
 	printf("Eligio cerrar el planificador \n");
 	seguir_ejecucion = false;
+
+	avisar_cierre(socket_coordinador);
+
+	exit(42);
+}
+
+void cerrar_ESIs() {
+	t_esi_node* puntero = new_ESIs.head;
+
+	while (puntero != NULL) {
+		kill_ESI(puntero->esi);
+
+		sleep(1);
+
+		puntero = puntero->sgte;
+	}
+
 }
 
 void listarOpciones() {
-	printf("0 : Cancelar consola \n");
-	printf("1 : Pausar o reactivar la planificación \n");
-	printf("2.<ESI ID> : Bloquea al ESI elegido \n");
-	printf("3.<ESI ID> : Desbloquea al ESI elegido \n");
-	printf("4.<Recurso> : Lista procesos esperando dicho recurso \n");
-	printf("5.<ESI ID> : Mata al ESI elegido \n");
-	printf("6.<ESI ID> : Brinda el estado del ESI elegido \n");
-	printf("7 : Lista los ESI en deadlock \n");
+	printf("0: Cancelar consola \n");
+	printf("1: Pausar o reactivar la planificación \n");
+	printf("2.<ESI ID>: Bloquea al ESI elegido \n");
+	printf("3.<ESI ID>: Desbloquea al ESI elegido \n");
+	printf("4.<Recurso>: Lista procesos esperando dicho recurso \n");
+	printf("5.<ESI ID>: Mata al ESI elegido \n");
+	printf("6.<ESI ID>: Brinda el estado del ESI elegido \n");
+	printf("7: Lista los ESI en deadlock \n");
+	printf("8: Termina el proceso \n");
+	printf("9: Muestra el clock interno del planificador \n");
+	printf("10: Enciende o apaga el display de las opciones de consola \n");
 	printf("Introduzca la opcion deseada \n");
 }
 void* consola(void* nada) {
 	float comando;
 	printf("Bienvenido a la consola interactiva para el planificador \n");
 	while (1) {
-		listarOpciones();
+		if (display) {
+			listarOpciones();
+		}
+
 		comando = recibirCodigo();
 		interpretarYEjecutarCodigo(comando);
 
-		if(!seguir_ejecucion){
+		if (!seguir_ejecucion) {
 			break;
 		}
 	}
@@ -570,7 +646,29 @@ void* consola(void* nada) {
 	return NULL;
 }
 void pausarOContinuar(void) {
-	printf("Eligio pausar o continuar \n");
+	if (consola_planificacion) {
+		printf("Pausando planificación...\n");
+
+		consola_planificacion = false;
+
+		sleep(1);
+
+		printf("Planificación pausada.\n");
+
+	}
+
+	else {
+		printf("Reanudando planificacion...\n");
+
+		consola_planificacion = true;
+
+		sleep(1);
+
+		printf("Planificación reanudada.\n");
+		planificar();
+
+	}
+
 }
 void bloquear(float codigo) {
 	printf("Eligio bloquear el ESI \n");

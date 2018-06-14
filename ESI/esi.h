@@ -142,4 +142,11 @@ t_esi_operacion first(t_parsed_list lista);
 	 * 		t_parsed_list lista: lista de la cual obtener el elemento.
 	 */
 
+bool esta_vacia(t_parsed_list* lista);
+	/*
+	 * Descripción: devuelve si la lista se encuentra vacía.
+	 * Argumentos:
+	 * 		t_parsed_list* lista: lista a verificar.
+	 */
+
 #endif /* ESI_H_ */

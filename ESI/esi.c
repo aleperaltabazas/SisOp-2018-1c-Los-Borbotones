@@ -24,13 +24,11 @@ int main(int argc, char** argv) {
 
 	//asignar_ID(socket_planificador);
 
-
-
 	this_id = recibir_ID(socket_planificador);
 
 	ready(socket_planificador);
 
-	while (parsed_ops.head->sgte != NULL) {
+	while (parsed_ops.head != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
 	}
 
@@ -130,9 +128,30 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 }
 
 void ejecutar(void) {
+	t_esi_operacion parsed = first(parsed_ops);
+
+	if (parsed.valido) {
+		switch (parsed.keyword) {
+		case GET:
+			log_trace(logger, "GET %s", parsed.argumentos.GET.clave);
+			break;
+		case SET:
+			log_trace(logger, "SET %s %s", parsed.argumentos.SET.clave,
+					parsed.argumentos.SET.valor);
+			break;
+		case STORE:
+			log_trace(logger, "STORE %s", parsed.argumentos.STORE.clave);
+			break;
+		default:
+			break;
+		}
+
+	}
+
 	eliminar_parseo(&parsed_ops);
 
-	sleep(5);
+	sleep(2);
+
 }
 
 void iniciar(char** argv) {
@@ -206,13 +225,10 @@ t_esi_operacion parsear(char* line) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
-			loggear("GET.");
 			break;
 		case SET:
-			loggear("SET.");
 			break;
 		case STORE:
-			loggear("STORE.");
 			break;
 		default:
 			log_error(logger, "No se pudo interpretar la linea.");
@@ -258,11 +274,15 @@ void destruir_nodo(t_parsed_node* nodo) {
 }
 
 void eliminar_parseo(t_parsed_list* lista) {
-	if (lista->head != NULL) {
+	if (!esta_vacia(lista)) {
 		t_parsed_node* eliminado = lista->head;
 		lista->head = lista->head->sgte;
 		destruir_nodo(eliminado);
 	}
+}
+
+bool esta_vacia(t_parsed_list* lista) {
+	return lista->head == NULL;
 }
 
 t_esi_operacion first(t_parsed_list lista) {
@@ -270,7 +290,6 @@ t_esi_operacion first(t_parsed_list lista) {
 
 	return parsed;
 }
-
 
 void error_de_archivo(char* mensaje_de_error, int retorno) {
 	log_error(logger, mensaje_de_error);

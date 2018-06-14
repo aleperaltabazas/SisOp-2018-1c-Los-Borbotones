@@ -175,6 +175,7 @@ void* atender_Planificador(void* un_socket) {
 
 		if(aviso_plani.aviso == 0){
 			loggear("Fin de Planificador. Cerrando sesión y terminando.");
+			exit(42);
 			break;
 		}
 

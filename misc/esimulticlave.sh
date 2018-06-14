@@ -1,7 +1,7 @@
 #/bin/bash
 
-cd ../Instancias/Debug
+cd ../ESI/Debug
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug
 
-valgrind ./instancias
+valgrind ./ESI ESI_MultiClave

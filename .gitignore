@@ -31,6 +31,12 @@
 *.so.*
 *.dylib
 
+#gitignores
+Coordinador/.gitignore
+shared-library/.gitignore
+Instancias/.gitignore
+ESI/.gitignore
+
 # Executables
 *.exe
 *.out
