@@ -94,6 +94,7 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_ID, NULL);
 	pthread_mutex_init(&sem_clock, NULL);
 	pthread_mutex_init(&sem_planificacion, NULL);
+	pthread_mutex_init(&sem_ejecucion, NULL);
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
@@ -188,11 +189,19 @@ void* atender_ESI(void* buffer) {
 
 			agregar_ESI(&finished_ESIs, esi);
 
+			pthread_mutex_lock(&sem_ESIs_size);
+			eliminar_ESI(&new_ESIs, esi);
+
+			ESIs_size--;
+			pthread_mutex_unlock(&sem_ESIs_size);
+
 			loggear("Agregado correctamente a la cola de terminados.");
 
 			loggear("Eliminado correctamente de la cola de listos.");
 
 			desalojar();
+
+			pthread_mutex_unlock(&sem_ejecucion);
 
 			break;
 		}
@@ -218,6 +227,12 @@ void* atender_ESI(void* buffer) {
 				loggear("ESI desalojado.");
 			}
 
+		}
+
+		else if(aviso.aviso == 10){
+			log_trace(logger, "ESI número %i ejecutó correctamente.", this_id);
+
+			pthread_mutex_unlock(&sem_ejecucion);
 		}
 
 		else {
@@ -317,6 +332,7 @@ void procesar_cierre(int socket_ESI) {
 
 void planificar(void) {
 	if (consola_planificacion && ESIs_size > 0) {
+		pthread_mutex_lock(&sem_ejecucion);
 
 		ESI next_esi = dame_proximo_ESI();
 
@@ -329,7 +345,7 @@ void planificar(void) {
 ESI dame_proximo_ESI() {
 	ESI next_esi = executing_ESI;
 
-	//if (no_hay_ESI()) {
+	if (no_hay_ESI()) {
 		switch (algoritmo_planificacion.tipo) {
 		case FIFO:
 			next_esi = first(new_ESIs);
@@ -343,7 +359,7 @@ ESI dame_proximo_ESI() {
 		default:
 			loggear("FALLO EN EL ALGORITMO.");
 			break;
-	//	}
+		}
 	}
 
 	return next_esi;
@@ -463,6 +479,11 @@ void cerrar(void) {
 }
 
 void ejecutar(ESI esi_a_ejecutar) {
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = true;
+	pthread_mutex_unlock(&sem_ejecutando);
+
 	int socket_ESI = esi_a_ejecutar.socket;
 	executing_ESI = esi_a_ejecutar;
 
@@ -489,12 +510,6 @@ void ejecutar(ESI esi_a_ejecutar) {
 
 	loggear("Orden enviada.");
 
-	pthread_mutex_lock(&sem_ESIs_size);
-	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
-
-	ESIs_size--;
-	pthread_mutex_unlock(&sem_ESIs_size);
-
 	loggear("ESI eliminado de la cola de la listos.");
 
 	free(message);
@@ -502,6 +517,10 @@ void ejecutar(ESI esi_a_ejecutar) {
 	pthread_mutex_lock(&sem_clock);
 	tiempo++;
 	pthread_mutex_unlock(&sem_clock);
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = false;
+	pthread_mutex_unlock(&sem_ejecutando);
 }
 
 void cerrar_listas() {

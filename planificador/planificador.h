@@ -81,6 +81,8 @@ pthread_mutex_t sem_ID;
 pthread_mutex_t mutex_consola_planificacion;
 pthread_mutex_t sem_clock;
 pthread_mutex_t sem_planificacion;
+pthread_mutex_t sem_ejecucion;
+pthread_mutex_t sem_ejecutando;
 
 //Hilos
 

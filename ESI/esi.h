@@ -29,6 +29,14 @@ t_parsed_list parsed_ops;
 
 t_list* lineas_parseadas;
 
+aviso_ESI aviso_ready = {
+		.aviso = 1
+};
+
+aviso_ESI aviso_ejecute = {
+		.aviso = 10
+};
+
 //Funciones
 
 void iniciar(char** argv);
@@ -89,11 +97,12 @@ void avisar_cierre(int sockfd);
 	 * 		int sockfd: socket al cu�l se enviar� el mensaje de cierre.
 	 */
 
-void ready(int sockfd);
+void enviar_aviso(int sockfd, aviso_ESI aviso);
 	/*
-	 * Descripción: le informa al planificador que se encuentra listo para ejecutarse.
+	 * Descripción: envía un mensaje a un servidor del tipo aviso_ESI.
 	 * Argumentos:
-	 * 		int socket_planificador: socket del planificador.
+	 * 		int sockfd: socket del servidor.
+	 * 		aviso_ESI aviso: aviso a enviar.
 	 */
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador);

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 
 	this_id = recibir_ID(socket_planificador);
 
-	ready(socket_planificador);
+	enviar_aviso(socket_planificador, aviso_ready);
 
 	while (parsed_ops.head != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
@@ -67,9 +67,7 @@ int recibir_ID(int server_socket) {
 	return aviso.id;
 }
 
-void ready(int socket_planificador) {
-	aviso_ESI aviso = { .aviso = 1, .id = this_id };
-
+void enviar_aviso(int socket_planificador, aviso_ESI aviso) {
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
@@ -85,7 +83,7 @@ void ready(int socket_planificador) {
 
 	free(message);
 
-	loggear("Preparado.");
+	loggear("Mensaje enviado.");
 }
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
@@ -123,7 +121,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		ejecutar();
 	}
 
-	ready(socket_planificador);
+	enviar_aviso(socket_planificador, aviso_ejecute);
 
 }
 
