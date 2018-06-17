@@ -83,7 +83,7 @@ algoritmo_reemplazo dame_algoritmo(char* algoritmo_src){
 void cargar_configuracion(void){
 	t_config* config = config_create("instancia.config");
 
-	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOOR");
+	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
 
 	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
