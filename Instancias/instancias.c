@@ -125,8 +125,7 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	orden_del_coordinador orden;
-	orden_del_coordinador * buffer_orden = malloc(
-			sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(sizeof(orden_del_coordinador));
 
 	loggear("Esperando orden del coordinador...");
 
@@ -140,14 +139,11 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	loggear("Orden recibida!");
 
-	//memcpy(&(orden.codigo_operacion), buffer_orden -> codigo_operacion, sizeof(uint32_t));
-	//memcpy(&(orden.tamanio_a_enviar), buffer_orden -> tamanio_a_enviar, sizeof(uint32_t));
-
 	log_trace(logger, "cod. op: %d", buffer_orden->codigo_operacion);
 
 	log_trace(logger, "tamanio: %d", buffer_orden->tamanio_a_enviar);
 
-	sleep(10);
+	sleep(5);
 
 	orden.codigo_operacion = buffer_orden->codigo_operacion;
 
@@ -158,48 +154,53 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 void set(uint32_t longitud_parametros, int socket_coordinador) {
 
-	parametros_set valores;
-	parametros_set * buffer_valores = malloc(longitud_parametros);
+	parametros_set parametros;
+	if(recieve_and_deserialize(&(parametros), socket_coordinador) < 0){
+		loggear("Fallo en la recepcion de los parametros");
+	}
 
-	loggear("Esperando valores");
+	if(strcmp(parametros.valor, "UnValor")){
+		loggear("VAMO MENEN");
+	}
 
-	recv(socket_coordinador, (void*) buffer_valores, longitud_parametros, 0);
-
-	loggear("Valor recibido, deserializando...");
-
-	int offset = 0;
-
-	memcpy(&valores.tamanio_clave, buffer_valores, sizeof(uint32_t));
-
-	loggear("Tamanio clave deserializado");
-
-	offset += sizeof(uint32_t);
-
-	memcpy(&valores.clave, buffer_valores + offset, valores.tamanio_clave);
-
-	loggear("Clave deserializada");
-
-	offset += valores.tamanio_clave;
-
-	memcpy(&valores.tamanio_valor, buffer_valores + offset, sizeof(uint32_t));
-
-	loggear("Tamanio valor deserializado");
-
-	offset += sizeof(uint32_t);
-
-	log_trace(logger, "Tamanio clave: %d tamanio_valor: %d",
-			valores.tamanio_clave, valores.tamanio_valor);
-
-	memcpy(&valores.valor, buffer_valores + offset, valores.tamanio_valor);
-
-	loggear("Valores deserializados!");
-
-	log_trace(logger, "Clave: %s Valor: %s", valores.clave, valores.valor);
-
+	loggear("Fin");
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar la clave (veo si entra)
 	//Si puedo almacenar creo un struct entrada con los valores que me dieron y dandole una posicion por la cual acceder
 
+}
+
+int recieve_and_deserialize(parametros_set *parametros, int socketCliente){
+
+	int status;
+	int buffer_size;
+	char *buffer = malloc(buffer_size = sizeof(uint32_t));
+
+	uint32_t tamanio_clave;
+	status = recv(socketCliente, buffer, sizeof(parametros-> tamanio_clave), 0);
+	memcpy(&(tamanio_clave), buffer, buffer_size);
+	if (!status) return -1;
+
+	log_trace(logger, "Tamanio clave recibido: %d", tamanio_clave);
+
+	parametros -> clave = malloc(tamanio_clave);
+
+	status = recv(socketCliente, parametros -> clave, tamanio_clave, 0);
+	if (!status) return -1;
+
+	uint32_t tamanio_valor;
+	status = recv(socketCliente, buffer, sizeof(parametros -> tamanio_valor), 0);
+	memcpy(&(tamanio_valor), buffer, buffer_size);
+	if (!status) return -1;
+
+	parametros -> valor = malloc(tamanio_valor);
+
+	status = recv(socketCliente, parametros -> valor, tamanio_valor, 0);
+	if (!status) return -1;
+
+	free(buffer);
+
+	return status;
 }
 
 int almacenar_valor() {

@@ -56,6 +56,70 @@ void deserializar_aviso(aviso_ESI *aviso, char** package) {
 	memcpy(&aviso->id, *package + offset, sizeof(aviso->id));
 }
 
+char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set){
+
+	char * buffer_parametros = malloc(tamanio_a_enviar);
+	int offset = 0;
+	int size_to_send;
+
+	size_to_send =  sizeof(valor_set -> tamanio_clave);
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave), size_to_send);
+	offset += size_to_send;
+
+	loggear("tamanio clave serializado");
+
+	size_to_send =  valor_set -> tamanio_clave;
+	memcpy(buffer_parametros + offset, &(valor_set->clave), size_to_send);
+	offset += size_to_send;
+
+	loggear("clave serializada");
+
+	size_to_send =  sizeof(valor_set -> tamanio_valor);
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor), size_to_send);
+	offset += size_to_send;
+
+	loggear("tamanio valor serializado");
+
+	size_to_send =  valor_set -> tamanio_valor;
+	memcpy(buffer_parametros + offset, &(valor_set->valor), size_to_send);
+	offset += size_to_send;
+
+	loggear("valor serializado");
+
+	return buffer_parametros;
+}
+
+void deserializar_valores_set(parametros_set ** buffer_valores, parametros_set * valores){
+
+
+}
+
+/*
+char* serializarOperandos(t_Package *package){
+
+	char *serializedPackage = malloc(package->total_size);
+
+	int offset = 0;
+	int size_to_send;
+
+	size_to_send =  sizeof(package->username_long);
+	memcpy(serializedPackage + offset, &(package->username_long), size_to_send);
+	offset += size_to_send;
+
+	size_to_send =  package->username_long;
+	memcpy(serializedPackage + offset, package->username, size_to_send);
+	offset += size_to_send;
+
+	size_to_send =  sizeof(package->message_long);
+	memcpy(serializedPackage + offset, &(package->message_long), size_to_send);
+	offset += size_to_send;
+
+	size_to_send =  package->message_long;
+	memcpy(serializedPackage + offset, package->message, size_to_send);
+
+	return serializedPackage;
+}
+*/
 void avisar_cierre(int server_socket) {
 	int status = 1;
 	aviso_ESI aviso_de_fin = { .aviso = 0 };

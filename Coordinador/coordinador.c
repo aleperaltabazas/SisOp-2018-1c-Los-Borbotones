@@ -478,67 +478,59 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
-	parametros_set valor_set;
+	asignar_parametros_a_enviar();
 
-	valor_set.tamanio_clave = 5;
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave + valor_set.tamanio_valor;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	return NULL;
+}
+
+void asignar_parametros_a_enviar(){
+
+	//Aca estaria la logica de recibir las claves y valores
 	valor_set.clave = "Clave";
-	valor_set.tamanio_valor = 7;
+	valor_set.tamanio_clave = strlen(valor_set.clave);
 	valor_set.valor = "UnValor";
+	valor_set.tamanio_valor = strlen(valor_set.valor);
 
-	uint32_t tamanio_parametros_set = 2 * sizeof(uint32_t)
-			+ strlen(valor_set.clave) + strlen(valor_set.valor);
+}
 
-	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
-
-//---------
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket){
 
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 11;
 	orden.tamanio_a_enviar = tamanio_parametros_set;
 
+	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
+
 	log_trace(logger, "tamanio a enviar: %d", orden.tamanio_a_enviar);
 
-//Quiero mandar dos uint32_t
 	orden_del_coordinador * buffer_orden = malloc(
 			sizeof(orden_del_coordinador));
 
-	memcpy(buffer_orden, &orden, tamanio_orden);
+	//Serializacion de la orden
 
-//memcpy(buffer_orden, &(orden.codigo_operacion), sizeof(uint32_t));
-//memcpy(buffer_orden + sizeof(uint32_t), &(orden.tamanio_a_enviar), sizeof(uint32_t));
+	memcpy(buffer_orden, &orden, tamanio_orden);
 
 	loggear("Enviando orden a la instancia...");
 
 	if (send((int) un_socket, (void*) buffer_orden,
 			sizeof(orden_del_coordinador), 0) < 0) {
 		loggear("Error en el envio de la orden");
-		return -1;
+		return;
 	}
 
 	loggear("Orden enviada!");
 
-//Serializacion valor_set
+}
 
-	parametros_set * buffer_parametros = malloc(tamanio_parametros_set);
+void enviar_valores_set(int tamanio_parametros_set, void * un_socket){
 
-	int offset = 0;
-
-	memcpy(buffer_parametros, &valor_set.tamanio_clave, sizeof(uint32_t));
-
-	offset += sizeof(uint32_t);
-
-	memcpy(buffer_parametros + offset, &valor_set.clave,
-			strlen(valor_set.clave));
-
-	offset += strlen(valor_set.clave);
-
-	memcpy(buffer_parametros + offset, &valor_set.tamanio_valor,
-			sizeof(uint32_t));
-
-	offset += sizeof(uint32_t);
-
-	memcpy(buffer_parametros + offset, &valor_set.valor,
-			strlen(valor_set.valor));
+	char * buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
 
 	loggear("Enviando parametros a la instancia");
 
@@ -546,6 +538,4 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Parametros enviados!");
 
-	return NULL;
 }
-

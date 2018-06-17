@@ -56,6 +56,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador);
 void cargar_configuracion(void);
 void iniciar(void);
 algoritmo_reemplazo dame_algoritmo(char* algoritmo_src);
+int recieve_and_deserialize(parametros_set *parametros, int socketCliente);
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_list * entradas;

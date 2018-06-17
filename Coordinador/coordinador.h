@@ -28,6 +28,9 @@ package_int bloqueo_ok = {
 t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 
+parametros_set valor_set;
+
+
 //Hilos
 
 pthread_t hilo_ESI;
@@ -206,5 +209,14 @@ char* first(t_clave_list lista);
 	 * Argumentos:
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
+
+void asignar_parametros_a_enviar();
+	/*
+ 	 * Descripción: obtiene los parametros para mandarlos a la instancia.
+ 	 */
+
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket);
+void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
+
 
 #endif /* COORDINADOR_H_ */

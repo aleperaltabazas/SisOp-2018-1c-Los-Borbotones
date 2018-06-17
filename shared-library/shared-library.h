@@ -97,6 +97,14 @@ void deserializar_aviso(aviso_ESI *aviso, char** package);
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
+char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
+	/*
+	 * Descripción: serializa un mensaje del tipo parametros_set.
+	 * Argumentos:
+	 * 		tamanio_a_enviar: para hacer el malloc.
+	 * 		valor_set: el recipiente del mensaje serializado.
+	 */
+
 void avisar_cierre(int server_socket);
 	/*
 	 * Descripción: manda un mensaje al servidor avisando su terminación.
