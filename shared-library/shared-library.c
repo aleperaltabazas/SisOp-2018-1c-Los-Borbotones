@@ -21,11 +21,11 @@ void terminar_conexion(int sockfd) {
 	int envio = send(sockfd, package, packageSize, 0);
 
 	if (envio < 0) {
-		loggear("Fallo la terminaci�n. Intentando de vuelta.");
+		loggear("Fallo la terminación. Intentando de vuelta.");
 		terminar_conexion(sockfd);
 	}
 
-	loggear("Terminaci�n exitosa.");
+	loggear("Terminación exitosa.");
 }
 
 void serializar_packed(package_int packed, char** message) {
@@ -99,8 +99,12 @@ int levantar_servidor(char* puerto) {
 	int listening_socket = socket(server_info->ai_family,
 			server_info->ai_socktype, server_info->ai_protocol);
 
-	bind(listening_socket, server_info->ai_addr, server_info->ai_addrlen);
+	int bindeo = bind(listening_socket, server_info->ai_addr, server_info->ai_addrlen);
 	freeaddrinfo(server_info);
+
+	if (bindeo < 0){
+		salir_con_error("Falló el bindeo.", 0);
+	}
 
 	return listening_socket;
 }
