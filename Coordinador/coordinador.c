@@ -7,12 +7,8 @@
 
 #include "coordinador.h"
 
-#define PUERTO "6667"
-#define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
-#define PACKAGE_SIZE 1024
-
 int main(int argc, char** argv) {
-	iniciar_log("Coordinador", "Nace el coordinador...");
+	iniciar();
 
 	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
 	int socketCliente;
@@ -27,6 +23,59 @@ int main(int argc, char** argv) {
 	close(socketCliente);
 	close(listening_socket);
 	return EXIT_SUCCESS;
+}
+
+void iniciar(void) {
+	iniciar_log("Coordinador", "Nace el coordinador...");
+	cargar_configuracion();
+}
+
+void cargar_configuracion(void) {
+	t_config* config = config_create("coordinador.config");
+
+	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
+
+	char* algoritmo = config_get_string_value(config, "ALGORITMO_DISTRIBUCION");
+	ALGORITMO_DISTRIBUCION = dame_algoritmo(algoritmo);
+	log_info(logger, "Algoritmo de distribución: %s", algoritmo);
+
+	CANTIDAD_ENTRADAS = config_get_int_value(config, "CANTIDAD_ENTRADAS");
+	log_info(logger, "Cantidad de entradas: %i", CANTIDAD_ENTRADAS);
+
+	TAMANIO_ENTRADAS = config_get_int_value(config, "TAMANIO_ENTRADAS");
+	log_info(logger, "Tamaño de entradas: %i", TAMANIO_ENTRADAS);
+
+	int retardo = config_get_int_value(config, "RETARDO");
+	RETARDO = dame_retardo(retardo);
+	log_info(logger, "Retardo: %i (en microsegundos)", retardo);
+
+	loggear("Configuración cargada.");
+}
+
+algoritmo_distribucion dame_algoritmo(char* algoritmo_src){
+	algoritmo_distribucion algoritmo_ret;
+
+	if(strcmp(algoritmo_src, "LSU") == 0){
+		algoritmo_ret = LSU;
+	}
+
+	else if(strcmp(algoritmo_src, "EL") == 0){
+		algoritmo_ret = EL;
+	}
+
+	else if(strcmp(algoritmo_src, "KE") == 0){
+		algoritmo_ret = KE;
+	}
+
+	return algoritmo_ret;
+}
+
+float dame_retardo(int retardo_int){
+	float ret_val = (float) retardo_int;
+	ret_val = ret_val/1000;
+
+	return ret_val;
 }
 
 int manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
@@ -135,8 +184,7 @@ int chequear_solicitud(int socket_cliente) {
 		return 0;
 	} else if (aviso_cliente.aviso == 1) {
 		loggear("Ejecución de ESI.");
-	}
-	else{
+	} else {
 		loggear("Mensaje erróneo. Abortando ESI.");
 		terminar_conexion(socket_cliente);
 	}
@@ -161,19 +209,19 @@ void* atender_Planificador(void* un_socket) {
 	int packageSize = sizeof(aviso_ESI);
 	char* message = malloc(packageSize);
 
-	while(1){
+	while (1) {
 		int res = recv(socket_cliente, (void*) message, packageSize, 0);
 
-		if(res != 0){
+		if (res != 0) {
 			loggear("Mensaje recibido del planificador.");
-		}
-		else{
-			salir_con_error("Fallo la recepción de mensaje del planificador.", socket_cliente);
+		} else {
+			salir_con_error("Fallo la recepción de mensaje del planificador.",
+					socket_cliente);
 		}
 
 		deserializar_aviso(&(aviso_plani), &(message));
 
-		if(aviso_plani.aviso == 0){
+		if (aviso_plani.aviso == 0) {
 			loggear("Fin de Planificador. Cerrando sesión y terminando.");
 			exit(42);
 			break;
@@ -197,10 +245,10 @@ void* atender_Instancia(void* un_socket) {
 	valor_set.tamanio_valor = 7;
 	valor_set.valor = "UnValor";
 
-	uint32_t tamanio_parametros_set = 2 * sizeof(uint32_t) + strlen(valor_set.clave) + strlen(valor_set.valor);
+	uint32_t tamanio_parametros_set = 2 * sizeof(uint32_t)
+			+ strlen(valor_set.clave) + strlen(valor_set.valor);
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
-
 
 	//---------
 
@@ -211,7 +259,8 @@ void* atender_Instancia(void* un_socket) {
 	log_trace(logger, "tamanio a enviar: %d", orden.tamanio_a_enviar);
 
 	//Quiero mandar dos uint32_t
-	orden_del_coordinador * buffer_orden = malloc(sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(
+			sizeof(orden_del_coordinador));
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 
@@ -220,7 +269,8 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Enviando orden a la instancia...");
 
-	if(send((int) un_socket, (void*) buffer_orden, sizeof(orden_del_coordinador), 0) < 0){
+	if (send((int) un_socket, (void*) buffer_orden,
+			sizeof(orden_del_coordinador), 0) < 0) {
 		loggear("Error en el envio de la orden");
 		return -1;
 	}
@@ -237,15 +287,18 @@ void* atender_Instancia(void* un_socket) {
 
 	offset += sizeof(uint32_t);
 
-	memcpy(buffer_parametros + offset, &valor_set.clave, strlen(valor_set.clave));
+	memcpy(buffer_parametros + offset, &valor_set.clave,
+			strlen(valor_set.clave));
 
 	offset += strlen(valor_set.clave);
 
-	memcpy(buffer_parametros + offset, &valor_set.tamanio_valor, sizeof(uint32_t));
+	memcpy(buffer_parametros + offset, &valor_set.tamanio_valor,
+			sizeof(uint32_t));
 
 	offset += sizeof(uint32_t);
 
-	memcpy(buffer_parametros + offset, &valor_set.valor, strlen(valor_set.valor));
+	memcpy(buffer_parametros + offset, &valor_set.valor,
+			strlen(valor_set.valor));
 
 	loggear("Enviando parametros a la instancia");
 

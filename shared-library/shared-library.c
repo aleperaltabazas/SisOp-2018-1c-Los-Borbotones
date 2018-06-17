@@ -21,11 +21,11 @@ void terminar_conexion(int sockfd) {
 	int envio = send(sockfd, package, packageSize, 0);
 
 	if (envio < 0) {
-		loggear("Fallo la terminación. Intentando de vuelta.");
+		loggear("Fallo la terminaciï¿½n. Intentando de vuelta.");
 		terminar_conexion(sockfd);
 	}
 
-	loggear("Terminación exitosa.");
+	loggear("Terminaciï¿½n exitosa.");
 }
 
 void serializar_pedido(package_pedido pedido, char** message) {
@@ -124,7 +124,7 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 		salir_con_error("Fallo la conexion con el servidor.", server_socket);
 	}
 
-	loggear("Conectó sin problemas");
+	loggear("ConectÃ³ sin problemas");
 
 	freeaddrinfo(serverInfo);
 

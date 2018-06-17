@@ -10,8 +10,6 @@
 
 #include <shared-library.h>
 
-#define ALFA 50
-
 //Estructuras
 typedef struct algoritmo {
 	enum {
@@ -40,6 +38,14 @@ typedef struct t_esi_list{
 } t_esi_list;
 
 //Variables locales
+
+char* PUERTO_COORDINADOR;
+char* PUERTO_PLANIFICADOR;
+char* IP_COORDINADOR;
+char* IP_PLANIFICADOR;
+int ESTIMACION_INICIAL;
+int ALFA;
+algoritmo ALGORITMO_PLANIFICACION;
 
 ESI esi_vacio = {
 		.id = 0,
@@ -70,11 +76,6 @@ bool display = true;
 
 t_esi_list new_ESIs;
 t_esi_list finished_ESIs;
-
-algoritmo algoritmo_planificacion;
-
-pthread_spinlock_t sem_ESIs;
-pthread_spinlock_t sem_id;
 
 pthread_mutex_t sem_ESIs_size;
 pthread_mutex_t sem_ID;
@@ -327,4 +328,12 @@ void iniciar_hilos(void);
 	 * Argumentos:
 	 * 		void
 	 */
+
+algoritmo dame_algoritmo(char* algoritmo_src);
+	/*
+	 * Descripción: devuelve el algoritmo correspondiente respecto a una cadena.
+	 * Argumentos:
+	 * 		char* algoritmo_src: la cadena a tomar el algoritmo.
+	 */
+
 #endif /* PLANIFICADOR_H_ */

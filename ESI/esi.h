@@ -25,6 +25,11 @@ typedef struct t_parsed_list{
 
 //Variables locales
 
+char* IP_COORDINADOR;
+char* PUERTO_COORDINADOR;
+char* IP_PLANIFICADOR;
+char* PUERTO_PLANIFICADOR;
+
 t_parsed_list parsed_ops;
 
 t_list* lineas_parseadas;
@@ -156,6 +161,13 @@ bool esta_vacia(t_parsed_list* lista);
 	 * Descripción: devuelve si la lista se encuentra vacía.
 	 * Argumentos:
 	 * 		t_parsed_list* lista: lista a verificar.
+	 */
+
+void cargar_configuracion(void);
+	/*
+	 * Descripción: carga el archivo de configuración en variables globales.
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* ESI_H_ */

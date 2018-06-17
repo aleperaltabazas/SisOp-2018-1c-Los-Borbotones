@@ -7,11 +7,6 @@
 
 #include "esi.h"
 
-#define IP "127.0.0.1"
-#define PUERTO "6667"
-#define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamaño no fijo
-
 int this_id;
 
 int main(int argc, char** argv) {
@@ -154,16 +149,18 @@ void ejecutar(void) {
 
 void iniciar(char** argv) {
 	iniciar_log("ESI", "ESI on duty!");
-	lineas_parseadas = list_create();
+	loggear("Cargando configuración.");
+	cargar_configuracion();
 
 	char* line = NULL;
 	size_t len = 0;
 	ssize_t read;
 
 	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
-	//FILE* archivo_de_parseo = levantar_archivo("script.esi");
 
 	t_esi_operacion parsed;
+
+	loggear("Parseando sentencias.");
 
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
 		parsed = parsear(line);
@@ -173,6 +170,24 @@ void iniciar(char** argv) {
 	loggear("Parseo exitoso.");
 
 	return;
+}
+
+void cargar_configuracion(void){
+	t_config* config = config_create("esi.config");
+
+	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
+
+	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
+	log_info(logger, "IP Coordinador: %s", IP_COORDINADOR);
+
+	PUERTO_PLANIFICADOR = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	log_info(logger, "Puerto Planificador: %s", PUERTO_PLANIFICADOR);
+
+	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
+	log_info(logger, "IP Planificador: %s", IP_PLANIFICADOR);
+
+	loggear("Configuración cargada.");
 }
 
 FILE* levantar_archivo(char* archivo) {

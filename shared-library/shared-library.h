@@ -19,19 +19,14 @@
 #include <readline/readline.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/config.h>
 #include <pthread.h>
 #include <parsi/parser.h>
 
-#define PUERTO_COORDINADOR "8000"
-#define PUERTO_PLANIFICADOR "8001"
-#define IP_COORDINADOR "127.0.0.1"
-#define IP_PLANIFICADOR "127.0.0.2"
-#define BACKLOG 5//Definimos cuantas conexiones pendientes al mismo tiempo tendremos
-#define PACKAGE_SIZE 1024
-#define LINE_MAX 40
-#define ESTIMACION_INICIAL 3
-
 //Variables super globales
+
+#define PACKAGE_SIZE 1024
+#define BACKLOG 5
 
 t_log * logger;
 char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";

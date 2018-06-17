@@ -11,7 +11,19 @@
 #define TAMANIO_ENTRADA 8
 
 #include <shared-library.h>
-//#include "shared-library.h"
+
+typedef enum{
+	CIRC,
+	LRU,
+	BSU
+} algoritmo_reemplazo;
+
+char* IP_COORDINADOR;
+char* PUERTO_COORDINADOR;
+algoritmo_reemplazo ALGORITMO_REEMPLAZO;
+char* PUNTO_MONTAJE;
+char* NOMBRE;
+int DUMP;
 
 //Estos valores vienen definidos por el coordinador
 int cantidad_entradas;
@@ -23,7 +35,7 @@ char * valor;
 //Para saber si una entrada esta ocupada o no uso un vector (0 => libre)
 int entradas_disponibles[CANTIDAD_ENTRADAS];
 
-//Para conocer el tama�o del valor almacenado en la entrada
+//Para conocer el tamaño del valor almacenado en la entrada
 int tamanios_de_valor_de_entradas_ocupadas[CANTIDAD_ENTRADAS];
 
 //Esta es la posicion inicial de memoria en la que comienzo a guardar los valores (mi base)
@@ -47,6 +59,9 @@ void leer_valores_almacenados();
 int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa, int entrada);
 void actualizar_entradas(int pos_entrada, int entradas_que_ocupa);
 void set(uint32_t longitud_parametros, int socket_coordinador);
+void cargar_configuracion(void);
+void iniciar(void);
+algoritmo_reemplazo dame_algoritmo(char* algoritmo_src);
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_list * entradas;

@@ -36,6 +36,7 @@ Coordinador/.gitignore
 shared-library/.gitignore
 Instancias/.gitignore
 ESI/.gitignore
+planificador/.gitignore
 
 # Executables
 *.exe

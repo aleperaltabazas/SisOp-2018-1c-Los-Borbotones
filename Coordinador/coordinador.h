@@ -11,7 +11,21 @@
 #include <shared-library.h>
 //#include "shared-library.h"
 
+//Estructuras
+
+typedef enum{
+	LSU,
+	EL,
+	KE
+} algoritmo_distribucion;
+
 //Variables globales
+
+char* PUERTO_COORDINADOR;
+algoritmo_distribucion ALGORITMO_DISTRIBUCION;
+int CANTIDAD_ENTRADAS;
+int TAMANIO_ENTRADAS;
+float RETARDO;
 
 int seguir_ejecucion = 1;
 
@@ -25,7 +39,7 @@ pthread_t hilo_planificador;
 
 int manejar_cliente(int listening_socket, int socketCliente, char* mensaje);
 	/*
-	 * Descripci�n: determina qu� hacer cuando recibe una nueva conexi�n a trav�s del
+	 * Descripción: determina qu� hacer cuando recibe una nueva conexi�n a trav�s del
 	 * 		socket cliente.
 	 * Argumentos:
 	 * 		int listening_socket: socket del servidor local.
@@ -35,7 +49,7 @@ int manejar_cliente(int listening_socket, int socketCliente, char* mensaje);
 
 void identificar_cliente(char* mensaje, int socket_cliente);
 	/*
-	 * Descripci�n: identifica a un cliente y crea un hilo para el mismo, o llama a salir_con_error().
+	 * Descripción: identifica a un cliente y crea un hilo para el mismo, o llama a salir_con_error().
 	 * 		en caso de ser un cliente desconocido.
 	 * Argumentos:
 	 * 		char* mensaje: el mensaje enviado por el cliente.
@@ -46,7 +60,7 @@ void identificar_cliente(char* mensaje, int socket_cliente);
 
 void *atender_ESI(void* un_socket);
 	/*
-	 * Descripci�n: atiende los mensajes enviados por un proceso ESI y le asigna los recursos
+	 * Descripción: atiende los mensajes enviados por un proceso ESI y le asigna los recursos
 	 * 		o no si se encuentran disponibles.
 	 * Argumentos:
 	 * 		void* un_socket: descriptor del socket que luego se castea a int.
@@ -54,15 +68,15 @@ void *atender_ESI(void* un_socket);
 
 void *atender_Instancia(void* un_socket);
 	/*
-	 * Descripci�n: atiende los mensajes enviados por un proces de instancia y le indica
-	 * 		los resultados de una ejecuci�n de ESI.
+	 * Descripción: atiende los mensajes enviados por un proces de instancia y le indica
+	 * 		los resultados de una ejecución de ESI.
 	 * Argumentos:
 	 * 		void* un_socket: descriptor del socket que luego se castea a int.
 	 */
 
 void *atender_Planificador(void* un_socket);
 	/*
-	 * Descripci�n: atiende los mensajes enviados por el planificador.
+	 * Descripción: atiende los mensajes enviados por el planificador.
 	 * Argumentos:
 	 * 		void* un_socket: descriptor del socket que luego se castea a int.
 	 */
@@ -71,10 +85,38 @@ void *atender_Planificador(void* un_socket);
 
 int chequear_solicitud(int socket_cliente);
 	/*
-	 * Descripci�n: revisa una solicitud de ejecuci�n de un proceso ESI y le indica si puede
+	 * Descripción: revisa una solicitud de ejecución de un proceso ESI y le indica si puede
 	 * 		o no ejecutar.
 	 * Argumentos:
 	 * 		int socket_cliente: socket del proceso ESI.
+	 */
+
+void iniciar(void);
+	/*
+	 * Descripción: carga las configuraciones iniciales del proceso.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void cargar_configuracion(void);
+	/*
+	 * Descripción: abre el archivo de configuración y carga los valores en variables globales.
+	 * Argumentos:
+	 * 		void
+	 */
+
+algoritmo_distribucion dame_algoritmo(char* algoritmo_src);
+	/*
+	 * Descripción: devuelve el algoritmo correspondiente a una cadena.
+	 * Argumentos:
+	 * 		char* algoritmo_src: cadena a tomar el algoritmo.
+	 */
+
+float dame_retardo(int retardo);
+	/*
+	 * Descripción: devuelve en segundos un retardo.
+	 * Argumentos:
+	 * 		int retardo: la forma entera (en microsegundos) del retardo.
 	 */
 
 #endif /* COORDINADOR_H_ */

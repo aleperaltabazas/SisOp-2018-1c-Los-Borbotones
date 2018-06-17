@@ -6,9 +6,6 @@
 
 #include "planificador.h"
 
-#define PACKAGE_SIZE 1024
-//Estos tres define van a cambiar, para poder cambiar ip y puerto en runtime (en caso de que esten ocupados) y para poder mandar datos de tamañoo no fijo
-
 int i;
 
 ESI test;
@@ -60,6 +57,7 @@ void iniciar_hilos(void) {
 }
 
 void cargar_configuracion(void) {
+
 	executing_ESI = esi_vacio;
 
 	ESI_id = 1;
@@ -67,8 +65,58 @@ void cargar_configuracion(void) {
 	ESIs_size = 0;
 	tiempo = 0;
 
-	algoritmo_planificacion.desalojo = false;
-	algoritmo_planificacion.tipo = FIFO;
+	t_config* config = config_create("planificador.config");
+
+	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
+
+	PUERTO_PLANIFICADOR = config_get_string_value(config,
+			"PUERTO_PLANIFICADOR");
+	log_info(logger, "Puerto Planificador: %s", PUERTO_PLANIFICADOR);
+
+	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
+	log_info(logger, "IP Coordinador: %s", IP_COORDINADOR);
+
+	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
+	log_info(logger, "IP Planificador: %s", IP_COORDINADOR);
+
+	char* algoritmo = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+	ALGORITMO_PLANIFICACION = dame_algoritmo(algoritmo);
+	log_info(logger, "Algoritmo: %s", algoritmo);
+
+	ESTIMACION_INICIAL = config_get_int_value(config, "ESTIMACION_INICIAL");
+	log_info(logger, "Estimación inicial: %i", ESTIMACION_INICIAL);
+
+	ALFA = config_get_int_value(config, "ALFA");
+	log_info(logger, "Alfa: %i", ALFA);
+
+	loggear("Configuración cargada.");
+}
+
+algoritmo dame_algoritmo(char* algoritmo_src) {
+	algoritmo algoritmo_ret;
+
+	if (strcmp(algoritmo_src, "FIFO") == 0) {
+		algoritmo_ret.tipo = FIFO;
+		algoritmo_ret.desalojo = false;
+	}
+
+	else if (strcmp(algoritmo_src, "SJF-SD") == 0) {
+		algoritmo_ret.tipo = SJF;
+		algoritmo_ret.desalojo = false;
+	}
+
+	else if (strcmp(algoritmo_src, "SJF-CD") == 0) {
+		algoritmo_ret.tipo = SJF;
+		algoritmo_ret.desalojo = true;
+	}
+
+	else if (strcmp(algoritmo_src, "HRRN") == 0) {
+		algoritmo_ret.tipo = HRRN;
+		algoritmo_ret.desalojo = false;
+	}
+
+	return algoritmo_ret;
 }
 
 void* atender_coordinador(void* nada) {
@@ -169,8 +217,7 @@ void* atender_ESI(void* buffer) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	ESI esi = { .socket = socket_ESI, .rafaga_estimada =
-	ESTIMACION_INICIAL };
+	ESI esi = { .socket = socket_ESI, .rafaga_estimada = ESTIMACION_INICIAL };
 
 	int this_id = asignar_ID(esi);
 
@@ -222,14 +269,14 @@ void* atender_ESI(void* buffer) {
 					"ESI número %i listo para ejecutar añadido a la cola.",
 					this_id);
 
-			if (algoritmo_planificacion.desalojo) {
+			if (ALGORITMO_PLANIFICACION.desalojo) {
 				desalojar();
 				loggear("ESI desalojado.");
 			}
 
 		}
 
-		else if(aviso.aviso == 10){
+		else if (aviso.aviso == 10) {
 			log_trace(logger, "ESI número %i ejecutó correctamente.", this_id);
 
 			pthread_mutex_unlock(&sem_ejecucion);
@@ -346,7 +393,7 @@ ESI dame_proximo_ESI() {
 	ESI next_esi = executing_ESI;
 
 	if (no_hay_ESI()) {
-		switch (algoritmo_planificacion.tipo) {
+		switch (ALGORITMO_PLANIFICACION.tipo) {
 		case FIFO:
 			next_esi = first(new_ESIs);
 			break;
