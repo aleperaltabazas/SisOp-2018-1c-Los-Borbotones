@@ -8,7 +8,20 @@
 #ifndef ESTRUCTURAS_H_
 #define ESTRUCTURAS_H_
 
-#include <shared-library.h>
+#include <commons/log.h>
+#include <commons/collections/list.h>
+#include <commons/config.h>
+
+//	Misc
+
+typedef struct ESI {
+	int id;
+	int socket;
+	int rafaga_estimada;
+	int rafaga_real;
+	int tiempo_arribo;
+	bool ejecutando;
+} ESI;
 
 //	Estructuras con serialización
 
@@ -17,9 +30,9 @@ typedef struct aviso_ESI {
 	int id;
 }__attribute__((packed)) aviso_ESI;
 
-typedef struct package_permiso {
-	uint32_t pedido;
-} package_pedido;
+typedef struct package_int {
+	uint32_t packed;
+} __attribute__((packed)) package_int;
 
 typedef struct orden_del_coordinador {
 	uint32_t codigo_operacion;
@@ -32,6 +45,11 @@ typedef struct parametros_set {
 	uint32_t tamanio_valor;
 	char * valor;
 }__attribute__((packed)) parametros_set;
+
+typedef struct key{
+	char* clave;
+	int clave_size;
+}__attribute__((packed)) key;
 
 //	Algoritmos
 
@@ -72,15 +90,14 @@ typedef struct t_parsed_list {
 	t_parsed_node* head;
 } t_parsed_list;
 
-//	Otros
+typedef struct t_clave_node {
+	char* clave;
+	char* valor;
+	struct t_clave_node* sgte;
+} t_clave_node;
 
-typedef struct ESI {
-	int id;
-	int socket;
-	int rafaga_estimada;
-	int rafaga_real;
-	int tiempo_arribo;
-	bool ejecutando;
-} ESI;
+typedef struct t_clave_list {
+	t_clave_node* head;
+} t_clave_list;
 
 #endif /* ESTRUCTURAS_H_ */

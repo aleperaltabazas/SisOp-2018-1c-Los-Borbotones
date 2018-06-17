@@ -28,12 +28,12 @@ void terminar_conexion(int sockfd) {
 	loggear("Terminaci�n exitosa.");
 }
 
-void serializar_pedido(package_pedido pedido, char** message) {
-	memcpy(*message, &(pedido.pedido), sizeof(pedido.pedido));
+void serializar_packed(package_int packed, char** message) {
+	memcpy(*message, &(packed.packed), sizeof(packed.packed));
 }
 
-void deserializar_pedido(package_pedido *pedido, char** package) {
-	memcpy(&pedido->pedido, *package, sizeof(pedido->pedido));
+void deserializar_packed(package_int *packed, char** package) {
+	memcpy(&packed->packed, *package, sizeof(packed->packed));
 }
 
 void serializar_aviso(aviso_ESI aviso, char** message) {

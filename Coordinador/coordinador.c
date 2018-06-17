@@ -53,27 +53,27 @@ void cargar_configuracion(void) {
 	loggear("Configuración cargada.");
 }
 
-algoritmo_distribucion dame_algoritmo(char* algoritmo_src){
+algoritmo_distribucion dame_algoritmo(char* algoritmo_src) {
 	algoritmo_distribucion algoritmo_ret;
 
-	if(strcmp(algoritmo_src, "LSU") == 0){
+	if (strcmp(algoritmo_src, "LSU") == 0) {
 		algoritmo_ret = LSU;
 	}
 
-	else if(strcmp(algoritmo_src, "EL") == 0){
+	else if (strcmp(algoritmo_src, "EL") == 0) {
 		algoritmo_ret = EL;
 	}
 
-	else if(strcmp(algoritmo_src, "KE") == 0){
+	else if (strcmp(algoritmo_src, "KE") == 0) {
 		algoritmo_ret = KE;
 	}
 
 	return algoritmo_ret;
 }
 
-float dame_retardo(int retardo_int){
+float dame_retardo(int retardo_int) {
 	float ret_val = (float) retardo_int;
-	ret_val = ret_val/1000;
+	ret_val = ret_val / 1000;
 
 	return ret_val;
 }
@@ -214,7 +214,9 @@ void* atender_Planificador(void* un_socket) {
 
 		if (res != 0) {
 			loggear("Mensaje recibido del planificador.");
-		} else {
+		}
+
+		else {
 			salir_con_error("Fallo la recepción de mensaje del planificador.",
 					socket_cliente);
 		}
@@ -227,11 +229,249 @@ void* atender_Planificador(void* un_socket) {
 			break;
 		}
 
+		else if (aviso_plani.aviso == 25) {
+			bloquear_clave(socket_cliente);
+		}
+
+		else if (aviso_plani.aviso == 27) {
+			desbloquear_clave(socket_cliente);
+		}
+
 	}
 
 	seguir_ejecucion = 0;
 
 	return NULL;
+}
+
+void desbloquear_clave(int socket_cliente) {
+	aviso_ESI aviso_ok = { .aviso = 25 };
+
+	int packageSize = sizeof(aviso_ESI);
+	char* message = malloc(packageSize);
+
+	int package_int_size = sizeof(package_int);
+	char* size_package = malloc(package_int_size);
+	package_int size;
+
+	serializar_aviso(aviso_ok, &message);
+
+	int envio = send(socket_cliente, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el aviso de ok.", socket_cliente);
+	}
+
+	int res = recv(socket_cliente, size_package, package_int_size, 0);
+
+	if (res <= 0) {
+		salir_con_error("Falló la recepción de tamaño de clave.",
+				socket_cliente);
+	}
+
+	deserializar_packed(&(size), &(size_package));
+
+	char* clave = malloc(size.packed);
+
+	res = recv(socket_cliente, clave, size.packed, 0);
+
+	if (res < 0) {
+		salir_con_error("Falló la recepción de la clave.", socket_cliente);
+	}
+
+	desbloquear(clave);
+
+	log_trace(logger, "La clave %s fue desbloqueada.", clave);
+
+	package_int unlock_ok = { .packed = 28 };
+
+	packageSize = sizeof(package_int);
+	char* package = malloc(packageSize);
+
+	serializar_packed(unlock_ok, &package);
+
+	envio = send(socket_cliente, package, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el envío de ok.", socket_cliente);
+	}
+
+}
+
+void desbloquear(char* clave) {
+	if (!existe(clave)) {
+		crear(clave);
+		desbloquear(clave);
+	}
+
+	else if (existe(clave) && esta_bloqueada(clave)) {
+		eliminar_clave(&claves_bloqueadas, clave);
+		agregar_clave(&claves_disponibles, clave);
+	}
+
+}
+
+void bloquear_clave(int socket_cliente) {
+	aviso_ESI aviso_ok = { .aviso = 25 };
+
+	int packageSize = sizeof(aviso_ESI);
+	char* message = malloc(packageSize);
+
+	int package_int_size = sizeof(package_int);
+	char* size_package = malloc(package_int_size);
+	package_int size;
+
+	serializar_aviso(aviso_ok, &message);
+
+	int envio = send(socket_cliente, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el aviso de ok.", socket_cliente);
+	}
+
+	int res = recv(socket_cliente, size_package, package_int_size, 0);
+
+	if (res <= 0) {
+		salir_con_error("Falló la recepción de tamaño de clave.",
+				socket_cliente);
+	}
+
+	deserializar_packed(&(size), &(size_package));
+
+	char* clave = malloc(size.packed);
+
+	res = recv(socket_cliente, clave, size.packed, 0);
+
+	if (res < 0) {
+		salir_con_error("Falló la recepción de la clave.", socket_cliente);
+	}
+
+	bloquear(clave);
+
+	log_trace(logger, "La clave %s fue bloqueada.", clave);
+
+	package_int block_ok = { .packed = 26 };
+
+	packageSize = sizeof(package_int);
+	char* package = malloc(packageSize);
+
+	serializar_packed(block_ok, &package);
+
+	envio = send(socket_cliente, package, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el envío de ok.", socket_cliente);
+	}
+
+}
+
+void bloquear(char* clave) {
+	if (!existe(clave)) {
+		crear(clave);
+		bloquear(clave);
+	}
+
+	else if (existe(clave) && !esta_bloqueada(clave)) {
+		eliminar_clave(&claves_disponibles, clave);
+		agregar_clave(&claves_bloqueadas, clave);
+	}
+
+}
+
+bool esta_bloqueada(char* clave) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		if (strcmp(puntero->clave, clave) == 0) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
+bool existe(char* clave) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		if (strcmp(puntero->clave, clave) == 0) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	puntero = claves_disponibles.head;
+
+	while (puntero != NULL) {
+		if (strcmp(puntero->clave, clave) == 0) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
+void crear(char* clave) {
+	agregar_clave(&claves_disponibles, clave);
+}
+
+void agregar_clave(t_clave_list* lista, char* clave) {
+	t_clave_node* nodo = crear_nodo(clave);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_clave_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+}
+
+t_clave_node* crear_nodo(char* clave) {
+	t_clave_node* nodo = (t_clave_node*) malloc(sizeof(t_clave_node));
+	nodo->clave = clave;
+	nodo->sgte = NULL;
+
+	return nodo;
+}
+
+void eliminar_clave(t_clave_list* lista, char* clave) {
+	if (lista->head != NULL) {
+		char* head = first(*lista);
+		if (strcmp(clave, head) == 0) {
+			t_clave_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_nodo(eliminado);
+		} else {
+			t_clave_node* puntero = lista->head;
+
+			while (!strcmp(puntero->clave, clave) != 0) {
+				puntero = puntero->sgte;
+			}
+
+			t_clave_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_nodo(eliminado);
+		}
+	}
+}
+
+void destruir_nodo(t_clave_node* nodo) {
+	free(nodo);
+}
+
+char* first(t_clave_list lista) {
+	char* key = lista.head->clave;
+
+	return key;
 }
 
 void* atender_Instancia(void* un_socket) {
@@ -250,7 +490,7 @@ void* atender_Instancia(void* un_socket) {
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
 
-	//---------
+//---------
 
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 11;
@@ -258,14 +498,14 @@ void* atender_Instancia(void* un_socket) {
 
 	log_trace(logger, "tamanio a enviar: %d", orden.tamanio_a_enviar);
 
-	//Quiero mandar dos uint32_t
+//Quiero mandar dos uint32_t
 	orden_del_coordinador * buffer_orden = malloc(
 			sizeof(orden_del_coordinador));
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 
-	//memcpy(buffer_orden, &(orden.codigo_operacion), sizeof(uint32_t));
-	//memcpy(buffer_orden + sizeof(uint32_t), &(orden.tamanio_a_enviar), sizeof(uint32_t));
+//memcpy(buffer_orden, &(orden.codigo_operacion), sizeof(uint32_t));
+//memcpy(buffer_orden + sizeof(uint32_t), &(orden.tamanio_a_enviar), sizeof(uint32_t));
 
 	loggear("Enviando orden a la instancia...");
 
@@ -277,7 +517,7 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Orden enviada!");
 
-	//Serializacion valor_set
+//Serializacion valor_set
 
 	parametros_set * buffer_parametros = malloc(tamanio_parametros_set);
 

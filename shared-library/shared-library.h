@@ -17,9 +17,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <readline/readline.h>
-#include <commons/log.h>
-#include <commons/collections/list.h>
-#include <commons/config.h>
 #include <pthread.h>
 #include <parsi/parser.h>
 #include "estructuras.h"
@@ -68,19 +65,19 @@ void chequear_servidor(char* id, int server_socket);
 	 * 		int server_socket: socket del servidor.
 	 */
 
-void serializar_pedido(package_pedido pedido, char** message);
+void serializar_packed(package_int pedido, char** message);
 	/*
-	 * Descripción: serializa un mensaje del tipo package_pedido.
+	 * Descripción: serializa un mensaje del tipo package_int.
 	 * Argumentos:
-	 * 		package_pedido pedido: mensaje a serializar.
+	 * 		package_int pedido: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
 	 */
 
-void deserializar_pedido(package_pedido *pedido, char **package);
+void deserializar_packed(package_int *pedido, char **package);
 	/*
-	 * Descripción: deserializa un mensaje del tipo package_pedido.
+	 * Descripción: deserializa un mensaje del tipo package_int.
 	 * Argumentos:
-	 * 		package_pedido *pedido: el recipiente del mensaje a deserializar.
+	 * 		package_int *pedido: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 

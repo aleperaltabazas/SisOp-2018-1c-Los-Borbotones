@@ -26,21 +26,21 @@ ESI esi_vacio = {
 };
 
 int ESI_id;
-
 int tiempo;
-
 int ESIs_size;
 
 int socket_coordinador;
 
+aviso_ESI aviso_bloqueo = {
+		.aviso = 25
+};
+
+aviso_ESI aviso_desbloqueo = {
+		.aviso = 27
+};
+
 bool consola_planificacion = true;
 bool ejecutando = false;
-
-t_list * ESIs;
-t_list * ESIs_bloqueados;
-t_list * ESIs_en_ejecucion;
-t_list * ESIs_listos;
-t_list * ESIs_finalizados;
 
 ESI executing_ESI;
 
@@ -48,7 +48,10 @@ bool seguir_ejecucion = true;
 bool display = true;
 
 t_esi_list new_ESIs;
+t_esi_list blocked_ESIs;
 t_esi_list finished_ESIs;
+
+//Semaforos
 
 pthread_mutex_t sem_ESIs_size;
 pthread_mutex_t sem_ID;
@@ -79,17 +82,20 @@ void interpretarYEjecutarCodigo(float comando);
 void terminar(void);
 void mostrame_clock(void);
 void display_console(void);
+void dame_datos(void);
+void bloquear_clave(void);
+void desbloquear_clave(void);
 
 //Funciones de servidor
 
 int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje);
 	/*
-	 * Descripción: determina qu� hacer cuando recibe una nueva conexi�n a través del
+	 * Descripción: determina qué hacer cuando recibe una nueva conexión a través del
 	 * 		socket cliente.
 	 * Argumentos:
 	 * 		int listening_socket: socket del servidor local.
 	 * 		int socket_cliente: socket del cliente.
-	 * 		char* mensaje: mensaje para enviar como identificaci�na a los nuevos clientes.
+	 * 		char* mensaje: mensaje para enviar como indentificación a los nuevos clientes.
 	 */
 
 void identificar_cliente(char* mensaje, int socket_cliente);
@@ -117,19 +123,20 @@ void* atender_coordinador(void*);
 	 * Argumentos:
 	 * 		void* nada
 	 */
+
 //Funciones
 
 void iniciar(void);
 	/*
 	 * Descripción: crea el logger y las listas de ESIs, y carga los datos del archivo
-	 * 		de configuraci�n en variables globales.
+	 * 		de configuración en variables globales.
 	 * Argumentos:
 	 * 		void
 	 */
 
 void planificar(void);
 	/*
-	 * Descripción: decide cu�l es el siguiente ESI a ejecutar, dependiendo del algoritmo
+	 * Descripción: decide cuál es el siguiente ESI a ejecutar, dependiendo del algoritmo
 	 * 		que se use en el momento.
 	 * Argumentos:
 	 * 		void
@@ -218,7 +225,7 @@ void eliminar_ESI(t_esi_list* lista, ESI esi);
 	/*
 	 * Descripción: elimina un ESI de una lista.
 	 * Argumentos:
-	 * 		t_esi_list* lista: lista de la cual se eliminar� el elemento.
+	 * 		t_esi_list* lista: lista de la cual se eliminará el elemento.
 	 * 		ESI esi: elemento a eliminar de la lista.
 	 */
 
@@ -307,6 +314,22 @@ algoritmo_planificacion dame_algoritmo(char* algoritmo_src);
 	 * Descripción: devuelve el algoritmo correspondiente respecto a una cadena.
 	 * Argumentos:
 	 * 		char* algoritmo_src: la cadena a tomar el algoritmo.
+	 */
+
+void avisar_bloqueo(int server_socket, char* clave);
+	/*
+	 * Descripción: avisa a un servidor el bloqueo de una clave determinada.
+	 * Argumentos:
+	 * 		int server_socket: socket del servidor.
+	 * 		char* clave: clave a bloquear.
+	 */
+
+void avisar_desbloqueo(int server_socket, char* clave);
+	/*
+	 * Descripción: avisa a un servidor el desbloqueo de una clave determinada.
+	 * Argumentos:
+	 * 		int server_socket: socket del servidor.
+	 * 		char* clave: clave a desbloquear.
 	 */
 
 #endif /* PLANIFICADOR_H_ */

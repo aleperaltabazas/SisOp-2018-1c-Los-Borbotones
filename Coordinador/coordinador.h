@@ -21,6 +21,13 @@ float RETARDO;
 
 int seguir_ejecucion = 1;
 
+package_int bloqueo_ok = {
+		.packed = 26
+};
+
+t_clave_list claves_bloqueadas;
+t_clave_list claves_disponibles;
+
 //Hilos
 
 pthread_t hilo_ESI;
@@ -109,6 +116,95 @@ float dame_retardo(int retardo);
 	 * Descripción: devuelve en segundos un retardo.
 	 * Argumentos:
 	 * 		int retardo: la forma entera (en microsegundos) del retardo.
+	 */
+
+void bloquear_clave(int socket_cliente);
+	/*
+	 * Descripción: recibe mensajes de un cliente para bloquear una clave.
+	 * Argumentos:
+	 * 		int socket_cliente: socket del cliente.
+	 */
+
+void bloquear(char* clave);
+	/*
+	 * Descripción: bloquea una clave. En caso de que no exista, la crea y la bloquea.
+	 * 		Si la clave ya se encuentra bloqueada, no hace nada.
+	 * Argumentos:
+	 * 		char* clave: clave a bloquear.
+	 */
+
+void desbloquear_clave(int socket_cliente);
+	/*
+	 * Descripción: recibe mensajes de un cliente para desbloquear una clave.
+	 * Argumentos:
+	 * 		int socket_cliente: socket del cliente.
+	 */
+
+void desbloquear(char* clave);
+	/*
+	 * Descripción: desbloquea una clave. En caso que no exista, la crea y la agrega a disponibles.
+	 * 		Si la clave ya existe y está disponible, no hace nada.
+	 * Argumentos:
+	 * 		char* clave: la clave a desbloquear.
+	 */
+
+bool existe(char* clave);
+	/*
+	 * Descripción: devuelve si la clave existe en la lista de claves_bloqueadas o de
+	 * 		claves_disponibles.
+	 * Argumentos:
+	 * 		char* clave: clave a chequear su existencia.
+	 */
+
+void crear(char* clave);
+	/*
+	 * Descripción: agrega una clave a la lista de claves disponibles;
+	 * Argumentos:
+	 * 		char* clave: la nueva clave.
+	 */
+
+bool esta_bloqueada(char* clave);
+	/*
+	 * Descripción: indica si la clave se encuentra en la lista de claves_bloqueadas.
+	 * Argumentos:
+	 * 		char* clave: la clave a chequear.
+	 */
+
+void eliminar_clave(t_clave_list* lista, char* clave);
+	/*
+	 * Descripción: elimina una clave de la lista.
+	 * Argumentos:
+	 * 		t_clave_list* lista: lista de la cual eliminar la clave.
+	 * 		char* clave: la clave a eliminar.
+	 */
+
+void agregar_clave(t_clave_list* lista, char* clave);
+	/*
+	 * Descripción: agrega una clave a la lista.
+	 * Argumentos:
+	 * 		t_clave_list* lista: lista a la cual agregar la clave.
+	 * 		char* clave: la clave a agregar.
+	 */
+
+t_clave_node* crear_nodo(char* clave);
+	/*
+	 * Descripción: crea un nodo con la clave.
+	 * Argumentos:
+	 * 		char* clave: la clave a poner en el nodo.
+	 */
+
+void destruir_nodo(t_clave_node* nodo);
+	/*
+	 * Descripción: libera la memoria del nodo.
+	 * Argumentos:
+	 * 		t_clave_node* nodo: puntero a memoria a liberar.
+	 */
+
+char* first(t_clave_list lista);
+	/*
+	 * Descripción: retorna la primer clave de una lista.
+	 * Argumentos:
+	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
 
 #endif /* COORDINADOR_H_ */
