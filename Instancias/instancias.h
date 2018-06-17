@@ -12,12 +12,6 @@
 
 #include <shared-library.h>
 
-typedef enum{
-	CIRC,
-	LRU,
-	BSU
-} algoritmo_reemplazo;
-
 char* IP_COORDINADOR;
 char* PUERTO_COORDINADOR;
 algoritmo_reemplazo ALGORITMO_REEMPLAZO;

@@ -10,33 +10,6 @@
 
 #include <shared-library.h>
 
-//Estructuras
-typedef struct algoritmo {
-	enum {
-		FIFO, SJF, HRRN,
-	} tipo;
-	bool desalojo;
-} algoritmo;
-
-typedef struct ESI {
-	int id;
-	int socket;
-	int rafaga_estimada;
-	int rafaga_real;
-	int tiempo_arribo;
-	bool ejecutando;
-} ESI;
-
-typedef struct t_esi_node{
-	int index;
-	ESI esi;
-	struct t_esi_node* sgte;
-} t_esi_node;
-
-typedef struct t_esi_list{
-	t_esi_node* head;
-} t_esi_list;
-
 //Variables locales
 
 char* PUERTO_COORDINADOR;
@@ -45,7 +18,7 @@ char* IP_COORDINADOR;
 char* IP_PLANIFICADOR;
 int ESTIMACION_INICIAL;
 int ALFA;
-algoritmo ALGORITMO_PLANIFICACION;
+algoritmo_planificacion ALGORITMO_PLANIFICACION;
 
 ESI esi_vacio = {
 		.id = 0,
@@ -329,7 +302,7 @@ void iniciar_hilos(void);
 	 * 		void
 	 */
 
-algoritmo dame_algoritmo(char* algoritmo_src);
+algoritmo_planificacion dame_algoritmo(char* algoritmo_src);
 	/*
 	 * Descripción: devuelve el algoritmo correspondiente respecto a una cadena.
 	 * Argumentos:

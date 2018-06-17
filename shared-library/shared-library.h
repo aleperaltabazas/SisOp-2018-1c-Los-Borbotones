@@ -22,6 +22,7 @@
 #include <commons/config.h>
 #include <pthread.h>
 #include <parsi/parser.h>
+#include "estructuras.h"
 
 //Variables super globales
 
@@ -34,31 +35,6 @@ char* mensajeESI = "A wild ESI has appeared!";
 char* mensajeESILista = "Gotcha! Wild ESI was added to the list!";
 char* mensajeInstancia = "It's ya boi, instancia!";
 char* mensajeCoordinador = "Coordinador: taringuero profesional.";
-
-//Estructuras
-
-typedef struct aviso_ESI{
-	int aviso;
-	int id;
-} __attribute__((packed)) aviso_ESI;
-
-typedef struct package_permiso {
-	uint32_t pedido;
-} package_pedido;
-
-//Estructura de la orden que le manda el coordinador a la instancia
-typedef struct orden_del_coordinador{
-	uint32_t codigo_operacion;
-	uint32_t tamanio_a_enviar;
-} __attribute__((packed)) orden_del_coordinador;
-
-//Valores de set
-typedef struct parametros_set{
-	uint32_t tamanio_clave;
-	char * clave;
-	uint32_t tamanio_valor;
-	char * valor;
-} __attribute__((packed)) parametros_set;
 
 //Funciones servidor
 

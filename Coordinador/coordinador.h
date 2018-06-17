@@ -11,14 +11,6 @@
 #include <shared-library.h>
 //#include "shared-library.h"
 
-//Estructuras
-
-typedef enum{
-	LSU,
-	EL,
-	KE
-} algoritmo_distribucion;
-
 //Variables globales
 
 char* PUERTO_COORDINADOR;

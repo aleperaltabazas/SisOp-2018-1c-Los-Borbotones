@@ -1,0 +1,86 @@
+/*
+ * estructuras.h
+ *
+ *  Created on: 16 jun. 2018
+ *      Author: utnso
+ */
+
+#ifndef ESTRUCTURAS_H_
+#define ESTRUCTURAS_H_
+
+#include <shared-library.h>
+
+//	Estructuras con serialización
+
+typedef struct aviso_ESI {
+	int aviso;
+	int id;
+}__attribute__((packed)) aviso_ESI;
+
+typedef struct package_permiso {
+	uint32_t pedido;
+} package_pedido;
+
+typedef struct orden_del_coordinador {
+	uint32_t codigo_operacion;
+	uint32_t tamanio_a_enviar;
+}__attribute__((packed)) orden_del_coordinador;
+
+typedef struct parametros_set {
+	uint32_t tamanio_clave;
+	char * clave;
+	uint32_t tamanio_valor;
+	char * valor;
+}__attribute__((packed)) parametros_set;
+
+//	Algoritmos
+
+typedef struct algoritmo_planificacion {
+	enum {
+		FIFO, SJF, HRRN,
+	} tipo;
+	bool desalojo;
+} algoritmo_planificacion;
+
+typedef enum {
+	LSU, EL, KE
+} algoritmo_distribucion;
+
+typedef enum {
+	CIRC, LRU, BSU
+} algoritmo_reemplazo;
+
+//	Listas
+
+typedef struct t_esi_node {
+	int index;
+	ESI esi;
+	struct t_esi_node* sgte;
+} t_esi_node;
+
+typedef struct t_esi_list {
+	t_esi_node* head;
+} t_esi_list;
+
+typedef struct t_parsed_node {
+	int index;
+	t_esi_operacion esi_op;
+	struct t_parsed_node* sgte;
+} t_parsed_node;
+
+typedef struct t_parsed_list {
+	t_parsed_node* head;
+} t_parsed_list;
+
+//	Otros
+
+typedef struct ESI {
+	int id;
+	int socket;
+	int rafaga_estimada;
+	int rafaga_real;
+	int tiempo_arribo;
+	bool ejecutando;
+} ESI;
+
+#endif /* ESTRUCTURAS_H_ */

@@ -9,19 +9,6 @@
 #define ESI_H_
 
 #include <shared-library.h>
-//#include "shared-library.h"
-
-//Estructuras
-
-typedef struct t_parsed_node{
-	int index;
-	t_esi_operacion esi_op;
-	struct t_parsed_node* sgte;
-} t_parsed_node;
-
-typedef struct t_parsed_list{
-	t_parsed_node* head;
-} t_parsed_list;
 
 //Variables locales
 
