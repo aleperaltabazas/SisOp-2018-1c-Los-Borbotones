@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
 	int socketCliente;
 
 	while (seguir_ejecucion) {
-		socketCliente = manejar_cliente(listening_socket, socketCliente, id_coordinador);
+		socketCliente = manejar_cliente(listening_socket, socketCliente,
+				id_coordinador);
 	}
 
 	loggear("Cerrando sesion...");
@@ -96,36 +97,14 @@ int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 
 	package_int id_cliente = { .packed = -1 };
 
-	int packageSize = sizeof(package_int);
-	char* package = malloc(packageSize);
-
-	int res = recv(socketCliente, package, PACKAGE_SIZE, 0);
-
-	if (res <= 0) {
-		loggear("Fallo la conexion con el cliente.");
-	}
-
-	deserializar_packed(&(id_cliente), &(package));
+	id_cliente = recibir_packed(socketCliente);
 
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(id_cliente, socketCliente);
 
 	loggear("Enviando id al cliente.");
 
-	char* message = malloc(packageSize);
-
-	serializar_packed(id, &(message));
-
-	int envio = send(socketCliente, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el envío", socketCliente);
-	}
-
-	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
-
-	free(package);
-	free(message);
+	enviar_packed(id, socketCliente);
 
 	return socketCliente;
 }
@@ -221,24 +200,28 @@ void get(int socket_cliente, int id) {
 
 	package_int response;
 
+	response.packed = dame_response(clave, id);
+
+	enviar_packed(response, socket_cliente);
+}
+
+int dame_response(char* clave, int id) {
 	if (!existe(clave)) {
-		response.packed = 20;
 		bloquear(clave, id);
 		loggear("Get exitoso.");
+		return 20;
 	}
 
 	else if (existe(clave) && !esta_bloqueada(clave)) {
-		response.packed = 20;
 		bloquear(clave, id);
 		loggear("Get exitoso.");
+		return 20;
 	}
 
 	else {
-		response.packed = 5;
 		loggear("Bloqueando ESI.");
+		return 5;
 	}
-
-	enviar_packed(response, socket_cliente);
 }
 
 void set(int socket_cliente, int id) {
@@ -360,22 +343,8 @@ void* atender_Planificador(void* un_socket) {
 
 	aviso_ESI aviso_plani;
 
-	int packageSize = sizeof(aviso_ESI);
-	char* message = malloc(packageSize);
-
 	while (1) {
-		int res = recv(socket_cliente, (void*) message, packageSize, 0);
-
-		if (res != 0) {
-			loggear("Mensaje recibido del planificador.");
-		}
-
-		else {
-			salir_con_error("Fallo la recepción de mensaje del planificador.",
-					socket_cliente);
-		}
-
-		deserializar_aviso(&(aviso_plani), &(message));
+		aviso_plani = recibir_aviso(socket_cliente);
 
 		if (aviso_plani.aviso == 0) {
 			loggear("Fin de Planificador. Cerrando sesión y terminando.");
@@ -401,54 +370,20 @@ void* atender_Planificador(void* un_socket) {
 void desbloquear_clave(int socket_cliente) {
 	aviso_ESI aviso_ok = { .aviso = 25 };
 
-	int packageSize = sizeof(aviso_ESI);
-	char* message = malloc(packageSize);
+	package_int size_package = { .packed = -1 };
 
-	int package_int_size = sizeof(package_int);
-	char* size_package = malloc(package_int_size);
-	package_int size;
+	package_int unlock_ok = { .packed = 28 };
 
-	serializar_aviso(aviso_ok, &message);
+	enviar_aviso(socket_cliente, aviso_ok);
 
-	int envio = send(socket_cliente, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el aviso de ok.", socket_cliente);
-	}
-
-	int res = recv(socket_cliente, size_package, package_int_size, 0);
-
-	if (res <= 0) {
-		salir_con_error("Falló la recepción de tamaño de clave.",
-				socket_cliente);
-	}
-
-	deserializar_packed(&(size), &(size_package));
-
-	char* clave = malloc(size.packed);
-
-	res = recv(socket_cliente, clave, size.packed, 0);
-
-	if (res < 0) {
-		salir_con_error("Falló la recepción de la clave.", socket_cliente);
-	}
+	size_package = recibir_packed(socket_cliente);
+	char* clave = recibir_cadena(socket_cliente, size_package.packed);
 
 	desbloquear(clave);
 
 	log_trace(logger, "La clave %s fue desbloqueada.", clave);
 
-	package_int unlock_ok = { .packed = 28 };
-
-	packageSize = sizeof(package_int);
-	char* package = malloc(packageSize);
-
-	serializar_packed(unlock_ok, &package);
-
-	envio = send(socket_cliente, package, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el envío de ok.", socket_cliente);
-	}
+	enviar_packed(unlock_ok, socket_cliente);
 
 }
 
@@ -468,54 +403,22 @@ void desbloquear(char* clave) {
 void bloquear_clave(int socket_cliente) {
 	aviso_ESI aviso_ok = { .aviso = 25 };
 
-	int packageSize = sizeof(aviso_ESI);
-	char* message = malloc(packageSize);
-
-	int package_int_size = sizeof(package_int);
-	char* size_package = malloc(package_int_size);
-	package_int size;
-
-	serializar_aviso(aviso_ok, &message);
-
-	int envio = send(socket_cliente, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el aviso de ok.", socket_cliente);
-	}
-
-	int res = recv(socket_cliente, size_package, package_int_size, 0);
-
-	if (res <= 0) {
-		salir_con_error("Falló la recepción de tamaño de clave.",
-				socket_cliente);
-	}
-
-	deserializar_packed(&(size), &(size_package));
-
-	char* clave = malloc(size.packed);
-
-	res = recv(socket_cliente, clave, size.packed, 0);
-
-	if (res < 0) {
-		salir_con_error("Falló la recepción de la clave.", socket_cliente);
-	}
-
-	bloquear(clave, 0);
-
-	log_trace(logger, "La clave %s fue bloqueada.", clave);
-
 	package_int block_ok = { .packed = 26 };
 
-	packageSize = sizeof(package_int);
-	char* package = malloc(packageSize);
+	package_int size_package = {
+			.packed = -1
+	};
 
-	serializar_packed(block_ok, &package);
+	enviar_aviso(socket_cliente, aviso_ok);
 
-	envio = send(socket_cliente, package, packageSize, 0);
+	size_package = recibir_packed(socket_cliente);
+	char* clave = recibir_cadena(socket_cliente, size_package.packed);
 
-	if (envio < 0) {
-		salir_con_error("Falló el envío de ok.", socket_cliente);
-	}
+	desbloquear(clave);
+
+	log_trace(logger, "La clave %s fue desbloqueada.", clave);
+
+	enviar_packed(block_ok, socket_cliente);
 
 }
 
@@ -634,7 +537,8 @@ void* atender_Instancia(void* un_socket) {
 
 	asignar_parametros_a_enviar();
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave + valor_set.tamanio_valor;
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
+			+ valor_set.tamanio_valor;
 
 	enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
@@ -685,15 +589,16 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
+	buffer_parametros = serializar_valores_set(tamanio_parametros_set,
+			&(valor_set));
 
 	loggear("Enviando parametros a la instancia");
 
-	log_trace(logger, "%c, %c, %c", buffer_parametros[4], buffer_parametros[5], buffer_parametros[6]);
+	log_trace(logger, "%c, %c, %c", buffer_parametros[4], buffer_parametros[5],
+			buffer_parametros[6]);
 
 	send((int) un_socket, buffer_parametros, sizeof(valor_set), 0);
 
 	loggear("Parametros enviados!");
-
 
 }

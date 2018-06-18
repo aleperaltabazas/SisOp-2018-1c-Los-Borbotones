@@ -312,7 +312,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 	}
 
-	else if(aviso.aviso == 5){
+	else if (aviso.aviso == 5) {
 		pthread_mutex_lock(&sem_new_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
 		eliminar_ESI(&new_ESIs, esi);
@@ -694,7 +694,7 @@ void interpretarYEjecutarCodigo(float comando) {
 void desbloquear_clave() {
 	printf("Ingrese la clave a desbloquear: ");
 	char clave[40] = "futbol:messi";
-	scanf(" %s", clave);
+	scanf("%s", clave);
 
 	avisar_desbloqueo(socket_coordinador, clave);
 
@@ -703,70 +703,29 @@ void desbloquear_clave() {
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
-	int packageSize = sizeof(aviso_ESI);
-	char* message = malloc(packageSize);
-	char* res_message = malloc(packageSize);
+	aviso_ESI aviso_coordi = { .aviso = -1 };
 
-	serializar_aviso(aviso_desbloqueo, &message);
+	uint32_t size = (uint32_t) strlen(clave) + 1;
 
-	int envio = send(server_socket, message, packageSize, 0);
+	package_int size_package = { .packed = size };
+	package_int response = { .packed = -1 };
 
-	if (envio < 0) {
-		salir_con_error("Falló el aviso de bloqueo de clave.", server_socket);
-	}
-
-	int res = recv(server_socket, res_message, packageSize, 0);
-
-	if (res <= 0) {
-		salir_con_error("No se pudo recibir bien la confirmación.",
-				server_socket);
-	}
-
-	aviso_ESI aviso_coordi;
-
-	deserializar_aviso(&(aviso_coordi), &(res_message));
+	enviar_aviso(server_socket, aviso_desbloqueo);
+	aviso_coordi = recibir_aviso(server_socket);
 
 	if (aviso_coordi.aviso != 25) {
 		salir_con_error("Respuesta errónea.", server_socket);
 	}
 
-	uint32_t size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = size };
-
-	packageSize = sizeof(package_int);
-	char* package_de_size = malloc(packageSize);
-
-	serializar_packed(size_package, &package_de_size);
-
-	send(server_socket, package_de_size, packageSize, 0);
-
-	packageSize = size;
-
+	enviar_packed(size_package, server_socket);
 	sleep(2);
+	enviar_cadena(clave, server_socket);
 
-	send(server_socket, clave, packageSize, 0);
-
-	packageSize = sizeof(package_int);
-	char* response_package = malloc(packageSize);
-	package_int response;
-
-	res = recv(server_socket, response_package, packageSize, 0);
-
-	if (res <= 0) {
-		salir_con_error("Falló la respuesta del coordinador.", server_socket);
-	}
-
-	deserializar_packed(&(response), &(response_package));
+	response = recibir_packed(server_socket);
 
 	if (response.packed != 28) {
-		salir_con_error("Falló el desbloqueo de la clave", server_socket);
+		salir_con_error("Falló el bloqueo de la clave", server_socket);
 	}
-
-	free(message);
-	free(res_message);
-	free(package_de_size);
-	free(response_package);
 
 	log_trace(logger, "La clave %s fue desbloqueada.", clave);
 }
@@ -774,7 +733,7 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 void bloquear_clave() {
 	printf("Ingrese la clave a bloquear: ");
 	char clave[40] = "futbol:messi";
-	scanf(" %s", clave);
+	scanf("%s", clave);
 
 	avisar_bloqueo(socket_coordinador, clave);
 
@@ -782,70 +741,29 @@ void bloquear_clave() {
 }
 
 void avisar_bloqueo(int server_socket, char* clave) {
-	int packageSize = sizeof(aviso_ESI);
-	char* message = malloc(packageSize);
-	char* res_message = malloc(packageSize);
+	aviso_ESI aviso_coordi = { .aviso = -1 };
 
-	serializar_aviso(aviso_bloqueo, &message);
+	uint32_t size = (uint32_t) strlen(clave) + 1;
 
-	int envio = send(server_socket, message, packageSize, 0);
+	package_int size_package = { .packed = size };
+	package_int response = { .packed = -1 };
 
-	if (envio < 0) {
-		salir_con_error("Falló el aviso de bloqueo de clave.", server_socket);
-	}
-
-	int res = recv(server_socket, res_message, packageSize, 0);
-
-	if (res <= 0) {
-		salir_con_error("No se pudo recibir bien la confirmación.",
-				server_socket);
-	}
-
-	aviso_ESI aviso_coordi;
-
-	deserializar_aviso(&(aviso_coordi), &(res_message));
+	enviar_aviso(server_socket, aviso_bloqueo);
+	aviso_coordi = recibir_aviso(server_socket);
 
 	if (aviso_coordi.aviso != 25) {
 		salir_con_error("Respuesta errónea.", server_socket);
 	}
 
-	uint32_t size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = size };
-
-	packageSize = sizeof(package_int);
-	char* package_de_size = malloc(packageSize);
-
-	serializar_packed(size_package, &package_de_size);
-
-	send(server_socket, package_de_size, packageSize, 0);
-
-	packageSize = size;
-
+	enviar_packed(size_package, server_socket);
 	sleep(2);
+	enviar_cadena(clave, server_socket);
 
-	send(server_socket, clave, packageSize, 0);
-
-	packageSize = sizeof(package_int);
-	char* response_package = malloc(packageSize);
-	package_int response;
-
-	res = recv(server_socket, response_package, packageSize, 0);
-
-	if (res <= 0) {
-		salir_con_error("Falló la respuesta del coordinador.", server_socket);
-	}
-
-	deserializar_packed(&(response), &(response_package));
+	response = recibir_packed(server_socket);
 
 	if (response.packed != 26) {
 		salir_con_error("Falló el bloqueo de la clave", server_socket);
 	}
-
-	free(message);
-	free(res_message);
-	free(package_de_size);
-	free(response_package);
 
 	log_trace(logger, "La clave %s fue bloqueada.", clave);
 

@@ -268,6 +268,15 @@ void hacer_store(char* clave);
 	 * 		char* clave: la clave a guardar.
 	 */
 
+int dame_response(char* clave, int id);
+	/*
+	 * Descripción: devuelve el valor de respuesta respecto a la clave que se quiere bloquear y quién
+	 * 		desea bloquearla.
+	 * Argumentos:
+	 * 		char* clave: la clave a bloquear.
+	 * 		int id: el id del bloqueante.
+	 */
+
 void asignar_parametros_a_enviar();
 	/*
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.
