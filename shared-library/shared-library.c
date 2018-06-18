@@ -161,38 +161,35 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 	int offset = 0;
 	int size_to_send;
 
-	size_to_send = sizeof(valor_set->tamanio_clave);
-	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave),
-			size_to_send);
+	size_to_send =  sizeof(valor_set -> tamanio_clave);
+	log_trace(logger, "%i", size_to_send);
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave), size_to_send);
 	offset += size_to_send;
 
 	loggear("tamanio clave serializado");
 
-	size_to_send = valor_set->tamanio_clave;
-	memcpy(buffer_parametros + offset, &(valor_set->clave), size_to_send);
+	size_to_send =  valor_set -> tamanio_clave;
+	memcpy(buffer_parametros + offset, valor_set->clave, size_to_send);
 	offset += size_to_send;
 
 	loggear("clave serializada");
 
-	size_to_send = sizeof(valor_set->tamanio_valor);
-	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor),
-			size_to_send);
+	size_to_send =  sizeof(valor_set -> tamanio_valor);
+
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor), size_to_send);
 	offset += size_to_send;
 
 	loggear("tamanio valor serializado");
 
-	size_to_send = valor_set->tamanio_valor;
-	memcpy(buffer_parametros + offset, &(valor_set->valor), size_to_send);
+	size_to_send =  valor_set -> tamanio_valor;
+	memcpy(buffer_parametros + offset, valor_set->valor, size_to_send);
 	offset += size_to_send;
 
 	loggear("valor serializado");
 
+	log_trace(logger, "%c, %c, %c", valor_set -> valor[0], valor_set -> valor[1], valor_set -> valor[2]);
+
 	return buffer_parametros;
-}
-
-void deserializar_valores_set(parametros_set ** buffer_valores,
-		parametros_set * valores) {
-
 }
 
 /*
@@ -221,6 +218,7 @@ void deserializar_valores_set(parametros_set ** buffer_valores,
  return serializedPackage;
  }
  */
+
 void avisar_cierre(int server_socket) {
 	int status = 1;
 	aviso_ESI aviso_de_fin = { .aviso = 0 };
@@ -275,7 +273,7 @@ int levantar_servidor(char* puerto) {
 	return listening_socket;
 }
 
-int conectar_a(char *ip, char *puerto, char* mensaje) {
+int conectar_a(char *ip, char *puerto, package_int id) {
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
 	memset(&hints, 0, sizeof(hints));
@@ -298,17 +296,18 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 
 	freeaddrinfo(serverInfo);
 
-	char package[PACKAGE_SIZE];
+	char * buffer_id = malloc(sizeof(package_int));
 
-	send(server_socket, mensaje, strlen(mensaje) + 1, 0);
+	send(server_socket, buffer_id, sizeof(package_int), 0);
 
 	loggear("Mensaje enviado.");
-	int res = recv(server_socket, (void*) package, PACKAGE_SIZE, 0);
+	int res = recv(server_socket, (void*) buffer_id, sizeof(package_int), 0);
+
+	memcpy(&(id.packed), buffer_id, sizeof(uint32_t));
 
 	if (res != 0) {
-		loggear(
-				"Mensaje recibido desde el servidor. Identificando servidor...");
-		chequear_servidor((char*) package, server_socket);
+		loggear("Mensaje recibido desde el servidor. Identificando servidor...");
+		chequear_servidor(id, server_socket);
 
 	} else {
 		salir_con_error("Fallo el envio de mensaje de parte del servidor.",
@@ -320,14 +319,14 @@ int conectar_a(char *ip, char *puerto, char* mensaje) {
 	return server_socket;
 }
 
-void chequear_servidor(char* mensaje, int server_socket) {
+void chequear_servidor(package_int id, int server_socket) {
 	char mensajeCoordinador[] = "Coordinador: taringuero profesional.";
 	char mensajePlanificador[] =
 			"My name is Planificador.c and I'm the fastest planifier alive...";
 
-	if (strcmp(mensaje, mensajeCoordinador) == 0) {
+	if (id.packed == 0) {
 		loggear(mensajeCoordinador);
-	} else if (strcmp(mensaje, mensajePlanificador) == 0) {
+	} else if (id.packed == 1) {
 		loggear(mensajePlanificador);
 	} else {
 		salir_con_error("Servidor desconocido, cerrando conexion.",

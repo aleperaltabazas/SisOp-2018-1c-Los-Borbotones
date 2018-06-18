@@ -14,8 +14,7 @@ int main(int argc, char** argv) {
 	int socketCliente;
 
 	while (seguir_ejecucion) {
-		socketCliente = manejar_cliente(listening_socket, socketCliente,
-				id_coordinador);
+		socketCliente = manejar_cliente(listening_socket, socketCliente, id_coordinador);
 	}
 
 	loggear("Cerrando sesion...");
@@ -635,14 +634,14 @@ void* atender_Instancia(void* un_socket) {
 
 	asignar_parametros_a_enviar();
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
-			+ valor_set.tamanio_valor;
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave + valor_set.tamanio_valor;
 
 	enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
 	enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	return NULL;
+
 }
 
 void asignar_parametros_a_enviar() {
@@ -686,13 +685,15 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	char * buffer_parametros = serializar_valores_set(tamanio_parametros_set,
-			&(valor_set));
+	buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
 
 	loggear("Enviando parametros a la instancia");
 
-	send((int) un_socket, (void*) buffer_parametros, sizeof(valor_set), 0);
+	log_trace(logger, "%c, %c, %c", buffer_parametros[4], buffer_parametros[5], buffer_parametros[6]);
+
+	send((int) un_socket, buffer_parametros, sizeof(valor_set), 0);
 
 	loggear("Parametros enviados!");
+
 
 }

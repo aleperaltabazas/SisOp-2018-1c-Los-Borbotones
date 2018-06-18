@@ -29,7 +29,7 @@ t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 
 parametros_set valor_set;
-
+char * buffer_parametros;
 
 //Hilos
 
@@ -39,7 +39,7 @@ pthread_t hilo_planificador;
 
 //Funciones de servidor
 
-int manejar_cliente(int listening_socket, int socketCliente, char* mensaje);
+int manejar_cliente(int listening_socket, int socketCliente, package_int id);
 	/*
 	 * Descripción: determina qu� hacer cuando recibe una nueva conexi�n a trav�s del
 	 * 		socket cliente.
@@ -49,7 +49,7 @@ int manejar_cliente(int listening_socket, int socketCliente, char* mensaje);
 	 * 		char* mensaje: mensaje para enviar como identificaci�na a los nuevos clientes.
 	 */
 
-void identificar_cliente(char* mensaje, int socket_cliente);
+void identificar_cliente(package_int id, int socket_cliente);
 	/*
 	 * Descripción: identifica a un cliente y crea un hilo para el mismo, o llama a salir_con_error().
 	 * 		en caso de ser un cliente desconocido.
@@ -128,7 +128,7 @@ void bloquear_clave(int socket_cliente);
 	 * 		int socket_cliente: socket del cliente.
 	 */
 
-void bloquear(char* clave);
+void bloquear(char* clave, int id);
 	/*
 	 * Descripción: bloquea una clave. En caso de que no exista, la crea y la bloquea.
 	 * 		Si la clave ya se encuentra bloqueada, no hace nada.

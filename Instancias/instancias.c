@@ -159,13 +159,18 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		loggear("Fallo en la recepcion de los parametros");
 	}
 
-	if(strcmp(parametros.valor, "UnValor")){
-		loggear("VAMO MENEN");
-	}
+	log_trace(logger, "%c, %c, %c", parametros.clave[0], parametros.clave[1], parametros.clave[2]);
 
-	loggear("Fin");
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
+
+	//Esta verificacion la hago cuando entienda como usar list_find sin usar bools
+
+	//list_find(entradas, existe_la_clave);
+
 	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar la clave (veo si entra)
+
+	//verificar_disponibilidad();
+
 	//Si puedo almacenar creo un struct entrada con los valores que me dieron y dandole una posicion por la cual acceder
 
 }
@@ -197,6 +202,8 @@ int recieve_and_deserialize(parametros_set *parametros, int socketCliente){
 
 	status = recv(socketCliente, parametros -> valor, tamanio_valor, 0);
 	if (!status) return -1;
+
+	log_trace(logger, "%c, %c, %c", parametros->clave[0], parametros->clave[1], parametros->clave[2]);
 
 	free(buffer);
 
