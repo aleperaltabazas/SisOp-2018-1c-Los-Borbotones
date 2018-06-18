@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 
 	while (seguir_ejecucion) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
-				mensajeCoordinador);
+				id_coordinador);
 	}
 
 	loggear("Cerrando sesion...");
@@ -78,7 +78,7 @@ float dame_retardo(int retardo_int) {
 	return ret_val;
 }
 
-int manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
+int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 
 	loggear("Esperando cliente...");
 
@@ -95,47 +95,64 @@ int manejar_cliente(int listening_socket, int socketCliente, char* mensaje) {
 
 	loggear("Esperando mensaje del cliente.");
 
-	char package[PACKAGE_SIZE];
+	package_int id_cliente = { .packed = -1 };
 
-	int res = recv(socketCliente, (void*) package, PACKAGE_SIZE, 0);
+	int packageSize = sizeof(package_int);
+	char* package = malloc(packageSize);
+
+	int res = recv(socketCliente, package, PACKAGE_SIZE, 0);
 
 	if (res <= 0) {
 		loggear("Fallo la conexion con el cliente.");
 	}
 
+	deserializar_packed(&(id_cliente), &(package));
+
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
-	identificar_cliente((char*) package, socketCliente);
+	identificar_cliente(id_cliente, socketCliente);
 
-	loggear("Enviando mensaje al cliente.");
+	loggear("Enviando id al cliente.");
 
-	send(socketCliente, mensaje, strlen(mensaje) + 1, 0);
+	char* message = malloc(packageSize);
+
+	serializar_packed(id, &(message));
+
+	int envio = send(socketCliente, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el envío", socketCliente);
+	}
 
 	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
+
+	free(package);
+	free(message);
 
 	return socketCliente;
 }
 
-void identificar_cliente(char* mensaje, int socket_cliente) {
-	char* mensajePlanificador =
-			"My name is Planificador.c and I'm the fastest planifier alive...";
-	char* mensajeESI = "A wild ESI has appeared!";
-	char* mensajeInstancia = "It's ya boi, instancia!";
-
-	if (strcmp(mensaje, mensajePlanificador) == 0) {
+void identificar_cliente(package_int id, int socket_cliente) {
+	if (id.packed == 1) {
 		loggear(mensajePlanificador);
 		pthread_create(&hilo_planificador, NULL, atender_Planificador,
 				(void*) socket_cliente);
 		pthread_detach(hilo_planificador);
-	} else if (strcmp(mensaje, mensajeESI) == 0) {
+	}
+
+	else if (id.packed == 2) {
 		loggear(mensajeESI);
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 		pthread_detach(hilo_ESI);
-	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
+	}
+
+	else if (id.packed == 3) {
 		loggear(mensajeInstancia);
 		pthread_create(&hilo_instancia, NULL, atender_Instancia,
 				(void*) socket_cliente);
 		pthread_detach(hilo_instancia);
-	} else {
+	}
+
+	else {
 		salir_con_error("Cliente desconocido, cerrando conexion.",
 				socket_cliente);
 	}
@@ -158,45 +175,183 @@ void* atender_ESI(void* un_socket) {
 }
 
 int chequear_solicitud(int socket_cliente) {
-	aviso_ESI aviso_cliente;
-	aviso_ESI aviso_servidor = { .aviso = 1 };
-
-	int packageSize = sizeof(aviso_cliente.aviso) + sizeof(aviso_cliente.id);
-	char *message = malloc(packageSize);
-	char *package = malloc(packageSize);
-
-	//Me gustaria mas que la aviso_servidor se envie como bool
-
-	int res = recv(socket_cliente, (void*) package, packageSize, 0);
-
-	if (res != 0) {
-		loggear("Mensaje recibido del ESI.");
-	} else {
-		log_error(logger, "Fallo la peticion. Terminando ESI.");
-
-		terminar_conexion(socket_cliente);
-	}
-
-	deserializar_aviso(&(aviso_cliente), &(package));
+	aviso_ESI aviso_cliente = recibir_aviso(socket_cliente);
 
 	if (aviso_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
 		return 0;
-	} else if (aviso_cliente.aviso == 1) {
-		loggear("Ejecución de ESI.");
-	} else {
-		loggear("Mensaje erróneo. Abortando ESI.");
-		terminar_conexion(socket_cliente);
 	}
 
-	serializar_aviso(aviso_servidor, &message);
+	else if (aviso_cliente.aviso == 1) {
+		loggear("Ejecución de ESI.");
+	}
 
-	send(socket_cliente, message, packageSize, 0);
+	else if (aviso_cliente.aviso == 11) {
+		loggear("GET.");
+		get(socket_cliente, aviso_cliente.id);
+	}
 
-	free(message);
-	free(package);
+	else if (aviso_cliente.aviso == 12) {
+		loggear("SET.");
+		set(socket_cliente, aviso_cliente.id);
+	}
+
+	else if (aviso_cliente.aviso == 13) {
+		loggear("STORE");
+		store(socket_cliente, aviso_cliente.id);
+	}
+
+	else {
+		loggear("Mensaje erróneo. Abortando ESI.");
+		terminar_conexion(socket_cliente);
+		return 0;
+	}
 
 	return 1;
+}
+
+void get(int socket_cliente, int id) {
+	aviso_ESI aviso_ok = { .aviso = 10 };
+
+	enviar_aviso(socket_cliente, aviso_ok);
+
+	package_int size_packed = recibir_packed(socket_cliente);
+	uint32_t clave_size = size_packed.packed;
+
+	char* clave = recibir_cadena(socket_cliente, clave_size);
+
+	package_int response;
+
+	if (!existe(clave)) {
+		response.packed = 20;
+		bloquear(clave, id);
+		loggear("Get exitoso.");
+	}
+
+	else if (existe(clave) && !esta_bloqueada(clave)) {
+		response.packed = 20;
+		bloquear(clave, id);
+		loggear("Get exitoso.");
+	}
+
+	else {
+		response.packed = 5;
+		loggear("Bloqueando ESI.");
+	}
+
+	enviar_packed(response, socket_cliente);
+}
+
+void set(int socket_cliente, int id) {
+	aviso_ESI aviso_ok = { .aviso = 10 };
+
+	enviar_aviso(socket_cliente, aviso_ok);
+
+	package_int clave_size_packed = recibir_packed(socket_cliente);
+	uint32_t clave_size = clave_size_packed.packed;
+	char* clave = recibir_cadena(socket_cliente, clave_size);
+
+	package_int valor_size_packed = recibir_packed(socket_cliente);
+	uint32_t valor_size = valor_size_packed.packed;
+	char* valor = recibir_cadena(socket_cliente, valor_size);
+
+	package_int response;
+
+	response.packed = settear(valor, clave, id);
+
+	enviar_packed(response, socket_cliente);
+}
+
+void store(int socket_cliente, int id) {
+	aviso_ESI aviso_ok = { .aviso = 10 };
+
+	enviar_aviso(socket_cliente, aviso_ok);
+
+	package_int size_packed = recibir_packed(socket_cliente);
+	uint32_t clave_size = size_packed.packed;
+
+	char* clave = recibir_cadena(socket_cliente, clave_size);
+
+	package_int response;
+	response.packed = get_packed(clave, id);
+
+	if (response.packed != 5) {
+		hacer_store(clave);
+	}
+
+	enviar_packed(response, socket_cliente);
+}
+
+int settear(char* valor, char* clave, int id) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	if (!existe(clave)) {
+		return 5;
+	}
+
+	while (puntero != NULL) {
+		if (strcmp(puntero->clave, clave) == 0) {
+			if (puntero->block_id != id) {
+				loggear("Bloqueando ESI.");
+				return 5;
+			}
+
+			puntero->valor = valor;
+
+			loggear("Set exitoso.");
+			return 20;
+		}
+	}
+
+	return 5;
+}
+
+int get_packed(char* clave, int id) {
+	if (!existe(clave)) {
+		loggear("Bloqueando ESI.");
+		return 5;
+	}
+
+	else {
+		int blocker = get_clave_id(clave);
+
+		if (blocker == -1) {
+			loggear("Bloqueando ESI.");
+			return 5;
+		}
+
+		if (blocker != id) {
+			loggear("Bloqueando ESI.");
+			return 5;
+		}
+
+		else if (!esta_bloqueada(clave)) {
+			loggear("Bloqueando ESI.");
+			return 5;
+		}
+
+		else {
+			desbloquear(clave);
+			loggear("Store exitoso.");
+			return 20;
+		}
+	}
+}
+
+void hacer_store(char* clave) {
+	//MATIIIIIIIIIIIIIIIIII te toca hacer esto
+}
+
+int get_clave_id(char* clave) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		if (strcmp(puntero->clave, clave) == 0) {
+			return puntero->block_id;
+		}
+	}
+
+	return -1;
 }
 
 void* atender_Planificador(void* un_socket) {
@@ -346,7 +501,7 @@ void bloquear_clave(int socket_cliente) {
 		salir_con_error("Falló la recepción de la clave.", socket_cliente);
 	}
 
-	bloquear(clave);
+	bloquear(clave, 0);
 
 	log_trace(logger, "La clave %s fue bloqueada.", clave);
 
@@ -365,10 +520,10 @@ void bloquear_clave(int socket_cliente) {
 
 }
 
-void bloquear(char* clave) {
+void bloquear(char* clave, int id) {
 	if (!existe(clave)) {
 		crear(clave);
-		bloquear(clave);
+		bloquear(clave, id);
 	}
 
 	else if (existe(clave) && !esta_bloqueada(clave)) {
@@ -480,7 +635,8 @@ void* atender_Instancia(void* un_socket) {
 
 	asignar_parametros_a_enviar();
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave + valor_set.tamanio_valor;
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
+			+ valor_set.tamanio_valor;
 
 	enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
@@ -489,7 +645,7 @@ void* atender_Instancia(void* un_socket) {
 	return NULL;
 }
 
-void asignar_parametros_a_enviar(){
+void asignar_parametros_a_enviar() {
 
 	//Aca estaria la logica de recibir las claves y valores
 	valor_set.clave = "Clave";
@@ -499,7 +655,7 @@ void asignar_parametros_a_enviar(){
 
 }
 
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket){
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
 
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 11;
@@ -528,9 +684,10 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket){
 
 }
 
-void enviar_valores_set(int tamanio_parametros_set, void * un_socket){
+void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	char * buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
+	char * buffer_parametros = serializar_valores_set(tamanio_parametros_set,
+			&(valor_set));
 
 	loggear("Enviando parametros a la instancia");
 

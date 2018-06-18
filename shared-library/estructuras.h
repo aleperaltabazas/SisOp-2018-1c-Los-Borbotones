@@ -23,6 +23,12 @@ typedef struct ESI {
 	bool ejecutando;
 } ESI;
 
+typedef struct entrada {
+	char clave[40];
+	uint32_t pos_valor;
+	uint32_t tamanio_valor;
+} entrada;
+
 //	Estructuras con serialización
 
 typedef struct aviso_ESI {
@@ -32,7 +38,7 @@ typedef struct aviso_ESI {
 
 typedef struct package_int {
 	uint32_t packed;
-} __attribute__((packed)) package_int;
+}__attribute__((packed)) package_int;
 
 typedef struct orden_del_coordinador {
 	uint32_t codigo_operacion;
@@ -46,7 +52,7 @@ typedef struct parametros_set {
 	char * valor;
 }__attribute__((packed)) parametros_set;
 
-typedef struct key{
+typedef struct key {
 	char* clave;
 	int clave_size;
 }__attribute__((packed)) key;
@@ -93,6 +99,7 @@ typedef struct t_parsed_list {
 typedef struct t_clave_node {
 	char* clave;
 	char* valor;
+	int block_id;
 	struct t_clave_node* sgte;
 } t_clave_node;
 

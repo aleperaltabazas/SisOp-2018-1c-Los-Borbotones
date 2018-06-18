@@ -33,6 +33,22 @@ char* mensajeESILista = "Gotcha! Wild ESI was added to the list!";
 char* mensajeInstancia = "It's ya boi, instancia!";
 char* mensajeCoordinador = "Coordinador: taringuero profesional.";
 
+package_int id_coordinador = {
+		.packed = 0
+};
+
+package_int id_planificador = {
+		.packed = 1
+};
+
+package_int id_ESI = {
+		.packed = 2
+};
+
+package_int id_instancia = {
+		.packed = 3
+};
+
 //Funciones servidor
 
 int levantar_servidor(char* puerto);
@@ -45,23 +61,23 @@ int levantar_servidor(char* puerto);
 
 //Funciones cliente
 
-int conectar_a(char* ip, char* puerto, char* mensaje);
+int conectar_a(char* ip, char* puerto, package_int id);
 	/*
-	 * Descripción: establece una conexión con un servidor y le env�a un mensaje, y devuelve
-	 * 		el socket servidor. En caso que falle la conexión con el servidor o el env�o
+	 * Descripción: establece una conexión con un servidor y le envía un mensaje, y devuelve
+	 * 		el socket servidor. En caso que falle la conexión con el servidor o el envío
 	 * 		de mensajes, llama a salir_con_error().
 	 * Argumentos:
 	 * 		char* ip: ip del servidor.
 	 * 		char* puerto: puerto por el que escucha el servidor.
-	 * 		char* mensaje: mensaje a enviar al servidor.
+	 * 		package_int id: mensaje a enviar al servidor.
 	 */
 
-void chequear_servidor(char* id, int server_socket);
+void chequear_servidor(package_int id, int server_socket);
 	/*
-	 * Descripción: revisa el mensaje devuelto por el servidor para saber de qu� servidor se trata.
+	 * Descripción: revisa el mensaje devuelto por el servidor para saber de qué servidor se trata.
 	 * 		En caso de que sea un servidor desconocido, llama a salir_con_error().
 	 * Argumentos:
-	 * 		char* id: identificaci�n enviada por el servidor.
+	 * 		package_int id: identificación enviada por el servidor.
 	 * 		int server_socket: socket del servidor.
 	 */
 
@@ -97,14 +113,6 @@ void deserializar_aviso(aviso_ESI *aviso, char** package);
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
-char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
-	/*
-	 * Descripción: serializa un mensaje del tipo parametros_set.
-	 * Argumentos:
-	 * 		tamanio_a_enviar: para hacer el malloc.
-	 * 		valor_set: el recipiente del mensaje serializado.
-	 */
-
 void avisar_cierre(int server_socket);
 	/*
 	 * Descripción: manda un mensaje al servidor avisando su terminación.
@@ -130,8 +138,8 @@ void exit_gracefully(int return_val);
 
 void iniciar_log(char* nombre, char* mensajeInicial);
 	/*
-	 * Descripción: crea un log con un nombre pasado por par�metro y se loggea
-	 * 		un mensaje inicial pasado por par�metro.
+	 * Descripción: crea un log con un nombre pasado por parámetro y se loggea
+	 * 		un mensaje inicial pasado por parámetro.
 	 * Argumentos:
 	 * 		char* nombre: nombre del logger.
 	 * 		char* mensajeInicial: mensaje a loggear al principio.
@@ -146,9 +154,63 @@ void loggear(char* mensaje);
 
 void terminar_conexion(int sockfd);
 	/*
-	 * Descripción: env�a un mensaje de terminaci�n a un proceso a trav�s de un socket.
+	 * Descripción: envía un mensaje de terminación a un proceso a trav�s de un socket.
 	 * Argumentos:
-	 * 		int sockfd: el socket por el cual se env�a el mensaje.
+	 * 		int sockfd: el socket por el cual se envía el mensaje.
+	 */
+
+void enviar_aviso(int sockfd, aviso_ESI aviso);
+	/*
+	 * Descripción: envía un mensaje a un servidor del tipo aviso_ESI.
+	 * Argumentos:
+	 * 		int sockfd: socket del servidor.
+	 * 		aviso_ESI aviso: aviso a enviar.
+	 */
+
+aviso_ESI recibir_aviso(int sockfd);
+	/*
+	 * Descripción: recibe un aviso del tipo aviso_ESI de otro proceso.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso.
+	 */
+
+void enviar_packed(package_int packed, int sockfd);
+	/*
+	 * Descripción: envia un paquete package_int a otro proceso.
+	 * Argumentos:
+	 * 		package_int packed: el paquete a enviar.
+	 * 		int sockfd: socket del proceso al cual enviar el paquete.
+	 */
+
+package_int recibir_packed(int sockfd);
+	/*
+	 * Descripción: recibe un paquete package_int de otro proceso.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso del cual recibir el paquete.
+	 */
+
+void enviar_cadena(char* cadena, int sockfd);
+	/*
+	 * Descripción: envía una cadena a otro proceso.
+	 * Argumentos.
+	 * 		char* cadena: la cadena a enviar.
+	 * 		int sockfd: el socket del proceso al cual enviar la cadena.
+	 */
+
+char* recibir_cadena(int sockfd, uint32_t size);
+	/*
+	 * Descripción: recibe una cadena de otro proceso.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso del cual recibir la cadena.
+	 * 		int size: tamaño de la cadena a recibir.
+	 */
+
+char* serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
+	/*
+	 * Descripción: serializa un mensaje del tipo parametros_set.
+	 * Argumentos:
+	 * 		tamanio_a_enviar: para hacer el malloc.
+	 * 		valor_set: el recipiente del mensaje serializado.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

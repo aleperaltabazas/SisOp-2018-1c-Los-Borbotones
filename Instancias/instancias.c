@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 	iniciar();
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajeInstancia);
+			id_instancia);
 
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;

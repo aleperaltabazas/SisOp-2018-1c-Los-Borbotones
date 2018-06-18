@@ -22,7 +22,8 @@ algoritmo_planificacion ALGORITMO_PLANIFICACION;
 
 ESI esi_vacio = {
 		.id = 0,
-		.socket = 0
+		.socket = 0,
+		.rafaga_real = 0
 };
 
 int ESI_id;
@@ -60,6 +61,7 @@ pthread_mutex_t sem_clock;
 pthread_mutex_t sem_planificacion;
 pthread_mutex_t sem_ejecucion;
 pthread_mutex_t sem_ejecutando;
+pthread_mutex_t sem_new_ESIs;
 
 //Hilos
 
@@ -88,7 +90,7 @@ void desbloquear_clave(void);
 
 //Funciones de servidor
 
-int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje);
+int manejar_cliente(int listening_socket, int socket_cliente, package_int package);
 	/*
 	 * Descripción: determina qué hacer cuando recibe una nueva conexión a través del
 	 * 		socket cliente.
@@ -98,12 +100,12 @@ int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje);
 	 * 		char* mensaje: mensaje para enviar como indentificación a los nuevos clientes.
 	 */
 
-void identificar_cliente(char* mensaje, int socket_cliente);
+void identificar_cliente(package_int id, int socket_cliente);
 	/*
 	 * Descripción: identifica a un cliente y crea un hilo para el mismo, o llama a salir_con_error().
 	 * 		en caso de ser un cliente desconocido.
 	 * Argumentos:
-	 * 		char* mensaje: el mensaje enviado por el cliente.
+	 * 		package_int id: identificación enviada por el cliente.
 	 * 		int socket_cliente: socket del cliente.
 	 */
 
@@ -330,6 +332,30 @@ void avisar_desbloqueo(int server_socket, char* clave);
 	 * Argumentos:
 	 * 		int server_socket: socket del servidor.
 	 * 		char* clave: clave a desbloquear.
+	 */
+
+int recibir_mensaje(int sockfd, int id, ESI esi);
+	/*
+	 * Descripción: recibe mensajes de un cliente y retorna si se continúa con el hilo o no.
+	 * Argumentos:
+	 * 		int sockfd: socket del cliente.
+	 * 		int id: id del cliente.
+	 * 		ESI esi: ESI del cliente.
+	 */
+
+bool esta(t_esi_list lista, ESI esi);
+	/*
+	 * Descripción: devuelve si un ESI se encuentra en una lista determinada.
+	 * Argumentos:
+	 * 		t_esi_list lista: lista a recorrer.
+	 * 		ESI esi: ESI a verificar su existencia.
+	 */
+
+void vaciar_ESI(void);
+	/*
+	 * Descripción: pone el ESI_vacio en el executing_ESI.
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* PLANIFICADOR_H_ */

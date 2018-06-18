@@ -62,11 +62,6 @@ int recieve_and_deserialize(parametros_set *parametros, int socketCliente);
 t_list * entradas;
 
 //Estructura de las entradas
-typedef struct entrada{
-	char clave[40];
-	uint32_t pos_valor;
-	uint32_t tamanio_valor;
-} entrada;
 
 //Funciones para el coordinador
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);

@@ -25,8 +25,24 @@ aviso_ESI aviso_ready = {
 		.aviso = 1
 };
 
+aviso_ESI aviso_bloqueo = {
+		.aviso = 5
+};
+
 aviso_ESI aviso_ejecute = {
 		.aviso = 10
+};
+
+aviso_ESI aviso_get = {
+		.aviso = 11
+};
+
+aviso_ESI aviso_set = {
+		.aviso = 12
+};
+
+aviso_ESI aviso_store = {
+		.aviso = 13
 };
 
 //Funciones
@@ -89,14 +105,6 @@ void avisar_cierre(int sockfd);
 	 * 		int sockfd: socket al cu�l se enviar� el mensaje de cierre.
 	 */
 
-void enviar_aviso(int sockfd, aviso_ESI aviso);
-	/*
-	 * Descripción: envía un mensaje a un servidor del tipo aviso_ESI.
-	 * Argumentos:
-	 * 		int sockfd: socket del servidor.
-	 * 		aviso_ESI aviso: aviso a enviar.
-	 */
-
 void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	/*
 	 * Descripción: espera a recibir una orden de ejecución por parte del planificador y llama a
@@ -106,12 +114,13 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	 * 		int socket_planificador: socket del planificador.
 	 */
 
-void ejecutar(void);
+void ejecutar(int socket_coordinador, int socket_planificador);
 	/*
 	 * Descripción: ejecuta la siguiente instrucción como indique la lista de líneas parseadas,
 	 * 		e informa el resultado al coordinador.
 	 * Arumgnetos:
-	 * 		void
+	 * 		int socket_coordinador: socket del coordinador.
+	 * 		int socket_planificador: socket del planificador.
 	 */
 
 void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed);
@@ -156,5 +165,30 @@ void cargar_configuracion(void);
 	 * Argumentos:
 	 * 		void
 	 */
+
+int get(t_esi_operacion parsed, int socket_coordinador);
+	/*
+	 * Descripción: hace la operación de get sobre la clave del parseo y le informa al coordinador.
+	 * Argumentos:
+	 * 		t_esi_operacion parsed: la sentencia parseada.
+	 * 		int socket_coordinador: socket del coordinador.
+	 */
+
+int set(t_esi_operacion parsed, int socket_coordinador);
+	/*
+	 * Descripción: hace la operación de set sobre la clave del parseo y le informa al coordinador.
+	 * Argumentos:
+	 * 		t_esi_operacion parsed: la sentencia parseada.
+	 * 		int socket_coordinador: socket del coordinador.
+	 */
+
+int store(t_esi_operacion parsed, int socket_coordinador);
+	/*
+	 * Descripción: hace la operación de store sobre la clave del parseo y le informa al coordinador.
+	 * Argumentos:
+	 * 		t_esi_operacion parsed: la sentencia parseada.
+	 * 		int socket_coordinador: socket del coordinador.
+	 */
+
 
 #endif /* ESI_H_ */

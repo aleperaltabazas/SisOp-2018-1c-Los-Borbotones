@@ -7,11 +7,110 @@
 
 #include "shared-library.h"
 
+/*
+ * shared-library.c
+ *
+ *  Created on: 21 abr. 2018
+ *      Author: utnso
+ */
+
+#include "shared-library.h"
+
+void enviar_aviso(int sockfd, aviso_ESI aviso) {
+	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
+	char* message = malloc(packageSize);
+
+	serializar_aviso(aviso, &message);
+
+	loggear("Serialice bien.");
+
+	int envio = send(sockfd, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Fallo el envio", sockfd);
+	}
+
+	free(message);
+
+	loggear("Mensaje enviado.");
+}
+
+aviso_ESI recibir_aviso(int sockfd) {
+	aviso_ESI ret_aviso;
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
+
+	int res = recv(sockfd, package, packageSize, 0);
+
+	if (res <= 0) {
+		salir_con_error("Falló el recibo del aviso.", sockfd);
+	}
+
+	deserializar_aviso(&(ret_aviso), &(package));
+
+	free(package);
+
+	return ret_aviso;
+}
+
+void enviar_packed(package_int packed, int server_socket) {
+	int packageSize = sizeof(package_int);
+	char* message = malloc(packageSize);
+
+	serializar_packed(packed, &message);
+
+	int envio = send(server_socket, message, packageSize, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el envío del paquete.", server_socket);
+	}
+
+	free(message);
+}
+
+package_int recibir_packed(int server_socket) {
+	package_int ret_package;
+	int packageSize = sizeof(package_int);
+	char* package = malloc(packageSize);
+
+	int res = recv(server_socket, package, packageSize, 0);
+
+	if (res <= 0) {
+		salir_con_error("Falló la recepción del paquete", server_socket);
+	}
+
+	deserializar_packed(&(ret_package), &(package));
+
+	free(package);
+
+	return ret_package;
+}
+
+void enviar_cadena(char* cadena, int server_socket) {
+	int cadena_size = strlen(cadena) + 1;
+
+	int envio = send(server_socket, cadena, cadena_size, 0);
+
+	if (envio < 0) {
+		salir_con_error("Falló el envío de la cadena.", server_socket);
+	}
+}
+
+char* recibir_cadena(int server_socket, uint32_t size) {
+	char* ret_string = malloc(size);
+
+	int res = recv(server_socket, ret_string, size, 0);
+
+	if (res <= 0) {
+		salir_con_error("Falló la recepción de la cadena", server_socket);
+	}
+
+	return ret_string;
+}
+
 void terminar_conexion(int sockfd) {
 
-	aviso_ESI aviso = {
-			.aviso = -1
-	};
+	aviso_ESI aviso = { .aviso = -1 };
 
 	int packageSize = sizeof(aviso_ESI);
 	char* package = malloc(packageSize);
@@ -56,31 +155,33 @@ void deserializar_aviso(aviso_ESI *aviso, char** package) {
 	memcpy(&aviso->id, *package + offset, sizeof(aviso->id));
 }
 
-char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set){
+char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) {
 
 	char * buffer_parametros = malloc(tamanio_a_enviar);
 	int offset = 0;
 	int size_to_send;
 
-	size_to_send =  sizeof(valor_set -> tamanio_clave);
-	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave), size_to_send);
+	size_to_send = sizeof(valor_set->tamanio_clave);
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave),
+			size_to_send);
 	offset += size_to_send;
 
 	loggear("tamanio clave serializado");
 
-	size_to_send =  valor_set -> tamanio_clave;
+	size_to_send = valor_set->tamanio_clave;
 	memcpy(buffer_parametros + offset, &(valor_set->clave), size_to_send);
 	offset += size_to_send;
 
 	loggear("clave serializada");
 
-	size_to_send =  sizeof(valor_set -> tamanio_valor);
-	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor), size_to_send);
+	size_to_send = sizeof(valor_set->tamanio_valor);
+	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor),
+			size_to_send);
 	offset += size_to_send;
 
 	loggear("tamanio valor serializado");
 
-	size_to_send =  valor_set -> tamanio_valor;
+	size_to_send = valor_set->tamanio_valor;
 	memcpy(buffer_parametros + offset, &(valor_set->valor), size_to_send);
 	offset += size_to_send;
 
@@ -89,37 +190,37 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set){
 	return buffer_parametros;
 }
 
-void deserializar_valores_set(parametros_set ** buffer_valores, parametros_set * valores){
-
+void deserializar_valores_set(parametros_set ** buffer_valores,
+		parametros_set * valores) {
 
 }
 
 /*
-char* serializarOperandos(t_Package *package){
+ char* serializarOperandos(t_Package *package){
 
-	char *serializedPackage = malloc(package->total_size);
+ char *serializedPackage = malloc(package->total_size);
 
-	int offset = 0;
-	int size_to_send;
+ int offset = 0;
+ int size_to_send;
 
-	size_to_send =  sizeof(package->username_long);
-	memcpy(serializedPackage + offset, &(package->username_long), size_to_send);
-	offset += size_to_send;
+ size_to_send =  sizeof(package->username_long);
+ memcpy(serializedPackage + offset, &(package->username_long), size_to_send);
+ offset += size_to_send;
 
-	size_to_send =  package->username_long;
-	memcpy(serializedPackage + offset, package->username, size_to_send);
-	offset += size_to_send;
+ size_to_send =  package->username_long;
+ memcpy(serializedPackage + offset, package->username, size_to_send);
+ offset += size_to_send;
 
-	size_to_send =  sizeof(package->message_long);
-	memcpy(serializedPackage + offset, &(package->message_long), size_to_send);
-	offset += size_to_send;
+ size_to_send =  sizeof(package->message_long);
+ memcpy(serializedPackage + offset, &(package->message_long), size_to_send);
+ offset += size_to_send;
 
-	size_to_send =  package->message_long;
-	memcpy(serializedPackage + offset, package->message, size_to_send);
+ size_to_send =  package->message_long;
+ memcpy(serializedPackage + offset, package->message, size_to_send);
 
-	return serializedPackage;
-}
-*/
+ return serializedPackage;
+ }
+ */
 void avisar_cierre(int server_socket) {
 	int status = 1;
 	aviso_ESI aviso_de_fin = { .aviso = 0 };
@@ -163,10 +264,11 @@ int levantar_servidor(char* puerto) {
 	int listening_socket = socket(server_info->ai_family,
 			server_info->ai_socktype, server_info->ai_protocol);
 
-	int bindeo = bind(listening_socket, server_info->ai_addr, server_info->ai_addrlen);
+	int bindeo = bind(listening_socket, server_info->ai_addr,
+			server_info->ai_addrlen);
 	freeaddrinfo(server_info);
 
-	if (bindeo < 0){
+	if (bindeo < 0) {
 		salir_con_error("Falló el bindeo.", 0);
 	}
 

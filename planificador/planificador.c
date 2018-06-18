@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
 	while (seguir_ejecucion) {
 		socketCliente = manejar_cliente(listening_socket, socketCliente,
-				mensajePlanificador);
+				id_planificador);
 	}
 
 	loggear("Terminando proceso...");
@@ -120,7 +120,7 @@ algoritmo_planificacion dame_algoritmo(char* algoritmo_src) {
 
 void* atender_coordinador(void* nada) {
 	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajePlanificador);
+			id_planificador);
 
 	int status = 1;
 
@@ -142,9 +142,11 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_clock, NULL);
 	pthread_mutex_init(&sem_planificacion, NULL);
 	pthread_mutex_init(&sem_ejecucion, NULL);
+	pthread_mutex_init(&sem_new_ESIs, NULL);
 }
 
-int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
+int manejar_cliente(int listening_socket, int socket_cliente,
+		package_int server_packed) {
 
 	loggear("Esperando cliente...");
 
@@ -161,43 +163,51 @@ int manejar_cliente(int listening_socket, int socket_cliente, char* mensaje) {
 
 	loggear("Esperando mensaje del cliente.");
 
-	char package[PACKAGE_SIZE];
+	package_int cliente_packed;
+	int packageSize = sizeof(package_int);
+	char* message = malloc(packageSize);
 
-	int res = recv(socket_cliente, (void*) package, PACKAGE_SIZE, 0);
+	int res = recv(socket_cliente, message, packageSize, 0);
 
 	if (res <= 0) {
 		loggear("Fallo la conexion con el cliente.");
 	}
 
+	deserializar_packed(&(cliente_packed), &(message));
+
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
-	identificar_cliente((char*) package, socket_cliente);
+	identificar_cliente(cliente_packed, socket_cliente);
 
 	loggear("Enviando mensaje al cliente.");
 
-	send(socket_cliente, mensaje, strlen(mensaje) + 1, 0);
+	char* package = malloc(packageSize);
+
+	serializar_packed(server_packed, &(package));
+
+	send(socket_cliente, package, packageSize, 0);
 
 	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
+
+	free(message);
+	free(package);
 
 	return socket_cliente;
 }
 
-void identificar_cliente(char* mensaje, int socket_cliente) {
+void identificar_cliente(package_int id, int socket_cliente) {
 	pthread_t hilo_ESI;
 
-	if (strcmp(mensaje, mensajePlanificador) == 0) {
-		loggear(mensajePlanificador);
-		loggear("Wait, what the fuck?");
-	} else if (strcmp(mensaje, mensajeESI) == 0) {
+	if (id.packed == 2) {
 		loggear(mensajeESI);
 
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 
-		//loggear(mensajeESILista);
+		loggear(mensajeESILista);
 
 		pthread_detach(hilo_ESI);
-	} else if (strcmp(mensaje, mensajeInstancia) == 0) {
-		loggear(mensajeInstancia);
-	} else {
+	}
+
+	else {
 
 		salir_con_error("Cliente desconocido, cerrando conexion.",
 				socket_cliente);
@@ -209,11 +219,6 @@ void identificar_cliente(char* mensaje, int socket_cliente) {
 void* atender_ESI(void* buffer) {
 	int socket_ESI = (int) buffer;
 
-	aviso_ESI aviso;
-
-	int packageSize = sizeof(aviso);
-	char* package = malloc(packageSize);
-
 	loggear("Hilo de ESI inicializado correctamente.");
 
 	ESI esi = { .socket = socket_ESI, .rafaga_estimada = ESTIMACION_INICIAL,
@@ -223,84 +228,10 @@ void* atender_ESI(void* buffer) {
 
 	esi.id = this_id;
 
-	while (1) {
-		recv(socket_ESI, package, packageSize, 0);
+	int status = 1;
 
-		log_trace(logger, "Mensaje recibidio del ESI numero: %i", this_id);
-
-		deserializar_aviso(&(aviso), &(package));
-
-		if (aviso.aviso == 0) {
-			loggear(
-					"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
-
-			agregar_ESI(&finished_ESIs, esi);
-
-			pthread_mutex_lock(&sem_ESIs_size);
-			eliminar_ESI(&new_ESIs, esi);
-
-			ESIs_size--;
-			pthread_mutex_unlock(&sem_ESIs_size);
-
-			loggear("Agregado correctamente a la cola de terminados.");
-
-			loggear("Eliminado correctamente de la cola de listos.");
-
-			desalojar();
-
-			pthread_mutex_unlock(&sem_ejecucion);
-
-			break;
-		}
-
-		else if (aviso.aviso == 1) {
-			pthread_mutex_lock(&sem_clock);
-			esi.tiempo_arribo = tiempo;
-			pthread_mutex_unlock(&sem_clock);
-
-			pthread_mutex_lock(&sem_ESIs_size);
-			agregar_ESI(&new_ESIs, esi);
-
-			ESIs_size++;
-			pthread_mutex_unlock(&sem_ESIs_size);
-
-			log_trace(logger,
-					"ESI número %i listo para ejecutar añadido a la cola.",
-					this_id);
-
-			if (ALGORITMO_PLANIFICACION.desalojo) {
-				desalojar();
-			}
-
-		}
-
-		else if (aviso.aviso == 10) {
-			pthread_mutex_lock(&sem_clock);
-			tiempo++;
-			pthread_mutex_unlock(&sem_clock);
-
-			pthread_mutex_lock(&sem_ejecutando);
-			ejecutando = false;
-			pthread_mutex_unlock(&sem_ejecutando);
-
-			esi.rafaga_real++;
-
-			pthread_mutex_lock(&sem_ESIs_size);
-			agregar_ESI(&new_ESIs, esi);
-
-			ESIs_size++;
-			pthread_mutex_unlock(&sem_ESIs_size);
-
-			log_trace(logger, "ESI número %i ejecutó correctamente.", this_id);
-
-			pthread_mutex_unlock(&sem_ejecucion);
-		}
-
-		else {
-
-			loggear("El ESI se volvió loco. Terminando.");
-			kill_ESI(esi);
-		}
+	while (status) {
+		status = recibir_mensaje(socket_ESI, this_id, esi);
 
 		planificar();
 	}
@@ -312,12 +243,152 @@ void* atender_ESI(void* buffer) {
 	return NULL;
 }
 
+int recibir_mensaje(int socket_cliente, int id, ESI esi) {
+	aviso_ESI aviso;
+	int packageSize = sizeof(aviso_ESI);
+	char* package = malloc(packageSize);
+
+	recv(socket_cliente, package, packageSize, 0);
+
+	log_trace(logger, "Mensaje recibidio del ESI numero: %i", id);
+
+	deserializar_aviso(&(aviso), &(package));
+
+	if (aviso.aviso == 0) {
+		loggear(
+				"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
+
+		agregar_ESI(&finished_ESIs, esi);
+
+		pthread_mutex_lock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ESIs_size);
+		if (!esta(new_ESIs, esi)) {
+			agregar_ESI(&new_ESIs, esi);
+			ESIs_size++;
+		}
+
+		eliminar_ESI(&new_ESIs, esi);
+
+		ESIs_size--;
+		pthread_mutex_unlock(&sem_ESIs_size);
+		pthread_mutex_unlock(&sem_new_ESIs);
+
+		vaciar_ESI();
+
+		loggear("Agregado correctamente a la cola de terminados.");
+
+		pthread_mutex_lock(&sem_clock);
+		tiempo++;
+		pthread_mutex_unlock(&sem_clock);
+
+		pthread_mutex_lock(&sem_ejecutando);
+		ejecutando = false;
+		pthread_mutex_unlock(&sem_ejecutando);
+
+		pthread_mutex_unlock(&sem_ejecucion);
+
+		return 0;
+	}
+
+	else if (aviso.aviso == 1) {
+		pthread_mutex_lock(&sem_clock);
+		esi.tiempo_arribo = tiempo;
+		pthread_mutex_unlock(&sem_clock);
+
+		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ESIs_size);
+		agregar_ESI(&new_ESIs, esi);
+
+		ESIs_size++;
+		pthread_mutex_unlock(&sem_ESIs_size);
+		pthread_mutex_unlock(&sem_new_ESIs);
+
+		log_trace(logger,
+				"ESI número %i listo para ejecutar añadido a la cola.", id);
+
+		if (ALGORITMO_PLANIFICACION.desalojo) {
+			desalojar();
+		}
+
+	}
+
+	else if(aviso.aviso == 5){
+		pthread_mutex_lock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ESIs_size);
+		eliminar_ESI(&new_ESIs, esi);
+
+		ESIs_size--;
+		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_unlock(&sem_ESIs_size);
+
+		agregar_ESI(&blocked_ESIs, esi);
+
+		log_trace(logger, "ESI número %i fue bloqueado.", id);
+
+		vaciar_ESI();
+	}
+
+	else if (aviso.aviso == 10) {
+		pthread_mutex_lock(&sem_clock);
+		tiempo++;
+		pthread_mutex_unlock(&sem_clock);
+
+		pthread_mutex_lock(&sem_ejecutando);
+		ejecutando = false;
+		pthread_mutex_unlock(&sem_ejecutando);
+
+		executing_ESI.rafaga_real++;
+
+		log_trace(logger, "ESI número %i ejecutó correctamente.", id);
+
+		pthread_mutex_unlock(&sem_ejecucion);
+	}
+
+	else {
+
+		loggear("El ESI se volvió loco. Terminando.");
+		kill_ESI(esi);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+bool esta(t_esi_list lista, ESI esi) {
+	t_esi_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 void desalojar(void) {
 	if (executing_ESI.id != esi_vacio.id) {
-		executing_ESI = esi_vacio;
+		pthread_mutex_lock(&sem_new_ESIs);
+		eliminar_ESI(&new_ESIs, executing_ESI);
+
+		ESI new_ESI = executing_ESI;
+		new_ESI.rafaga_estimada = estimated_time(new_ESI);
+
+		agregar_ESI(&new_ESIs, new_ESI);
+
+		pthread_mutex_unlock(&sem_new_ESIs);
+
+		vaciar_ESI();
 
 		loggear("ESI desalojado.");
 	}
+}
+
+void vaciar_ESI(void) {
+	executing_ESI = esi_vacio;
 }
 
 bool no_hay_ESI() {
@@ -467,7 +538,7 @@ ESI shortest(t_esi_list lista) {
 
 	ESI esi = first(lista);
 
-	while (puntero->sgte != NULL) {
+	while (puntero != NULL) {
 		if (es_mas_corto(esi, puntero->esi)) {
 			esi = puntero->esi;
 		}
@@ -483,7 +554,7 @@ ESI highest_RR(t_esi_list lista) {
 
 	ESI esi = first(lista);
 
-	while (puntero->sgte != NULL) {
+	while (puntero != NULL) {
 		if (tiene_mas_RR(esi, puntero->esi)) {
 			esi = puntero->esi;
 		}
@@ -511,7 +582,7 @@ int wait_time(ESI esi) {
 
 int estimated_time(ESI esi) {
 	return esi.rafaga_real * (ALFA / 100)
-			+ esi.rafaga_estimada * (1 - (ALFA/100));
+			+ esi.rafaga_estimada * (1 - (ALFA / 100));
 }
 
 void ejecutar(ESI esi_a_ejecutar) {
@@ -545,12 +616,6 @@ void ejecutar(ESI esi_a_ejecutar) {
 	}
 
 	loggear("Orden enviada.");
-
-	pthread_mutex_lock(&sem_ESIs_size);
-	eliminar_ESI(&new_ESIs, esi_a_ejecutar);
-
-	ESIs_size--;
-	pthread_mutex_unlock(&sem_ESIs_size);
 
 	loggear("ESI eliminado de la cola de la listos.");
 

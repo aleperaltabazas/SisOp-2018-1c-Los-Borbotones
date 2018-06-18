@@ -210,6 +210,64 @@ char* first(t_clave_list lista);
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
 
+void get(int sockfd, int id);
+	/*
+	 * Descripción: bloquea una clave y se la asigna al id. Si no existe, se crea y se bloquea. Si
+	 * 		ya existe y está bloqueada, se bloquea al proceso cliente.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso cliente.
+	 * 		int id: identificador del proceso cliente.
+	 */
+
+void set(int sockfd, int id);
+	/*
+	 * Descripción: settea un valor en una clave. Si la clave no existe, se bloquea al proceso cliente.
+	 * 		Si existe, pero las identificaciones del bloqueante y del proceso cliente no matchean, se
+	 * 		bloquea al proceso cliente.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso cliente.
+	 * 		int id: identificador del proceso cliente.
+	 */
+
+void store(int sockfd, int id);
+	/*
+	 * Descripción: guarda el valor de una clave en una instancia. Si la clave no existe, se bloquea al
+	 * 		proceso cliente. Si existe, pero las identificaciones del bloqueante y del proceso cliente
+	 * 		no matchean, se	bloquea al proceso cliente.
+	 * Argumentos:
+	 * 		int sockfd: socket del proceso cliente.
+	 * 		int id: identificador del proceso cliente.
+	 */
+
+int get_packed(char* clave, int id);
+	/*
+	 * Descripción: retorna el valor de la operación dependiendo de la existencia de la clave o el resultado
+	 * 		de la verificación de las identificaciones.
+	 * Argumentos:
+	 * 		char* clave: la cadena a verificar.
+	 * 		int id: la identificación a comparar.
+	 */
+
+int get_clave_id(char* clave);
+	/*
+	 * Descripción: retorna el id de quien bloqueó la clave. En caso de que la clave no exista, retorna -1.
+	 * Argumentos:
+	 * 		char* clave: la clave a verificar.
+	 */
+
+int settear(char* valor, char* clave, int id);
+	/*
+	 * Descripción: realiza las verificaciones sobre la clave y el id. En caso negativo, no hace nada y devuelve
+	 * 		5. En caso positivo, asigna el valor a la clave y devuelve 20.
+	 */
+
+void hacer_store(char* clave);
+	/*
+	 * Descripción: realiza el guardado de la clave en la instancia.
+	 * Argumentos:
+	 * 		char* clave: la clave a guardar.
+	 */
+
 void asignar_parametros_a_enviar();
 	/*
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.

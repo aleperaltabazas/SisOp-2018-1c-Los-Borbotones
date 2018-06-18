@@ -13,9 +13,9 @@ int main(int argc, char** argv) {
 	iniciar(argv);
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			mensajeESI);
+			id_ESI);
 	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
-			mensajeESI);
+			id_ESI);
 
 	//asignar_ID(socket_planificador);
 
@@ -36,13 +36,7 @@ int main(int argc, char** argv) {
 }
 
 int recibir_ID(int server_socket) {
-	aviso_ESI aviso;
-	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
-	char* package = malloc(packageSize);
-
-	int res = recv(server_socket, (void*) package, packageSize, 0);
-
-	deserializar_aviso(&(aviso), &(package));
+	aviso_ESI aviso = recibir_aviso(server_socket);
 
 	if (aviso.aviso == 0) {
 		salir_con_error("Fin de este ESI por parte del planificador",
@@ -51,34 +45,7 @@ int recibir_ID(int server_socket) {
 		salir_con_error("Orden desconocida.", server_socket);
 	}
 
-	if (res != 0) {
-		log_trace(logger, "ID: %i", aviso.id);
-	} else {
-		salir_con_error("Fallo el envio de ID.", server_socket);
-	}
-
-	free(package);
-
 	return aviso.id;
-}
-
-void enviar_aviso(int socket_planificador, aviso_ESI aviso) {
-	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
-	char* message = malloc(packageSize);
-
-	serializar_aviso(aviso, &message);
-
-	loggear("Serialice bien.");
-
-	int envio = send(socket_planificador, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Fallo el envio", socket_planificador);
-	}
-
-	free(message);
-
-	loggear("Mensaje enviado.");
 }
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
@@ -112,28 +79,29 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 
-	if (solicitar_permiso(socket_coordinador)) {
-		ejecutar();
-	}
-
-	enviar_aviso(socket_planificador, aviso_ejecute);
+	ejecutar(socket_coordinador, socket_planificador);
 
 }
 
-void ejecutar(void) {
+void ejecutar(int socket_coordinador, int socket_planificador) {
 	t_esi_operacion parsed = first(parsed_ops);
+
+	int res;
 
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
 			log_trace(logger, "GET %s", parsed.argumentos.GET.clave);
+			res = get(parsed, socket_coordinador);
 			break;
 		case SET:
 			log_trace(logger, "SET %s %s", parsed.argumentos.SET.clave,
 					parsed.argumentos.SET.valor);
+			res = set(parsed, socket_coordinador);
 			break;
 		case STORE:
 			log_trace(logger, "STORE %s", parsed.argumentos.STORE.clave);
+			res = store(parsed, socket_coordinador);
 			break;
 		default:
 			break;
@@ -141,10 +109,100 @@ void ejecutar(void) {
 
 	}
 
-	eliminar_parseo(&parsed_ops);
+	if (res == 20) {
+		eliminar_parseo(&parsed_ops);
 
-	sleep(2);
+		sleep(2);
 
+		enviar_aviso(socket_planificador, aviso_ejecute);
+	}
+
+	else if (res == 5) {
+		enviar_aviso(socket_planificador, aviso_bloqueo);
+	}
+
+	else {
+		log_error(logger, "Falló el retorno de la operación.");
+		exit(-1);
+	}
+
+}
+
+int get(t_esi_operacion parsed, int socket_coordinador) {
+	enviar_aviso(socket_coordinador, aviso_get);
+
+	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+
+	if (aviso_coordi.aviso != 10) {
+		salir_con_error("Aviso desconocido", socket_coordinador);
+	}
+
+	char* clave = parsed.argumentos.GET.clave;
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	package_int size_package = { .packed = clave_size };
+
+	enviar_packed(size_package, socket_coordinador);
+	sleep(3);
+	enviar_cadena(clave, socket_coordinador);
+
+	package_int response = recibir_packed(socket_coordinador);
+
+	return response.packed;
+}
+
+int set(t_esi_operacion parsed, int socket_coordinador) {
+	enviar_aviso(socket_coordinador, aviso_set);
+
+	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+
+	if (aviso_coordi.aviso != 10) {
+		salir_con_error("Aviso desconocido", socket_coordinador);
+	}
+
+	char* clave = parsed.argumentos.SET.clave;
+	char* valor = parsed.argumentos.SET.valor;
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+	uint32_t valor_size = (uint32_t) strlen(clave) + 1;
+
+	package_int clave_size_package = { .packed = clave_size };
+
+	package_int valor_size_package = { .packed = valor_size };
+
+	enviar_packed(clave_size_package, socket_coordinador);
+	sleep(3);
+	enviar_cadena(clave, socket_coordinador);
+	sleep(3);
+	enviar_packed(valor_size_package, socket_coordinador);
+	sleep(3);
+	enviar_cadena(valor, socket_coordinador);
+
+	package_int response = recibir_packed(socket_coordinador);
+
+	return response.packed;
+}
+
+int store(t_esi_operacion parsed, int socket_coordinador) {
+	enviar_aviso(socket_coordinador, aviso_store);
+
+	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+
+	if (aviso_coordi.aviso != 10) {
+		salir_con_error("Aviso desconocido", socket_coordinador);
+	}
+
+	char* clave = parsed.argumentos.GET.clave;
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	package_int size_package = { .packed = clave_size };
+
+	enviar_packed(size_package, socket_coordinador);
+	sleep(3);
+	enviar_cadena(clave, socket_coordinador);
+
+	package_int response = recibir_packed(socket_coordinador);
+
+	return response.packed;
 }
 
 void iniciar(char** argv) {
@@ -172,7 +230,7 @@ void iniciar(char** argv) {
 	return;
 }
 
-void cargar_configuracion(void){
+void cargar_configuracion(void) {
 	t_config* config = config_create("esi.config");
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
@@ -181,7 +239,8 @@ void cargar_configuracion(void){
 	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
 	log_info(logger, "IP Coordinador: %s", IP_COORDINADOR);
 
-	PUERTO_PLANIFICADOR = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	PUERTO_PLANIFICADOR = config_get_string_value(config,
+			"PUERTO_PLANIFICADOR");
 	log_info(logger, "Puerto Planificador: %s", PUERTO_PLANIFICADOR);
 
 	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
