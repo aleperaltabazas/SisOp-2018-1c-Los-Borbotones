@@ -298,6 +298,8 @@ int conectar_a(char *ip, char *puerto, package_int id) {
 
 	char * buffer_id = malloc(sizeof(package_int));
 
+	serializar_packed(id, &(buffer_id));
+
 	send(server_socket, buffer_id, sizeof(package_int), 0);
 
 	loggear("Mensaje enviado.");
