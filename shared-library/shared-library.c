@@ -305,7 +305,7 @@ int conectar_a(char *ip, char *puerto, package_int id) {
 	loggear("Mensaje enviado.");
 	int res = recv(server_socket, (void*) buffer_id, sizeof(package_int), 0);
 
-	memcpy(&(id.packed), buffer_id, sizeof(uint32_t));
+	deserializar_packed(&(id), &(buffer_id));
 
 	if (res != 0) {
 		loggear("Mensaje recibido desde el servidor. Identificando servidor...");

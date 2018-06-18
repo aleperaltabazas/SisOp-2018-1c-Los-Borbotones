@@ -224,8 +224,9 @@ int almacenar_valor() {
 
 	while (pos_entrada < cantidad_entradas) {
 
-		puedo_almacenar = verificar_disponibilidad_entradas_contiguas(
+		/*puedo_almacenar = verificar_disponibilidad_entradas_contiguas(
 				entradas_que_ocupa, pos_entrada);
+		*/
 
 		if (puedo_almacenar) {
 			log_trace(logger, "El valor entra en la entrada: %d", pos_entrada);
@@ -256,22 +257,31 @@ int almacenar_valor() {
 	return EXIT_FAILURE;
 }
 
-int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa,
-		int entrada) {
-	int referencia = entrada;
-	while (entrada < referencia + entradas_que_ocupa) {
-		if (entradas_disponibles[entrada] != 0) {
-			return 0;
-		}
-		if (entrada >= cantidad_entradas) {
-			return 0;
+int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa) {
+	int entrada = 0;
+
+	while (entrada <= CANTIDAD_ENTRADAS - entradas_que_ocupa) {
+		if(entradas_disponibles[entrada] == 0){
+
+			int puedo_almacenar = 1;
+			int i;
+
+			for(i = 1; i < entradas_que_ocupa; i++){
+				if (entradas_disponibles[entrada + i] != 0) {
+					puedo_almacenar = 0;
+				}
+			}
+
+			if(puedo_almacenar){
+				log_trace(logger, "Tengo suficientes entradas para almacenar en la entrada: %d", entrada);
+				return entrada;
+			}
+
 		}
 		entrada++;
 	}
-	log_trace(logger,
-			"Tengo suficientes entradas para almacenar en la entrada: %d",
-			entrada);
-	return 1;
+
+	return -1;
 }
 
 void actualizar_entradas(int pos_entrada, int entradas_que_ocupa) {

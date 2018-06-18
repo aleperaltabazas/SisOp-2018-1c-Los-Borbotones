@@ -50,7 +50,7 @@ void inicializar(int cantidad_entradas, int tamanio_entrada);
 int almacenar_valor();
 char * leer_valor(int posicion);
 void leer_valores_almacenados();
-int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa, int entrada);
+int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa);
 void actualizar_entradas(int pos_entrada, int entradas_que_ocupa);
 void set(uint32_t longitud_parametros, int socket_coordinador);
 void cargar_configuracion(void);
