@@ -143,6 +143,7 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_planificacion, NULL);
 	pthread_mutex_init(&sem_ejecucion, NULL);
 	pthread_mutex_init(&sem_new_ESIs, NULL);
+	pthread_mutex_init(&sem_ESI_ID, NULL);
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente,
@@ -163,33 +164,18 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 
 	loggear("Esperando mensaje del cliente.");
 
-	package_int cliente_packed;
-	int packageSize = sizeof(package_int);
-	char* message = malloc(packageSize);
+	package_int cliente_packed = { .packed = -1 };
 
-	int res = recv(socket_cliente, message, packageSize, 0);
-
-	if (res <= 0) {
-		loggear("Fallo la conexion con el cliente.");
-	}
-
-	deserializar_packed(&(cliente_packed), &(message));
+	cliente_packed = recibir_packed(socket_cliente);
 
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(cliente_packed, socket_cliente);
 
 	loggear("Enviando mensaje al cliente.");
 
-	char* package = malloc(packageSize);
-
-	serializar_packed(server_packed, &(package));
-
-	send(socket_cliente, package, packageSize, 0);
+	enviar_packed(server_packed, socket_cliente);
 
 	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
-
-	free(message);
-	free(package);
 
 	return socket_cliente;
 }
@@ -321,6 +307,12 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		pthread_mutex_unlock(&sem_new_ESIs);
 		pthread_mutex_unlock(&sem_ESIs_size);
 
+		pthread_mutex_lock(&sem_ejecutando);
+		ejecutando = false;
+		pthread_mutex_unlock(&sem_ejecutando);
+
+		pthread_mutex_unlock(&sem_ejecucion);
+
 		agregar_ESI(&blocked_ESIs, esi);
 
 		log_trace(logger, "ESI número %i fue bloqueado.", id);
@@ -419,26 +411,16 @@ int asignar_ID(ESI esi) {
 	int socket_ESI = esi.socket;
 
 	pthread_mutex_lock(&sem_ID);
-	aviso_ESI aviso = { .aviso = 1, .id = ESI_id };
+	aviso_id.id = ESI_id;
 
 	ESI_id++;
+
+	enviar_aviso(socket_ESI, aviso_id);
 	pthread_mutex_unlock(&sem_ID);
 
-	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
-	char* package = malloc(packageSize);
 
-	serializar_aviso(aviso, &package);
+	return aviso_id.id;
 
-	int envio = send(socket_ESI, package, packageSize, 0);
-
-	if (envio < 0) {
-		loggear("Fallo el envio de identificacion. Terminando ESI.");
-		kill_ESI(esi);
-	}
-
-	free(package);
-
-	return aviso.id;
 }
 
 void planificar(void) {
@@ -597,29 +579,9 @@ void ejecutar(ESI esi_a_ejecutar) {
 	loggear("Enviando orden de ejecucion.");
 	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
 
-	int packageSize = sizeof(orden_ejecucion.aviso)
-			+ sizeof(orden_ejecucion.id);
-	char* message = malloc(packageSize);
-
-	serializar_aviso(orden_ejecucion, &message);
-
-	int envio = send(socket_ESI, message, packageSize, 0);
-
-	if (envio < 0) {
-
-		log_error(logger, "Fallo el envio. Terminando ESI.");
-
-		kill_ESI(esi_a_ejecutar);
-
-		free(message);
-		return;
-	}
+	enviar_aviso(socket_ESI, orden_ejecucion);
 
 	loggear("Orden enviada.");
-
-	loggear("ESI eliminado de la cola de la listos.");
-
-	free(message);
 
 }
 

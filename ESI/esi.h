@@ -21,6 +21,10 @@ t_parsed_list parsed_ops;
 
 t_list* lineas_parseadas;
 
+aviso_ESI aviso_fin = {
+		.aviso = 0
+};
+
 aviso_ESI aviso_ready = {
 		.aviso = 1
 };

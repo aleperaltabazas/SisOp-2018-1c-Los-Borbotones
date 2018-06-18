@@ -381,8 +381,6 @@ void desbloquear_clave(int socket_cliente) {
 
 	desbloquear(clave);
 
-	log_trace(logger, "La clave %s fue desbloqueada.", clave);
-
 	enviar_packed(unlock_ok, socket_cliente);
 
 }
@@ -396,6 +394,8 @@ void desbloquear(char* clave) {
 	else if (existe(clave) && esta_bloqueada(clave)) {
 		eliminar_clave(&claves_bloqueadas, clave);
 		agregar_clave(&claves_disponibles, clave);
+
+		log_trace(logger, "La clave %s fue desbloqueada.", clave);
 	}
 
 }
@@ -405,18 +405,14 @@ void bloquear_clave(int socket_cliente) {
 
 	package_int block_ok = { .packed = 26 };
 
-	package_int size_package = {
-			.packed = -1
-	};
+	package_int size_package = { .packed = -1 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
 	size_package = recibir_packed(socket_cliente);
 	char* clave = recibir_cadena(socket_cliente, size_package.packed);
 
-	desbloquear(clave);
-
-	log_trace(logger, "La clave %s fue desbloqueada.", clave);
+	bloquear(clave, 0);
 
 	enviar_packed(block_ok, socket_cliente);
 
@@ -431,6 +427,8 @@ void bloquear(char* clave, int id) {
 	else if (existe(clave) && !esta_bloqueada(clave)) {
 		eliminar_clave(&claves_disponibles, clave);
 		agregar_clave(&claves_bloqueadas, clave);
+
+		log_trace(logger, "La clave %s fue bloqueada por %i.", clave, id);
 	}
 
 }

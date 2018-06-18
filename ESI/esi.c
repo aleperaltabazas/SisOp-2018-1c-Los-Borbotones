@@ -38,6 +38,8 @@ int main(int argc, char** argv) {
 int recibir_ID(int server_socket) {
 	aviso_ESI aviso = recibir_aviso(server_socket);
 
+	log_trace(logger, "%i %i", aviso.aviso, aviso.id);
+
 	if (aviso.aviso == 0) {
 		salir_con_error("Fin de este ESI por parte del planificador",
 				server_socket);
@@ -51,31 +53,24 @@ int recibir_ID(int server_socket) {
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 	loggear("Esperando orden de ejecucion del planificador.");
 
-	aviso_ESI orden;
+	aviso_ESI orden = {
+			.aviso = -1
+	};
 
-	int packageSize = sizeof(orden.aviso) + sizeof(orden.id);
-	char *package = malloc(packageSize);
+	orden = recibir_aviso(socket_planificador);
 
-	int res = recv(socket_planificador, (void*) package, packageSize, 0);
-
-	if (res != 0) {
-		loggear("Orden confirmada.");
-	} else {
-		close(socket_coordinador);
-		salir_con_error("Fallo la orden.", socket_planificador);
-	}
-
-	deserializar_aviso(&(orden), &(package));
+	log_trace(logger, "%i", orden.aviso);
 
 	if (orden.aviso == -1) {
-		close(socket_coordinador);
 		loggear("Orden de terminación.");
+		enviar_aviso(socket_coordinador, aviso_fin);
+
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(
 				"Orden de ejecucion recibida. Solicitando permiso al coordinador.");
 	} else {
-		close(socket_coordinador);
+		enviar_aviso(socket_coordinador, aviso_fin);
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 

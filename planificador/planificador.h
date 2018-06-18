@@ -32,6 +32,10 @@ int ESIs_size;
 
 int socket_coordinador;
 
+aviso_ESI aviso_id = {
+		.aviso = 1
+};
+
 aviso_ESI aviso_bloqueo = {
 		.aviso = 25
 };
@@ -56,6 +60,7 @@ t_esi_list finished_ESIs;
 
 pthread_mutex_t sem_ESIs_size;
 pthread_mutex_t sem_ID;
+pthread_mutex_t sem_ESI_ID;
 pthread_mutex_t mutex_consola_planificacion;
 pthread_mutex_t sem_clock;
 pthread_mutex_t sem_planificacion;

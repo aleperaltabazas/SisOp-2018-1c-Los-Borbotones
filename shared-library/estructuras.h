@@ -32,8 +32,8 @@ typedef struct entrada {
 //	Estructuras con serialización
 
 typedef struct aviso_ESI {
-	int aviso;
-	int id;
+	uint32_t aviso;
+	uint32_t id;
 }__attribute__((packed)) aviso_ESI;
 
 typedef struct package_int {
