@@ -24,7 +24,7 @@ typedef struct ESI {
 } ESI;
 
 typedef struct entrada {
-	char clave[40];
+	char * clave;
 	uint32_t pos_valor;
 	uint32_t tamanio_valor;
 } entrada;

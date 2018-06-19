@@ -29,9 +29,6 @@ char * valor;
 //Para saber si una entrada esta ocupada o no uso un vector (0 => libre)
 int entradas_disponibles[CANTIDAD_ENTRADAS];
 
-//Para conocer el tamaño del valor almacenado en la entrada
-int tamanios_de_valor_de_entradas_ocupadas[CANTIDAD_ENTRADAS];
-
 //Esta es la posicion inicial de memoria en la que comienzo a guardar los valores (mi base)
 char * almacenamiento_de_valores;
 
@@ -47,21 +44,20 @@ int resultado_almacenamiento;
 
 //Funciones auxiliares
 void inicializar(int cantidad_entradas, int tamanio_entrada);
-int almacenar_valor();
+void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor);
 char * leer_valor(int posicion);
 void leer_valores_almacenados();
 int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa);
 void actualizar_entradas(int pos_entrada, int entradas_que_ocupa);
 void set(uint32_t longitud_parametros, int socket_coordinador);
+void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor);
 void cargar_configuracion(void);
 void iniciar(void);
 algoritmo_reemplazo dame_algoritmo(char* algoritmo_src);
-int recieve_and_deserialize(parametros_set *parametros, int socketCliente);
+int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_list * entradas;
-
-//Estructura de las entradas
 
 //Funciones para el coordinador
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);

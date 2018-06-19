@@ -592,10 +592,9 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
-	log_trace(logger, "%c, %c, %c", buffer_parametros[4], buffer_parametros[5],
-			buffer_parametros[6]);
+	log_trace(logger, "UNVALOR: COORDI: %c, %c, %c, %c, %c, %c, %c", buffer_parametros[13], buffer_parametros[14], buffer_parametros[15], buffer_parametros[16], buffer_parametros[17], buffer_parametros[18], buffer_parametros[19]);
 
-	send((int) un_socket, buffer_parametros, sizeof(valor_set), 0);
+	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
 
 	loggear("Parametros enviados!");
 

@@ -115,7 +115,6 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 	int i;
 	for (i = 0; i < cantidad_entradas; i++) {
 		entradas_disponibles[i] = 0;
-		tamanios_de_valor_de_entradas_ocupadas[i] = 0;
 	}
 
 	list_create(entradas);
@@ -155,11 +154,13 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	parametros_set parametros;
-	if(recieve_and_deserialize(&(parametros), socket_coordinador) < 0){
+	if(recieve_and_deserialize_set(&(parametros), socket_coordinador) < 0){
 		loggear("Fallo en la recepcion de los parametros");
 	}
 
-	log_trace(logger, "%c, %c, %c", parametros.clave[0], parametros.clave[1], parametros.clave[2]);
+	log_trace(logger, "Clave: %c, %c, %c %c %c", parametros.clave[0], parametros.clave[1], parametros.clave[2], parametros.clave[3], parametros.clave[4]);
+
+	log_trace(logger, "Valor: %c, %c, %c %c %c %c %c", parametros.valor[0], parametros.valor[1], parametros.valor[2], parametros.valor[3], parametros.valor[4], parametros.valor[5], parametros.valor[6]);
 
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
@@ -167,15 +168,46 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	//list_find(entradas, existe_la_clave);
 
-	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar la clave (veo si entra)
+	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar el valor (veo si entra)
 
-	//verificar_disponibilidad();
+	int tamanio_valor = strlen(parametros.valor);
+
+	int entradas_que_ocupa = 1 + (tamanio_valor - 1) / tamanio_entrada;
+
+	int entrada_seleccionada = verificar_disponibilidad_entradas_contiguas(entradas_que_ocupa);
 
 	//Si puedo almacenar creo un struct entrada con los valores que me dieron y dandole una posicion por la cual acceder
 
+	log_trace(logger, "tamanio_valor: %i entradas que ocupa: %i, entrada_seleccionada: %i", tamanio_valor, entradas_que_ocupa, entrada_seleccionada);
+
+	if(entrada_seleccionada >= 0){
+		almacenar_valor(entrada_seleccionada, entradas_que_ocupa, parametros.valor);
+		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
+		crear_entrada(parametros, entrada_seleccionada, tamanio_valor);
+		return;
+	}
+
+	loggear("No puedo almacenar el valor");
 }
 
-int recieve_and_deserialize(parametros_set *parametros, int socketCliente){
+void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor){
+	entrada nueva_entrada;
+	nueva_entrada.clave = parametros.clave;
+	nueva_entrada.pos_valor = entrada_seleccionada;
+	nueva_entrada.tamanio_valor = tamanio_valor;
+
+	loggear("Entrada creada, agregando a la lista...");
+
+	int tamanio_de_entrada = strlen(parametros.clave) + sizeof(entrada_seleccionada) + sizeof(tamanio_valor);
+
+	char * buffer_entrada = malloc(tamanio_de_entrada);
+
+	memcpy(buffer_entrada, &(nueva_entrada), tamanio_de_entrada);
+
+	list_add(entradas, buffer_entrada);
+}
+
+int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
 
 	int status;
 	int buffer_size;
@@ -200,67 +232,35 @@ int recieve_and_deserialize(parametros_set *parametros, int socketCliente){
 
 	parametros -> valor = malloc(tamanio_valor);
 
+	log_trace(logger, "Tamanio valor recibido %d", tamanio_valor);
+
 	status = recv(socketCliente, parametros -> valor, tamanio_valor, 0);
 	if (!status) return -1;
-
-	log_trace(logger, "%c, %c, %c", parametros->clave[0], parametros->clave[1], parametros->clave[2]);
 
 	free(buffer);
 
 	return status;
 }
 
-int almacenar_valor() {
-	int pos_entrada = 0;
-	int offset = 0;
-	loggear("Se recibio el valor: ");
-	loggear(valor);
-	log_trace(logger, "Cantidad de caracteres del valor: %d", strlen(valor));
+void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor) {
 
-	int entradas_que_ocupa = (strlen(valor) - 1) / tamanio_entrada + 1;
-	log_trace(logger, "El valor entra en %d entradas", entradas_que_ocupa);
+	int offset = entrada_seleccionada * tamanio_entrada;
 
-	int puedo_almacenar = 0;
+	loggear("Posicion de memoria seleccionada");
+	log_trace(logger, "Ubicacion memoria: %d",
+	almacenamiento_de_valores + offset);
 
-	while (pos_entrada < cantidad_entradas) {
+	loggear("Copio el valor dentro de esa posicion de memoria");
+	memcpy(almacenamiento_de_valores + offset, valor, tamanio_entrada * entradas_que_ocupa);
 
-		/*puedo_almacenar = verificar_disponibilidad_entradas_contiguas(
-				entradas_que_ocupa, pos_entrada);
-		*/
+	loggear("Valor copiado");
 
-		if (puedo_almacenar) {
-			log_trace(logger, "El valor entra en la entrada: %d", pos_entrada);
-			offset = tamanio_entrada * pos_entrada;
-
-			loggear("Posicion de memoria seleccionada");
-			log_trace(logger, "Ubicacion memoria: %d",
-					almacenamiento_de_valores + offset);
-
-			loggear("Copio el valor dentro de esa posicion de memoria");
-			memcpy(almacenamiento_de_valores + offset, valor,
-					tamanio_entrada * entradas_que_ocupa);
-
-			loggear("Valor copiado");
-
-			//Actualizo las entradas
-			actualizar_entradas(pos_entrada, entradas_que_ocupa);
-
-			return EXIT_SUCCESS;
-		}
-		//Si no puedo almacenar me fijo en la siguiente
-
-		pos_entrada++;
-	}
-
-	loggear("No puedo almacenar el valor");
-
-	return EXIT_FAILURE;
 }
 
 int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa) {
 	int entrada = 0;
 
-	while (entrada <= CANTIDAD_ENTRADAS - entradas_que_ocupa) {
+	while (entrada <= cantidad_entradas - entradas_que_ocupa) {
 		if(entradas_disponibles[entrada] == 0){
 
 			int puedo_almacenar = 1;
@@ -288,22 +288,18 @@ void actualizar_entradas(int pos_entrada, int entradas_que_ocupa) {
 
 	entradas_disponibles[pos_entrada] = 1;
 
-	tamanios_de_valor_de_entradas_ocupadas[pos_entrada] = strlen(valor);
-
 	//Para marcar a las que fueron ocupadas por el valor con mas de una entrada
-	int referencia = pos_entrada;
 	int siguiente = pos_entrada + 1;
-	int limite = referencia + entradas_que_ocupa;
+	int limite = pos_entrada + entradas_que_ocupa;
 
 	while (siguiente < limite) {
-		entradas_disponibles[siguiente] = 2;
+		entradas_disponibles[siguiente] = 1;
 		siguiente++;
 	}
 }
 
 char * leer_valor(int posicion) {
-	int tamanio_del_valor_a_leer =
-			tamanios_de_valor_de_entradas_ocupadas[posicion];
+	int tamanio_del_valor_a_leer = 7;
 
 	auxiliar = malloc(tamanio_del_valor_a_leer);
 
@@ -339,11 +335,12 @@ void leer_valores_almacenados() {
 	}
 }
 
+/*
 //Lleno con el valor ejemplo
 void caso_de_prueba_1() {
 	valor = "EjemploX";
 	while (disponibilidad_de_conexion) {
-		resultado_almacenamiento = almacenar_valor();
+		resultado_almacenamiento = almacenar_valor(entrada_seleccionada, entradas_que_ocupa, valor);
 		if (resultado_almacenamiento == EXIT_FAILURE) {
 			disponibilidad_de_conexion = 0;
 		}
@@ -416,3 +413,4 @@ void caso_de_prueba_5() {
 		t++;
 	}
 }
+*/

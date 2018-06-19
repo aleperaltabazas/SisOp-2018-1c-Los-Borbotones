@@ -189,9 +189,6 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 
 	loggear("valor serializado");
 
-	log_trace(logger, "%c, %c, %c", valor_set->valor[0], valor_set->valor[1],
-			valor_set->valor[2]);
-
 	return buffer_parametros;
 }
 
