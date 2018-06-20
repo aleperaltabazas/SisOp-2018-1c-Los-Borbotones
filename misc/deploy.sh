@@ -1,31 +1,22 @@
 #/bin/bash
+
 clear
-echo "Comienza el deploy"
 
-cd /home/utnso/tp-2018-1c-Los-borbotones/Coordinador/Debug/
+cd ../shared-library/Debug/
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug
+make
+make clean
+make all
 
-echo "Coordinador listo"
+clear
 
-cd /home/utnso/tp-2018-1c-Los-borbotones/Planificador/Debug
+chmod u+x coordinador.sh
+chmod u+x planificador.sh
+chmod u+x esilargo.sh
+chmod u+x esimulticlave.sh
+chmod u+x esi1.sh
+chmod u+x instancias.sh
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug
+clear
 
-echo "Planificador listo"
-
-cd /home/utnso/tp-2018-1c-Los-borbotones/ESI/Debug
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug
-
-echo "ESI listo"
-
-cd /home/utnso/tp-2018-1c-Los-borbotones/Instancias/Debug/
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug
-
-echo "Instancia lista"
-
-cd /home/utnso/tp-2018-1c-Los-borbotones
-
-echo "Deploy completo"
+echo "Scripts preparados"
