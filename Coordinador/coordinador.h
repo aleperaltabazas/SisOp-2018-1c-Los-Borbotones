@@ -58,6 +58,13 @@ void identificar_cliente(package_int id, int socket_cliente);
 	 * 		int socket_cliente: socket del cliente.
 	 */
 
+void coordinar(void);
+	/*
+	 * Descripción: maneja las conexiones mientras que se siga la ejecución.
+	 * Argumentos:
+	 * 		void
+	 */
+
 //Funciones de hilos
 
 void *atender_ESI(void* un_socket);

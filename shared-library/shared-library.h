@@ -97,19 +97,19 @@ void deserializar_packed(package_int *pedido, char **package);
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
-void serializar_aviso(aviso_ESI aviso, char** message);
+void serializar_aviso(aviso_con_ID aviso, char** message);
 	/*
-	 * Descripción: serializa un mensaje del tipo aviso_ESI.
+	 * Descripción: serializa un mensaje del tipo aviso_con_ID.
 	 * Argumentos:
-	 * 		aviso_ESI aviso: mensaje a serializar.
+	 * 		aviso_con_ID aviso: mensaje a serializar.
 	 * 		char** message: el recipiente del mensaje serializado.
 	 */
 
-void deserializar_aviso(aviso_ESI *aviso, char** package);
+void deserializar_aviso(aviso_con_ID *aviso, char** package);
 	/*
-	 * Descripción: deserializa un mensaje del tipo aviso_ESI.
+	 * Descripción: deserializa un mensaje del tipo aviso_con_ID.
 	 * Argumentos:
-	 * 		aviso_ESI aviso: el recipiente del mensaje a deserializar.
+	 * 		aviso_con_ID aviso: el recipiente del mensaje a deserializar.
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
@@ -159,17 +159,17 @@ void terminar_conexion(int sockfd);
 	 * 		int sockfd: el socket por el cual se envía el mensaje.
 	 */
 
-void enviar_aviso(int sockfd, aviso_ESI aviso);
+void enviar_aviso(int sockfd, aviso_con_ID aviso);
 	/*
-	 * Descripción: envía un mensaje a un servidor del tipo aviso_ESI.
+	 * Descripción: envía un mensaje a un servidor del tipo aviso_con_ID.
 	 * Argumentos:
 	 * 		int sockfd: socket del servidor.
-	 * 		aviso_ESI aviso: aviso a enviar.
+	 * 		aviso_con_ID aviso: aviso a enviar.
 	 */
 
-aviso_ESI recibir_aviso(int sockfd);
+aviso_con_ID recibir_aviso(int sockfd);
 	/*
-	 * Descripción: recibe un aviso del tipo aviso_ESI de otro proceso.
+	 * Descripción: recibe un aviso del tipo aviso_con_ID de otro proceso.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso.
 	 */

@@ -6,13 +6,16 @@
 
 #include "planificador.h"
 
-int i;
-
-ESI test;
-
 int main(int argc, char** argv) {
 	iniciar();
 
+	manejar_conexiones();
+	cerrar();
+
+	return EXIT_SUCCESS;
+}
+
+void manejar_conexiones(void) {
 	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
 	int socketCliente;
 
@@ -23,13 +26,15 @@ int main(int argc, char** argv) {
 
 	loggear("Terminando proceso...");
 
-	avisar_cierre(socket_coordinador);
-
 	close(listening_socket);
 	close(socketCliente);
+}
+
+void cerrar(void) {
+	avisar_cierre(socket_coordinador);
+
 	close(socket_coordinador);
 
-	return EXIT_SUCCESS;
 }
 
 void iniciar(void) {
@@ -230,8 +235,8 @@ void* atender_ESI(void* buffer) {
 }
 
 int recibir_mensaje(int socket_cliente, int id, ESI esi) {
-	aviso_ESI aviso;
-	int packageSize = sizeof(aviso_ESI);
+	aviso_con_ID aviso;
+	int packageSize = sizeof(aviso_con_ID);
 	char* package = malloc(packageSize);
 
 	recv(socket_cliente, package, packageSize, 0);
@@ -390,9 +395,9 @@ bool no_hay_ESI() {
 void kill_ESI(ESI esi) {
 	int socket_ESI = esi.socket;
 
-	aviso_ESI aviso = { .aviso = -1, .id = esi.id };
+	aviso_con_ID aviso = { .aviso = -1, .id = esi.id };
 
-	int packageSize = sizeof(aviso_ESI);
+	int packageSize = sizeof(aviso_con_ID);
 	char* package = malloc(packageSize);
 
 	serializar_aviso(aviso, &package);
@@ -417,7 +422,6 @@ int asignar_ID(ESI esi) {
 
 	enviar_aviso(socket_ESI, aviso_id);
 	pthread_mutex_unlock(&sem_ID);
-
 
 	return aviso_id.id;
 
@@ -577,7 +581,7 @@ void ejecutar(ESI esi_a_ejecutar) {
 	executing_ESI = esi_a_ejecutar;
 
 	loggear("Enviando orden de ejecucion.");
-	aviso_ESI orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
+	aviso_con_ID orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
 
 	enviar_aviso(socket_ESI, orden_ejecucion);
 
@@ -665,7 +669,7 @@ void desbloquear_clave() {
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
-	aviso_ESI aviso_coordi = { .aviso = -1 };
+	aviso_con_ID aviso_coordi = { .aviso = -1 };
 
 	uint32_t size = (uint32_t) strlen(clave) + 1;
 
@@ -703,7 +707,7 @@ void bloquear_clave() {
 }
 
 void avisar_bloqueo(int server_socket, char* clave) {
-	aviso_ESI aviso_coordi = { .aviso = -1 };
+	aviso_con_ID aviso_coordi = { .aviso = -1 };
 
 	uint32_t size = (uint32_t) strlen(clave) + 1;
 

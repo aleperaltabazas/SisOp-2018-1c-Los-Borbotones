@@ -10,15 +10,25 @@
 int this_id;
 
 int main(int argc, char** argv) {
+
 	iniciar(argv);
+	establecer_conexiones();
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			id_ESI);
-	int socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
-			id_ESI);
+	ejecutar_sentencias();
+	cerrar();
 
-	//asignar_ID(socket_planificador);
+	return EXIT_SUCCESS;
+}
 
+void cerrar(void) {
+	avisar_cierre(socket_coordinador);
+	avisar_cierre(socket_planificador);
+
+	close(socket_planificador);
+	close(socket_coordinador);
+}
+
+void ejecutar_sentencias(void) {
 	this_id = recibir_ID(socket_planificador);
 
 	enviar_aviso(socket_planificador, aviso_ready);
@@ -26,19 +36,20 @@ int main(int argc, char** argv) {
 	while (parsed_ops.head != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
 	}
+}
 
-	avisar_cierre(socket_coordinador);
-	avisar_cierre(socket_planificador);
+void establecer_conexiones(void) {
+	loggear("Estableciendo conexiones...");
 
-	close(socket_planificador);
-	close(socket_coordinador);
-	return EXIT_SUCCESS;
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id_ESI);
+	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
+			id_ESI);
+
+	loggear("Conexiones realizadas.");
 }
 
 int recibir_ID(int server_socket) {
-	aviso_ESI aviso = recibir_aviso(server_socket);
-
-	log_trace(logger, "%i %i", aviso.aviso, aviso.id);
+	aviso_con_ID aviso = recibir_aviso(server_socket);
 
 	if (aviso.aviso == 0) {
 		salir_con_error("Fin de este ESI por parte del planificador",
@@ -47,19 +58,27 @@ int recibir_ID(int server_socket) {
 		salir_con_error("Orden desconocida.", server_socket);
 	}
 
+	fill_ID(aviso.id);
+
 	return aviso.id;
+}
+
+void fill_ID(int id) {
+	aviso_fin.id = id;
+	aviso_ready.id = id;
+	aviso_bloqueo.id = id;
+	aviso_ejecute.id = id;
+	aviso_get.id = id;
+	aviso_set.id = id;
+	aviso_store.id = id;
 }
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 	loggear("Esperando orden de ejecucion del planificador.");
 
-	aviso_ESI orden = {
-			.aviso = -1
-	};
+	aviso_con_ID orden = { .aviso = -1 };
 
 	orden = recibir_aviso(socket_planificador);
-
-	log_trace(logger, "%i", orden.aviso);
 
 	if (orden.aviso == -1) {
 		loggear("Orden de terminación.");
@@ -126,7 +145,7 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 int get(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_get);
 
-	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
 
 	if (aviso_coordi.aviso != 10) {
 		salir_con_error("Aviso desconocido", socket_coordinador);
@@ -149,7 +168,7 @@ int get(t_esi_operacion parsed, int socket_coordinador) {
 int set(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_set);
 
-	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
 
 	if (aviso_coordi.aviso != 10) {
 		salir_con_error("Aviso desconocido", socket_coordinador);
@@ -180,7 +199,7 @@ int set(t_esi_operacion parsed, int socket_coordinador) {
 int store(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_store);
 
-	aviso_ESI aviso_coordi = recibir_aviso(socket_coordinador);
+	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
 
 	if (aviso_coordi.aviso != 10) {
 		salir_con_error("Aviso desconocido", socket_coordinador);
@@ -257,9 +276,9 @@ FILE* levantar_archivo(char* archivo) {
 }
 
 bool solicitar_permiso(int socket_coordinador) {
-	aviso_ESI pedido_permiso = { .aviso = 1, .id = this_id };
+	aviso_con_ID pedido_permiso = { .aviso = 1, .id = this_id };
 
-	aviso_ESI respuesta;
+	aviso_con_ID respuesta;
 
 	int packageSize = sizeof(pedido_permiso.aviso) + sizeof(pedido_permiso.id);
 	char *message = malloc(packageSize);

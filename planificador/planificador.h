@@ -32,15 +32,15 @@ int ESIs_size;
 
 int socket_coordinador;
 
-aviso_ESI aviso_id = {
+aviso_con_ID aviso_id = {
 		.aviso = 1
 };
 
-aviso_ESI aviso_bloqueo = {
+aviso_con_ID aviso_bloqueo = {
 		.aviso = 25
 };
 
-aviso_ESI aviso_desbloqueo = {
+aviso_con_ID aviso_desbloqueo = {
 		.aviso = 27
 };
 
@@ -112,6 +112,20 @@ void identificar_cliente(package_int id, int socket_cliente);
 	 * Argumentos:
 	 * 		package_int id: identificación enviada por el cliente.
 	 * 		int socket_cliente: socket del cliente.
+	 */
+
+void manejar_conexiones(void);
+	/*
+	 * Descripción: levanta el servidor y recibe las conexiones mientras que se siga la ejecución.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void cerrar(void);
+	/*
+	 * Descripción: avisa el fin de ejecución al coordinador y cierra el socket.
+	 * Argumentos:
+	 * 		void
 	 */
 
 //Funciones de hilos

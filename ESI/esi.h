@@ -17,35 +17,38 @@ char* PUERTO_COORDINADOR;
 char* IP_PLANIFICADOR;
 char* PUERTO_PLANIFICADOR;
 
+int socket_coordinador;
+int socket_planificador;
+
 t_parsed_list parsed_ops;
 
 t_list* lineas_parseadas;
 
-aviso_ESI aviso_fin = {
+aviso_con_ID aviso_fin = {
 		.aviso = 0
 };
 
-aviso_ESI aviso_ready = {
+aviso_con_ID aviso_ready = {
 		.aviso = 1
 };
 
-aviso_ESI aviso_bloqueo = {
+aviso_con_ID aviso_bloqueo = {
 		.aviso = 5
 };
 
-aviso_ESI aviso_ejecute = {
+aviso_con_ID aviso_ejecute = {
 		.aviso = 10
 };
 
-aviso_ESI aviso_get = {
+aviso_con_ID aviso_get = {
 		.aviso = 11
 };
 
-aviso_ESI aviso_set = {
+aviso_con_ID aviso_set = {
 		.aviso = 12
 };
 
-aviso_ESI aviso_store = {
+aviso_con_ID aviso_store = {
 		.aviso = 13
 };
 
@@ -56,6 +59,34 @@ void iniciar(char** argv);
 	 * Descripción: inicia el log y llama a parsear() para guardar las lineas en la lista de parseadas.
 	 * Argumentos:
 	 * 		char** argv: vector de char*, que se usa con levantar_archivo() en la posición 1.
+	 */
+
+void cerrar(void);
+	/*
+	 * Descripción: cierra las conexiones con los servidores y cierra los sockets.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void ejecutar_sentencias(void);
+	/*
+	 * Descripción: recibe el ID local y luego ejecuta las instrucciones parseadas a medida que se le indica.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void establecer_conexiones(void);
+	/*
+	 * Descripción: establece las conexiones iniciales con el coordinador y el planificador.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void fill_ID(int id);
+	/*
+	 * Descripción: rellena el ID en los avisos globales.
+	 * Argumentos:
+	 * 		int id: el ID con el que llenar.
 	 */
 
 t_esi_operacion parsear(char* line);

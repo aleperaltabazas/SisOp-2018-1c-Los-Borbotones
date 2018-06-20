@@ -10,6 +10,14 @@
 int main(int argc, char** argv) {
 	iniciar();
 
+	coordinar();
+
+	loggear("Terminando proceso...");
+
+	return EXIT_SUCCESS;
+}
+
+void coordinar(void) {
 	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
 	int socketCliente;
 
@@ -18,11 +26,8 @@ int main(int argc, char** argv) {
 				id_coordinador);
 	}
 
-	loggear("Cerrando sesion...");
-
 	close(socketCliente);
 	close(listening_socket);
-	return EXIT_SUCCESS;
 }
 
 void iniciar(void) {
@@ -153,7 +158,7 @@ void* atender_ESI(void* un_socket) {
 }
 
 int chequear_solicitud(int socket_cliente) {
-	aviso_ESI aviso_cliente = recibir_aviso(socket_cliente);
+	aviso_con_ID aviso_cliente = recibir_aviso(socket_cliente);
 
 	if (aviso_cliente.aviso == 0) {
 		loggear("Fin de ESI.");
@@ -189,7 +194,7 @@ int chequear_solicitud(int socket_cliente) {
 }
 
 void get(int socket_cliente, int id) {
-	aviso_ESI aviso_ok = { .aviso = 10 };
+	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
@@ -225,7 +230,7 @@ int dame_response(char* clave, int id) {
 }
 
 void set(int socket_cliente, int id) {
-	aviso_ESI aviso_ok = { .aviso = 10 };
+	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
@@ -245,7 +250,7 @@ void set(int socket_cliente, int id) {
 }
 
 void store(int socket_cliente, int id) {
-	aviso_ESI aviso_ok = { .aviso = 10 };
+	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
@@ -341,7 +346,7 @@ void* atender_Planificador(void* un_socket) {
 
 	loggear("Hilo de planificador inicializado correctamente.");
 
-	aviso_ESI aviso_plani;
+	aviso_con_ID aviso_plani;
 
 	while (1) {
 		aviso_plani = recibir_aviso(socket_cliente);
@@ -368,7 +373,7 @@ void* atender_Planificador(void* un_socket) {
 }
 
 void desbloquear_clave(int socket_cliente) {
-	aviso_ESI aviso_ok = { .aviso = 25 };
+	aviso_con_ID aviso_ok = { .aviso = 25 };
 
 	package_int size_package = { .packed = -1 };
 
@@ -401,7 +406,7 @@ void desbloquear(char* clave) {
 }
 
 void bloquear_clave(int socket_cliente) {
-	aviso_ESI aviso_ok = { .aviso = 25 };
+	aviso_con_ID aviso_ok = { .aviso = 25 };
 
 	package_int block_ok = { .packed = 26 };
 
@@ -592,7 +597,10 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
-	log_trace(logger, "UNVALOR: COORDI: %c, %c, %c, %c, %c, %c, %c", buffer_parametros[13], buffer_parametros[14], buffer_parametros[15], buffer_parametros[16], buffer_parametros[17], buffer_parametros[18], buffer_parametros[19]);
+	log_trace(logger, "UNVALOR: COORDI: %c, %c, %c, %c, %c, %c, %c",
+			buffer_parametros[13], buffer_parametros[14], buffer_parametros[15],
+			buffer_parametros[16], buffer_parametros[17], buffer_parametros[18],
+			buffer_parametros[19]);
 
 	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
 

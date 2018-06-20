@@ -7,16 +7,7 @@
 
 #include "shared-library.h"
 
-/*
- * shared-library.c
- *
- *  Created on: 21 abr. 2018
- *      Author: utnso
- */
-
-#include "shared-library.h"
-
-void enviar_aviso(int sockfd, aviso_ESI aviso) {
+void enviar_aviso(int sockfd, aviso_con_ID aviso) {
 	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
 	char* message = malloc(packageSize);
 
@@ -35,9 +26,9 @@ void enviar_aviso(int sockfd, aviso_ESI aviso) {
 	loggear("Mensaje enviado.");
 }
 
-aviso_ESI recibir_aviso(int sockfd) {
-	aviso_ESI ret_aviso;
-	int packageSize = sizeof(aviso_ESI);
+aviso_con_ID recibir_aviso(int sockfd) {
+	aviso_con_ID ret_aviso;
+	int packageSize = sizeof(aviso_con_ID);
 	char* package = malloc(packageSize);
 
 	int res = recv(sockfd, package, packageSize, 0);
@@ -110,9 +101,9 @@ char* recibir_cadena(int server_socket, uint32_t size) {
 
 void terminar_conexion(int sockfd) {
 
-	aviso_ESI aviso = { .aviso = -1 };
+	aviso_con_ID aviso = { .aviso = -1 };
 
-	int packageSize = sizeof(aviso_ESI);
+	int packageSize = sizeof(aviso_con_ID);
 	char* package = malloc(packageSize);
 
 	serializar_aviso(aviso, &package);
@@ -135,7 +126,7 @@ void deserializar_packed(package_int *packed, char** package) {
 	memcpy(&packed->packed, *package, sizeof(packed->packed));
 }
 
-void serializar_aviso(aviso_ESI aviso, char** message) {
+void serializar_aviso(aviso_con_ID aviso, char** message) {
 	int offset = 0;
 
 	memcpy(*message, &(aviso.aviso), sizeof(aviso.aviso));
@@ -145,7 +136,7 @@ void serializar_aviso(aviso_ESI aviso, char** message) {
 	memcpy(*message + offset, &(aviso.id), sizeof(aviso.id));
 }
 
-void deserializar_aviso(aviso_ESI *aviso, char** package) {
+void deserializar_aviso(aviso_con_ID *aviso, char** package) {
 	int offset = 0;
 
 	memcpy(&aviso->aviso, *package, sizeof(aviso->aviso));
@@ -221,7 +212,7 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 
 void avisar_cierre(int server_socket) {
 	int status = 1;
-	aviso_ESI aviso_de_fin = { .aviso = 0 };
+	aviso_con_ID aviso_de_fin = { .aviso = 0 };
 
 	int packageSize = sizeof(aviso_de_fin.aviso) + sizeof(aviso_de_fin.id);
 	char *message = malloc(packageSize);
@@ -292,7 +283,7 @@ int conectar_a(char *ip, char *puerto, package_int id) {
 		salir_con_error("Fallo la conexion con el servidor.", server_socket);
 	}
 
-	loggear("Conectó sin problemas");
+	loggear("Conectó sin problemas.");
 
 	freeaddrinfo(serverInfo);
 
@@ -305,22 +296,21 @@ int conectar_a(char *ip, char *puerto, package_int id) {
 
 	chequear_servidor(server_package, server_socket);
 
-	loggear("Cerrando conexion con servidor y terminando.");
+	loggear("Handshake realizado sin problemas.");
 
 	return server_socket;
 }
 
 void chequear_servidor(package_int id, int server_socket) {
-	char mensajeCoordinador[] = "Coordinador: taringuero profesional.";
-	char mensajePlanificador[] =
-			"My name is Planificador.c and I'm the fastest planifier alive...";
 
 	if (id.packed == 0) {
+		loggear("Servidor reconocido.");
 		loggear(mensajeCoordinador);
 	} else if (id.packed == 1) {
+		loggear("Servidor reconocido.");
 		loggear(mensajePlanificador);
 	} else {
-		salir_con_error("Servidor desconocido, cerrando conexion.",
+		salir_con_error("Servidor desconocido, cerrando conexión.",
 				server_socket);
 	}
 
@@ -344,6 +334,5 @@ void salir_con_error(char* mensaje, int socket) {
 }
 
 void exit_gracefully(int return_val) {
-	//log_destroy(logger);
 	exit(return_val);
 }

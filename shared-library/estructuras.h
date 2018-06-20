@@ -31,10 +31,10 @@ typedef struct entrada {
 
 //	Estructuras con serialización
 
-typedef struct aviso_ESI {
+typedef struct aviso_con_ID {
 	uint32_t aviso;
 	uint32_t id;
-}__attribute__((packed)) aviso_ESI;
+}__attribute__((packed)) aviso_con_ID;
 
 typedef struct package_int {
 	uint32_t packed;

@@ -25,7 +25,7 @@ endif
 all: instancia
 
 dependents:
-	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
+	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) clean all
 
 # Tool invocations
 instancia: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
