@@ -538,14 +538,36 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
+	//list_add(instancias, un_socket);
+
 	asignar_parametros_a_enviar();
 
 	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
 			+ valor_set.tamanio_valor;
 
+	int i;
+
+	for(i=0; i < 4; i++){
+
 	enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
 	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	}
+
+	valor_set.valor = "PALABRAGRANDE";
+	valor_set.tamanio_valor += 6;
+
+	tamanio_parametros_set += 6;
+
+
+	for(i=0; i < 4; i++){
+
+		enviar_orden_instancia(tamanio_parametros_set, un_socket);
+
+		enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	}
 
 	return NULL;
 
