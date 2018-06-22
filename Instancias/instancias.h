@@ -45,11 +45,12 @@ int resultado_almacenamiento;
 //Funciones auxiliares
 void inicializar(int cantidad_entradas, int tamanio_entrada);
 void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor);
-char * leer_valor(int posicion);
+char * leer_valor(entrada unaEntrada);
 void leer_valores_almacenados();
 int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa);
 void actualizar_entradas(int pos_entrada, int entradas_que_ocupa);
 void set(uint32_t longitud_parametros, int socket_coordinador);
+int obtener_entradas_que_ocupa(int tamanio_valor);
 void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor);
 void cargar_configuracion(void);
 void iniciar(void);

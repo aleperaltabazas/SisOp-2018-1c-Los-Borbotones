@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
 	//caso_de_prueba_5();
 
-	leer_valores_almacenados();
+	//leer_valores_almacenados();
 
 	loggear("Cerrando conexion con servidor y terminando.");
 
@@ -133,6 +133,7 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 		loggear("Fallo en la recepcion de la orden");
 		orden.codigo_operacion = 13;
 		orden.tamanio_a_enviar = 0;
+		free(buffer_orden);
 		return orden;
 	}
 
@@ -142,11 +143,13 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	log_trace(logger, "tamanio: %d", buffer_orden->tamanio_a_enviar);
 
-	sleep(5);
+	sleep(2);
 
 	orden.codigo_operacion = buffer_orden->codigo_operacion;
 
 	orden.tamanio_a_enviar = buffer_orden->tamanio_a_enviar;
+
+	free(buffer_orden);
 
 	return orden;
 }
@@ -172,7 +175,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	int tamanio_valor = strlen(parametros.valor);
 
-	int entradas_que_ocupa = 1 + (tamanio_valor - 1) / tamanio_entrada;
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
 
 	int entrada_seleccionada = verificar_disponibilidad_entradas_contiguas(entradas_que_ocupa);
 
@@ -190,6 +193,10 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	loggear("No puedo almacenar el valor");
 }
 
+int obtener_entradas_que_ocupa(int tamanio_valor){
+	return 1 + (tamanio_valor - 1) / tamanio_entrada;
+}
+
 void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor){
 	entrada nueva_entrada;
 	nueva_entrada.clave = parametros.clave;
@@ -204,7 +211,16 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tama
 
 	memcpy(buffer_entrada, &(nueva_entrada), tamanio_de_entrada);
 
-	list_add(entradas, buffer_entrada);
+	log_trace(logger, "En la entrada %d esta guardado el valor %s", nueva_entrada.pos_valor, leer_valor(nueva_entrada));
+
+	//Cada vez que leo libero el buffer auxiliar para leer
+	free(auxiliar);
+
+	//list_add(entradas, buffer_entrada);
+
+	//Una vez que lo agregue a la lista tengo que liberarlo?
+
+	free(buffer_entrada);
 }
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
@@ -298,18 +314,13 @@ void actualizar_entradas(int pos_entrada, int entradas_que_ocupa) {
 	}
 }
 
-char * leer_valor(int posicion) {
-	int tamanio_del_valor_a_leer = 7;
+char * leer_valor(entrada unaEntrada) {
+	int tamanio_del_valor_a_leer = unaEntrada.tamanio_valor;
 
-	auxiliar = malloc(tamanio_del_valor_a_leer);
+	int posicion = unaEntrada.pos_valor;
 
-	if (entradas_disponibles[posicion] == 0) {
-		return "NOHAYNADA";
-	}
-
-	if (entradas_disponibles[posicion] == 2) {
-		return "Ocupada";
-	}
+	// + 1 por el '\0' que agrego al final para leer
+	auxiliar = malloc(tamanio_del_valor_a_leer + 1);
 
 	log_trace(logger, "Estoy por mostrar la entrada: %d que ocupa: %d",
 			posicion, tamanio_del_valor_a_leer);
@@ -323,6 +334,79 @@ char * leer_valor(int posicion) {
 	return auxiliar;
 }
 
+void compactacion(){
+
+	int primera_entrada_disponible = obtener_primera_entrada_disponible();
+
+	if(primera_entrada_disponible < 0){
+		return;
+	}
+
+	loggear("Estoy por compactar");
+
+	//Como ya se que esta libre le sumo 1
+	int i = primera_entrada_disponible + 1;
+
+	while(entradas_disponibles[i] < cantidad_entradas){
+
+		if(entradas_disponibles[i]){
+			//entrada entrada_a_desplazar = list_find(entradas, entrada_que_esta_en(i));
+			entrada entrada_a_desplazar;
+
+			desplazar(entrada_a_desplazar, primera_entrada_disponible);
+
+			primera_entrada_disponible += entrada_a_desplazar.tamanio_valor;
+
+			// -1 porque despues le hago el i++
+			i += entrada_a_desplazar.tamanio_valor - 1;
+
+		}
+
+		i++;
+
+	}
+
+}
+
+int obtener_primera_entrada_disponible(){
+
+	int i = 0;
+	while(i < cantidad_entradas){
+		if(entradas_disponibles[i] == 0){
+			return i;
+		}
+		i++;
+	}
+
+	loggear("No hay entradas libres, no hay que compactar");
+
+	return -1;
+}
+
+void desplazar(entrada una_entrada, int nueva_posicion){
+
+	int posicion_actual = una_entrada.pos_valor;
+
+	//Actualizo las estructuras administrativas
+	una_entrada.pos_valor = nueva_posicion;
+
+	//ACTUALIZAR EL VECTOR DE ENTRADAS, aunque se podria hacer al final de compactar si se el tamanio de todo
+	//Y seria [1,1,1,1,1,1,1,0,0,0,0]
+	//entradas_disponibles[nueva_posicion] = ??
+
+	//Actualizo la memoria
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(una_entrada.tamanio_valor);
+
+	desplazar_memoria(posicion_actual, nueva_posicion, entradas_que_ocupa);
+
+}
+
+void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual, int entradas_del_valor){
+
+	//Magia con memcpy y malloc
+}
+
+/*
 void leer_valores_almacenados() {
 
 	loggear("Se almacenaron los siguientes valores: ");
@@ -335,7 +419,6 @@ void leer_valores_almacenados() {
 	}
 }
 
-/*
 //Lleno con el valor ejemplo
 void caso_de_prueba_1() {
 	valor = "EjemploX";

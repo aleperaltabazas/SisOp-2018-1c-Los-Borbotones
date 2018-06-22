@@ -25,8 +25,8 @@ typedef struct ESI {
 
 typedef struct entrada {
 	char * clave;
-	uint32_t pos_valor;
-	uint32_t tamanio_valor;
+	int pos_valor;
+	int tamanio_valor;
 } entrada;
 
 //	Estructuras con serialización

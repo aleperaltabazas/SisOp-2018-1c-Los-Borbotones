@@ -25,7 +25,7 @@ endif
 all: coordinador
 
 dependents:
-	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) clean all
+	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
 
 # Tool invocations
 coordinador: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
