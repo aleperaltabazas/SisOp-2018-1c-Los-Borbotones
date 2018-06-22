@@ -135,7 +135,7 @@ void bloquear_clave(int socket_cliente);
 	 * 		int socket_cliente: socket del cliente.
 	 */
 
-void bloquear(char* clave, int id);
+void bloquear(char* clave, uint32_t id);
 	/*
 	 * Descripción: bloquea una clave. En caso de que no exista, la crea y la bloquea.
 	 * 		Si la clave ya se encuentra bloqueada, no hace nada.
@@ -188,7 +188,7 @@ void eliminar_clave(t_clave_list* lista, char* clave);
 	 * 		char* clave: la clave a eliminar.
 	 */
 
-void agregar_clave(t_clave_list* lista, char* clave);
+void agregar_clave(t_clave_list* lista, char* clave, uint32_t id);
 	/*
 	 * Descripción: agrega una clave a la lista.
 	 * Argumentos:
@@ -196,7 +196,7 @@ void agregar_clave(t_clave_list* lista, char* clave);
 	 * 		char* clave: la clave a agregar.
 	 */
 
-t_clave_node* crear_nodo(char* clave);
+t_clave_node* crear_nodo(char* clave, uint32_t id);
 	/*
 	 * Descripción: crea un nodo con la clave.
 	 * Argumentos:
@@ -217,55 +217,59 @@ char* first(t_clave_list lista);
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
 
-void get(int sockfd, int id);
+void get(int sockfd, uint32_t id);
 	/*
 	 * Descripción: bloquea una clave y se la asigna al id. Si no existe, se crea y se bloquea. Si
 	 * 		ya existe y está bloqueada, se bloquea al proceso cliente.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
-	 * 		int id: identificador del proceso cliente.
+	 * 		uint32_t id: identificador del proceso cliente.
 	 */
 
-void set(int sockfd, int id);
+void set(int sockfd, uint32_t id);
 	/*
 	 * Descripción: settea un valor en una clave. Si la clave no existe, se bloquea al proceso cliente.
 	 * 		Si existe, pero las identificaciones del bloqueante y del proceso cliente no matchean, se
 	 * 		bloquea al proceso cliente.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
-	 * 		int id: identificador del proceso cliente.
+	 * 		uint32_t id: identificador del proceso cliente.
 	 */
 
-void store(int sockfd, int id);
+void store(int sockfd, uint32_t id);
 	/*
 	 * Descripción: guarda el valor de una clave en una instancia. Si la clave no existe, se bloquea al
 	 * 		proceso cliente. Si existe, pero las identificaciones del bloqueante y del proceso cliente
 	 * 		no matchean, se	bloquea al proceso cliente.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
-	 * 		int id: identificador del proceso cliente.
+	 * 		uint32_t id: identificador del proceso cliente.
 	 */
 
-int get_packed(char* clave, int id);
+int get_packed(char* clave, uint32_t id);
 	/*
 	 * Descripción: retorna el valor de la operación dependiendo de la existencia de la clave o el resultado
 	 * 		de la verificación de las identificaciones.
 	 * Argumentos:
 	 * 		char* clave: la cadena a verificar.
-	 * 		int id: la identificación a comparar.
+	 * 		uint32_t id: la identificación a comparar.
 	 */
 
-int get_clave_id(char* clave);
+uint32_t get_clave_id(char* clave);
 	/*
 	 * Descripción: retorna el id de quien bloqueó la clave. En caso de que la clave no exista, retorna -1.
 	 * Argumentos:
 	 * 		char* clave: la clave a verificar.
 	 */
 
-int settear(char* valor, char* clave, int id);
+int settear(char* valor, char* clave, uint32_t id);
 	/*
 	 * Descripción: realiza las verificaciones sobre la clave y el id. En caso negativo, no hace nada y devuelve
 	 * 		5. En caso positivo, asigna el valor a la clave y devuelve 20.
+	 * Argumentos:
+	 * 		char* valor: valor de la clave.
+	 * 		char* clave: la clave en cuestión.
+	 * 		uint32_t id: id de quien pide el set.
 	 */
 
 void hacer_store(char* clave);
@@ -275,13 +279,13 @@ void hacer_store(char* clave);
 	 * 		char* clave: la clave a guardar.
 	 */
 
-int dame_response(char* clave, int id);
+int dame_response(char* clave, uint32_t id);
 	/*
 	 * Descripción: devuelve el valor de respuesta respecto a la clave que se quiere bloquear y quién
 	 * 		desea bloquearla.
 	 * Argumentos:
 	 * 		char* clave: la clave a bloquear.
-	 * 		int id: el id del bloqueante.
+	 * 		uint32_t id: el id del bloqueante.
 	 */
 
 void asignar_parametros_a_enviar();

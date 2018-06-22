@@ -99,7 +99,7 @@ typedef struct t_parsed_list {
 typedef struct t_clave_node {
 	char* clave;
 	char* valor;
-	int block_id;
+	uint32_t block_id;
 	struct t_clave_node* sgte;
 } t_clave_node;
 

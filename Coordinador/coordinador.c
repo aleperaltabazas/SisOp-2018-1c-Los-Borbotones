@@ -176,6 +176,8 @@ int chequear_solicitud(int socket_cliente) {
 
 	else if (aviso_cliente.aviso == 12) {
 		loggear("SET.");
+
+		log_trace(logger, "%i", aviso_cliente.id);
 		set(socket_cliente, aviso_cliente.id);
 	}
 
@@ -193,7 +195,7 @@ int chequear_solicitud(int socket_cliente) {
 	return 1;
 }
 
-void get(int socket_cliente, int id) {
+void get(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
@@ -210,7 +212,7 @@ void get(int socket_cliente, int id) {
 	enviar_packed(response, socket_cliente);
 }
 
-int dame_response(char* clave, int id) {
+int dame_response(char* clave, uint32_t id) {
 	if (!existe(clave)) {
 		bloquear(clave, id);
 		loggear("Get exitoso.");
@@ -229,7 +231,7 @@ int dame_response(char* clave, int id) {
 	}
 }
 
-void set(int socket_cliente, int id) {
+void set(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
@@ -244,12 +246,14 @@ void set(int socket_cliente, int id) {
 
 	package_int response;
 
+	log_trace(logger, "%s %s", clave, valor);
+
 	response.packed = settear(valor, clave, id);
 
 	enviar_packed(response, socket_cliente);
 }
 
-void store(int socket_cliente, int id) {
+void store(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
@@ -269,7 +273,7 @@ void store(int socket_cliente, int id) {
 	enviar_packed(response, socket_cliente);
 }
 
-int settear(char* valor, char* clave, int id) {
+int settear(char* valor, char* clave, uint32_t id) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	if (!existe(clave)) {
@@ -279,6 +283,7 @@ int settear(char* valor, char* clave, int id) {
 	while (puntero != NULL) {
 		if (strcmp(puntero->clave, clave) == 0) {
 			if (puntero->block_id != id) {
+				log_trace(logger, "%i %i", puntero->block_id, id);
 				loggear("Bloqueando ESI.");
 				return 5;
 			}
@@ -293,7 +298,7 @@ int settear(char* valor, char* clave, int id) {
 	return 5;
 }
 
-int get_packed(char* clave, int id) {
+int get_packed(char* clave, uint32_t id) {
 	if (!existe(clave)) {
 		loggear("Bloqueando ESI.");
 		return 5;
@@ -329,7 +334,7 @@ void hacer_store(char* clave) {
 	//MATIIIIIIIIIIIIIIIIII te toca hacer esto
 }
 
-int get_clave_id(char* clave) {
+uint32_t get_clave_id(char* clave) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	while (puntero != NULL) {
@@ -398,7 +403,7 @@ void desbloquear(char* clave) {
 
 	else if (existe(clave) && esta_bloqueada(clave)) {
 		eliminar_clave(&claves_bloqueadas, clave);
-		agregar_clave(&claves_disponibles, clave);
+		agregar_clave(&claves_disponibles, clave, -1);
 
 		log_trace(logger, "La clave %s fue desbloqueada.", clave);
 	}
@@ -423,7 +428,7 @@ void bloquear_clave(int socket_cliente) {
 
 }
 
-void bloquear(char* clave, int id) {
+void bloquear(char* clave, uint32_t id) {
 	if (!existe(clave)) {
 		crear(clave);
 		bloquear(clave, id);
@@ -431,7 +436,7 @@ void bloquear(char* clave, int id) {
 
 	else if (existe(clave) && !esta_bloqueada(clave)) {
 		eliminar_clave(&claves_disponibles, clave);
-		agregar_clave(&claves_bloqueadas, clave);
+		agregar_clave(&claves_bloqueadas, clave, id);
 
 		log_trace(logger, "La clave %s fue bloqueada por %i.", clave, id);
 	}
@@ -477,11 +482,11 @@ bool existe(char* clave) {
 }
 
 void crear(char* clave) {
-	agregar_clave(&claves_disponibles, clave);
+	agregar_clave(&claves_disponibles, clave, -1);
 }
 
-void agregar_clave(t_clave_list* lista, char* clave) {
-	t_clave_node* nodo = crear_nodo(clave);
+void agregar_clave(t_clave_list* lista, char* clave, uint32_t id) {
+	t_clave_node* nodo = crear_nodo(clave, id);
 
 	if (lista->head == NULL) {
 		lista->head = nodo;
@@ -495,9 +500,10 @@ void agregar_clave(t_clave_list* lista, char* clave) {
 	}
 }
 
-t_clave_node* crear_nodo(char* clave) {
+t_clave_node* crear_nodo(char* clave, uint32_t id) {
 	t_clave_node* nodo = (t_clave_node*) malloc(sizeof(t_clave_node));
 	nodo->clave = clave;
+	nodo->block_id = id;
 	nodo->sgte = NULL;
 
 	return nodo;

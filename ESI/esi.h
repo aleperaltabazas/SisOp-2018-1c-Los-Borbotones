@@ -82,11 +82,11 @@ void establecer_conexiones(void);
 	 * 		void
 	 */
 
-void fill_ID(int id);
+void fill_ID(uint32_t id);
 	/*
 	 * Descripción: rellena el ID en los avisos globales.
 	 * Argumentos:
-	 * 		int id: el ID con el que llenar.
+	 * 		uint32_t id: el ID con el que llenar.
 	 */
 
 t_esi_operacion parsear(char* line);

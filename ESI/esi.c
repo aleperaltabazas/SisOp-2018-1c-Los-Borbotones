@@ -63,7 +63,7 @@ int recibir_ID(int server_socket) {
 	return aviso.id;
 }
 
-void fill_ID(int id) {
+void fill_ID(uint32_t id) {
 	aviso_fin.id = id;
 	aviso_ready.id = id;
 	aviso_bloqueo.id = id;
