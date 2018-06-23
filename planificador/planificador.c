@@ -91,8 +91,8 @@ void cargar_configuracion(void) {
 	ESTIMACION_INICIAL = config_get_int_value(config, "ESTIMACION_INICIAL");
 	log_info(logger, "Estimación inicial: %i", ESTIMACION_INICIAL);
 
-	ALFA = config_get_int_value(config, "ALFA");
-	log_info(logger, "Alfa: %i", ALFA);
+	ALFA = (float) config_get_int_value(config, "ALFA");
+	log_info(logger, "Alfa: %f", ALFA);
 
 	loggear("Configuración cargada.");
 }
@@ -159,7 +159,7 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 	listen(listening_socket, BACKLOG);
 
 	log_trace(logger, "Esperando...");
-	struct sockaddr_in addr; // Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
+	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 
 	socket_cliente = accept(listening_socket, (struct sockaddr *) &addr,
@@ -235,15 +235,9 @@ void* atender_ESI(void* buffer) {
 }
 
 int recibir_mensaje(int socket_cliente, int id, ESI esi) {
-	aviso_con_ID aviso;
-	int packageSize = sizeof(aviso_con_ID);
-	char* package = malloc(packageSize);
-
-	recv(socket_cliente, package, packageSize, 0);
+	aviso_con_ID aviso = recibir_aviso(socket_cliente);
 
 	log_trace(logger, "Mensaje recibidio del ESI numero: %i", id);
-
-	deserializar_aviso(&(aviso), &(package));
 
 	if (aviso.aviso == 0) {
 		loggear(
@@ -372,6 +366,16 @@ void desalojar(void) {
 		eliminar_ESI(&new_ESIs, executing_ESI);
 
 		ESI new_ESI = executing_ESI;
+
+		log_debug(logger, "%f", ALFA);
+
+		log_debug(logger, "%i", new_ESI.rafaga_real);
+		log_debug(logger, "%f", new_ESI.rafaga_estimada);
+		log_debug(logger, "%f", estimated_time(new_ESI));
+
+		log_debug(logger, "%f", tiempo_real(new_ESI));
+		log_debug(logger, "%f", estimado(new_ESI));
+
 		new_ESI.rafaga_estimada = estimated_time(new_ESI);
 
 		agregar_ESI(&new_ESIs, new_ESI);
@@ -423,7 +427,7 @@ int asignar_ID(ESI esi) {
 	enviar_aviso(socket_ESI, aviso_id);
 	pthread_mutex_unlock(&sem_ID);
 
-	return aviso_id.id;
+	return (int) aviso_id.id;
 
 }
 
@@ -566,9 +570,16 @@ int wait_time(ESI esi) {
 	return tiempo - esi.tiempo_arribo;
 }
 
-int estimated_time(ESI esi) {
-	return esi.rafaga_real * (ALFA / 100)
-			+ esi.rafaga_estimada * (1 - (ALFA / 100));
+float estimated_time(ESI esi) {
+	return tiempo_real(esi) + estimado(esi);
+}
+
+float tiempo_real(ESI esi) {
+	return ((float) esi.rafaga_real) * (ALFA / 100);
+}
+
+float estimado(ESI esi) {
+	return ((float) esi.rafaga_estimada) * (1 - (ALFA / 100));
 }
 
 void ejecutar(ESI esi_a_ejecutar) {
@@ -649,6 +660,9 @@ void interpretarYEjecutarCodigo(float comando) {
 		break;
 	case 13:
 		desbloquear_clave();
+		break;
+	case 14:
+		desalojar();
 		break;
 	default:
 		printf(

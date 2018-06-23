@@ -17,12 +17,12 @@ ESIs a Planificador:
 	0: fin de ESI
 	1: ready
 	5: bloqueado
-	11: hizo GET
-	12: hizo SET
-	13: hizo STORE
+	10: ejecute Ok
 
 ESIs a Coordinador:
-	1: solicitar recurso
+	11: GET
+	12: SET
+	13: STORE
 
 Coordinador a ESI:
 	1: petición de recurso aceptada

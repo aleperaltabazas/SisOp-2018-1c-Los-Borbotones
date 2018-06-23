@@ -17,7 +17,7 @@ char* PUERTO_PLANIFICADOR;
 char* IP_COORDINADOR;
 char* IP_PLANIFICADOR;
 int ESTIMACION_INICIAL;
-int ALFA;
+float ALFA;
 algoritmo_planificacion ALGORITMO_PLANIFICACION;
 
 ESI esi_vacio = {
@@ -26,7 +26,7 @@ ESI esi_vacio = {
 		.rafaga_real = 0
 };
 
-int ESI_id;
+uint32_t ESI_id;
 int tiempo;
 int ESIs_size;
 
@@ -102,7 +102,7 @@ int manejar_cliente(int listening_socket, int socket_cliente, package_int packag
 	 * Argumentos:
 	 * 		int listening_socket: socket del servidor local.
 	 * 		int socket_cliente: socket del cliente.
-	 * 		char* mensaje: mensaje para enviar como indentificación a los nuevos clientes.
+	 * 		package_int package: identificación para los nuevos clientes.
 	 */
 
 void identificar_cliente(package_int id, int socket_cliente);
@@ -274,7 +274,7 @@ int wait_time(ESI esi);
 	 * 		ESI esi: el ESI a obtener su clock de espera.
 	 */
 
-int estimated_time(ESI esi);
+float estimated_time(ESI esi);
 	/*
 	 * Descripción: devuelve la duración estimada de ráfaga de un ESI.
 	 * Argumentos:
@@ -375,6 +375,20 @@ void vaciar_ESI(void);
 	 * Descripción: pone el ESI_vacio en el executing_ESI.
 	 * Argumentos:
 	 * 		void
+	 */
+
+float tiempo_real(ESI esi);
+	/*
+	 * Descripción: devuelve el tiempo real del ESI multiplicado por el Alfa.
+	 * Argumentos:
+	 * 		ESI esi: el ESI del cual calcular la ráfaga.
+	 */
+
+float estimado(ESI esi);
+	/*
+	 * Descripción: devuelve el tiempo estimado del ESI multplicado por el Alfa.
+	 * Argumentos:
+	 * 		ESI esi: el ESI del cual calcular la ráfaga.
 	 */
 
 #endif /* PLANIFICADOR_H_ */

@@ -239,6 +239,8 @@ void iniciar(char** argv) {
 		agregar_parseo(&parsed_ops, parsed);
 	}
 
+	fclose(archivo_de_parseo);
+
 	loggear("Parseo exitoso.");
 
 	return;
