@@ -53,6 +53,8 @@ void iniciar(void) {
 	loggear("Cargando configuración.");
 	cargar_configuracion();
 
+	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
+
 	cantidad_entradas = 10;
 	tamanio_entrada = 8;
 
@@ -110,6 +112,8 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 	//Creo una matriz de memoria para almacenar los valores que vengan
 	//Aunque en realidad es una fila pero lo pienso como matriz
 	almacenamiento_de_valores = malloc(tamanio_entrada * cantidad_entradas);
+
+	entradas_disponibles = malloc(sizeof(int) * cantidad_entradas);
 
 	//Inicializo todas las posiciones en 0 (osea que estan libres) y el tama�o de todos los valores en 0
 	int i;
@@ -255,6 +259,11 @@ int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
 
 	free(buffer);
 
+	int i;
+	for (i = 0; i < cantidad_entradas; i++) {
+		log_trace(logger, "%i", entradas_disponibles[i]);
+	}
+
 	return status;
 }
 
@@ -365,6 +374,8 @@ void compactacion(){
 		i++;
 
 	}
+
+	//int total_de_espacio_ocupado = list_sum(entradas);
 
 }
 
