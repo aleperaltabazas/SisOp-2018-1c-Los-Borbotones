@@ -32,6 +32,7 @@
 *.dylib
 
 #gitignores
+*.gitignore
 Coordinador/.gitignore
 shared-library/.gitignore
 Instancias/.gitignore

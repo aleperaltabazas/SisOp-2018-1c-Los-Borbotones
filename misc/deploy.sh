@@ -8,6 +8,8 @@ make
 make clean
 make all
 
+cd ../../misc/
+
 clear
 
 chmod u+x coordinador.sh
