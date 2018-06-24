@@ -297,4 +297,21 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
 
 
+
+typedef struct instancia{
+	int socket;
+	int vecesLlamado;
+	int espacio_usado;
+	int disponible;
+	struct instancia * siguiente;
+} instancia;
+
+instancia * miLista;
+
+void agregameInstancia(int unSocket);
+void add (instancia * unaLista, int unSocket);
+void * find ();
+int instanciasDisponibles(void);
+int equitativeLoad(void); //Devuelve el socket que corresponde
+
 #endif /* COORDINADOR_H_ */

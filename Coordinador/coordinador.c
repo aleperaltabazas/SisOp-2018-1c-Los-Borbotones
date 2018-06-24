@@ -544,7 +544,7 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
-	//list_add(instancias, un_socket);
+	agregameInstancia(un_socket);
 
 	asignar_parametros_a_enviar();
 
@@ -634,4 +634,65 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Parametros enviados!");
 
+}
+
+void agregameInstancia(int unSocket){
+	instancia * auxiliar;
+	auxiliar = miLista;
+	if (find(auxiliar, unSocket) != NULL)	(auxiliar->disponible) = 1;
+	else add (miLista, unSocket);
+}
+void * find (instancia * lista, int unSocket){
+	while(lista!=NULL){
+		if (lista -> socket == unSocket) return lista;
+		else lista = lista->siguiente;
+	}
+	return NULL;
+}
+void add(instancia * instancias, int unSocket){
+	instancia * nodo;
+	nodo = malloc(sizeof(instancia));
+	nodo -> socket = unSocket;
+	nodo -> vecesLlamado = 0;
+	nodo -> disponible = 1;
+	nodo -> espacio_usado = 0;
+	nodo -> siguiente = NULL;
+	if (instancias == NULL){
+		instancias = nodo;
+		}
+	else {
+		instancia * auxiliar;
+		auxiliar = instancias;
+		while (auxiliar -> siguiente != NULL){
+			auxiliar = auxiliar -> siguiente;
+		}
+		auxiliar -> siguiente = nodo;
+	}
+}
+int instanciasDisponibles(){
+	int i;
+	instancia * aux;
+	aux = malloc(sizeof(instancia));
+	aux = miLista;
+	while(aux != NULL){
+		if(aux -> disponible) i++;
+		aux = aux -> siguiente;
+	}
+	free(aux);
+	return i;
+}
+int equitativeLoad(void){
+	instancia * aux;
+	aux = miLista;
+	int i = aux -> vecesLlamado;
+	int retorno = aux -> socket;
+
+	while(aux -> siguiente != NULL){
+		if(aux -> vecesLlamado << i) {
+			i = aux -> vecesLlamado;
+			retorno = aux -> socket;
+		}
+	}
+	aux -> vecesLlamado++;
+	return (retorno);
 }
