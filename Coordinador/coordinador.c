@@ -696,3 +696,41 @@ int equitativeLoad(void){
 	aux -> vecesLlamado++;
 	return (retorno);
 }
+int leastSpaceUsed(void) { //acá me falta que reciba una cantidad de memoria que va a ocupar así se la puedo sumar
+	instancia * aux;
+	aux = miLista;
+	int i = aux->espacio_usado;
+	int retorno = aux->socket;
+	while (aux -> siguiente != NULL) {
+		if (aux -> espacio_usado << i) {
+			i = aux -> espacio_usado;
+			retorno = aux -> socket;
+		}
+		else {
+			if(aux -> espacio_usado == i) retorno = desempatar(aux, retorno);
+			aux = aux -> siguiente;
+			}
+		}
+	return(retorno);
+}
+int desempatar (instancia * a, int b){
+	instancia * aux;
+	aux = miLista;
+	while (aux -> socket != b) {
+		aux = aux -> siguiente;
+	}
+	if (a -> vecesLlamado >> aux -> vecesLlamado) return aux -> socket;
+	return a -> socket;
+}
+int keyExplicit (char * clave){
+	int cantidadDeLetras = 26/instanciasDisponibles();
+	int instanciaN = (clave[0] - 97)/cantidadDeLetras;
+	instancia * aux;
+	aux = miLista;
+	while(instanciaN > 1){
+		if (aux -> disponible) instanciaN--;
+		aux = aux -> siguiente;
+	}
+	//Creo que acá me falta verificar que estemos mandando una instancia que esté disponible
+	return aux -> socket;
+}
