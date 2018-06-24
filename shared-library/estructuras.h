@@ -15,7 +15,7 @@
 //	Misc
 
 typedef struct ESI {
-	int id;
+	uint32_t id;
 	int socket;
 	float rafaga_estimada;
 	int rafaga_real;
@@ -28,6 +28,11 @@ typedef struct entrada {
 	int pos_valor;
 	int tamanio_valor;
 } entrada;
+
+typedef struct blocked {
+	char* clave;
+	uint32_t id;
+} blocked;
 
 //	Estructuras con serialización
 
@@ -106,5 +111,15 @@ typedef struct t_clave_node {
 typedef struct t_clave_list {
 	t_clave_node* head;
 } t_clave_list;
+
+typedef struct t_blocked_node {
+	char* clave;
+	uint32_t id;
+	struct t_blocked_node* sgte;
+} t_blocked_node;
+
+typedef struct t_blocked_list {
+	t_blocked_node* head;
+} t_blocked_list;
 
 #endif /* ESTRUCTURAS_H_ */

@@ -67,6 +67,7 @@ pthread_mutex_t sem_planificacion;
 pthread_mutex_t sem_ejecucion;
 pthread_mutex_t sem_ejecutando;
 pthread_mutex_t sem_new_ESIs;
+pthread_mutex_t sem_socket_coordi;
 
 //Hilos
 
@@ -389,6 +390,21 @@ float estimado(ESI esi);
 	 * Descripción: devuelve el tiempo estimado del ESI multplicado por el Alfa.
 	 * Argumentos:
 	 * 		ESI esi: el ESI del cual calcular la ráfaga.
+	 */
+
+void desbloquear_ESI(uint32_t id);
+	/*
+	 * Descripción: mueve un ESI de la cola de bloqueados a la de listos a partir de su id.
+	 * Argumentos:
+	 * 		uint32_t id: id del ESI a desbloquear.
+	 */
+
+ESI get_ESI(uint32_t id, t_esi_list lista);
+	/*
+	 * Descripción: devuelve un ESI de una lista determinada a partir de un id.
+	 * Argumentos:
+	 * 		uint32_t id: el id del ESI a buscar.
+	 * 		t_esi_list lista: la lista donde buscar.
 	 */
 
 #endif /* PLANIFICADOR_H_ */

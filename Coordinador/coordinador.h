@@ -18,8 +18,12 @@ algoritmo_distribucion ALGORITMO_DISTRIBUCION;
 int CANTIDAD_ENTRADAS;
 int TAMANIO_ENTRADAS;
 float RETARDO;
+char* PUERTO_PLANIFICADOR;
+char* IP_PLANIFICADOR;
 
 int seguir_ejecucion = 1;
+
+int socket_planificador;
 
 package_int bloqueo_ok = {
 		.packed = 26
@@ -27,6 +31,8 @@ package_int bloqueo_ok = {
 
 t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
+
+t_blocked_list blocked_ESIs;
 
 parametros_set valor_set;
 char * buffer_parametros;
@@ -286,6 +292,68 @@ int dame_response(char* clave, uint32_t id);
 	 * Argumentos:
 	 * 		char* clave: la clave a bloquear.
 	 * 		uint32_t id: el id del bloqueante.
+	 */
+
+uint32_t dame_desbloqueado(char* clave, t_blocked_list lista);
+	/*
+	 * Descripción: devuelve el id del ESI a desbloquear respecto a una clave en una lista,
+	 * Argumentos:
+	 * 		char* clave: la clave a evaluar.
+	 * 		t_blocked_list lista: la lista de la cual buscar el id.
+	 *
+	 */
+
+void bloquear_ESI(char* clave, uint32_t id);
+	/*
+	 * Descripción: agrega un id asociado a una clave a la lista de bloqueados.
+	 * Argumentos:
+	 * 		char* clave: la clave que causó el bloqueo.
+	 * 		uint32_t id: el id del bloqueado.
+	 */
+
+void agregar_blocked(t_blocked_list* lista, blocked bloqueado);
+	/*
+	 * Descripción: agrega un blocked a una lista de blockeds.
+	 * Argumentos:
+	 * 		t_blocked_list* lista: la lista a la cual agregar el bloqueado.
+	 * 		blocked bloqueado: el bloqueado.
+	 */
+
+t_blocked_node* crear_blocked_node(blocked bloqueado);
+	/*
+	 * Descripción: crea y retorna un nodo de blocked.
+	 * Argumentos:
+	 * 		blocked bloqueado: estructura que contiene los datos a volcar en el nodo.
+	 */
+
+void liberar_ESI(t_blocked_list* lista, uint32_t id);
+	/*
+	 * Descripción: quita un elemento de la lista a partir de su id. Si el id es -5, no hace nada.
+	 * Argumentos:
+	 * 		t_blocked_list* lista: lista a modificar.
+	 * 		uint32_t id: elemento a quitar de la lista.
+	 */
+
+void destruir_blocked_node(t_blocked_node* nodo);
+	/*
+	 * Descripción: libera la porción de memoria de un nodo.
+	 * Argumentos:
+	 * 		t_blocked_node* nodo: la memoria a liberar.
+	 */
+
+uint32_t head_id(t_blocked_list lista);
+	/*
+	 * Descripción: devuelve el id del primer elemento de una lista de bloqueados.
+	 * Argumentos:
+	 * 		t_blocked_list lista: la lista en cuestión.
+	 */
+
+void eliminar_blocked(t_blocked_list* lista, uint32_t id);
+	/*
+	 * Descripción: elimina un nodo de la lista a partir de un id.
+	 * Argumentos:
+	 * 		t_blocked_list* lista: la lista a modificar.
+	 * 		uint32_t id: el id del nodo a eliminar.
 	 */
 
 void asignar_parametros_a_enviar();

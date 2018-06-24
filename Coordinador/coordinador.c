@@ -55,6 +55,9 @@ void cargar_configuracion(void) {
 	RETARDO = dame_retardo(retardo);
 	log_info(logger, "Retardo: %i (en microsegundos)", retardo);
 
+	PUERTO_PLANIFICADOR = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
+
 	loggear("Configuración cargada.");
 }
 
@@ -171,18 +174,22 @@ int chequear_solicitud(int socket_cliente) {
 
 	else if (aviso_cliente.aviso == 11) {
 		loggear("GET.");
+
+		log_debug(logger, "%i", aviso_cliente.id);
 		get(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 12) {
 		loggear("SET.");
 
-		log_trace(logger, "%i", aviso_cliente.id);
+		log_debug(logger, "%i", aviso_cliente.id);
 		set(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 13) {
 		loggear("STORE");
+
+		log_debug(logger, "%i", aviso_cliente.id);
 		store(socket_cliente, aviso_cliente.id);
 	}
 
@@ -209,6 +216,8 @@ void get(int socket_cliente, uint32_t id) {
 
 	response.packed = dame_response(clave, id);
 
+	log_debug(logger, "%i", response.packed);
+
 	enviar_packed(response, socket_cliente);
 }
 
@@ -227,6 +236,7 @@ int dame_response(char* clave, uint32_t id) {
 
 	else {
 		loggear("Bloqueando ESI.");
+		bloquear_ESI(clave, id);
 		return 5;
 	}
 }
@@ -250,6 +260,8 @@ void set(int socket_cliente, uint32_t id) {
 
 	response.packed = settear(valor, clave, id);
 
+	log_debug(logger, "%i", response.packed);
+
 	enviar_packed(response, socket_cliente);
 }
 
@@ -268,7 +280,16 @@ void store(int socket_cliente, uint32_t id) {
 
 	if (response.packed != 5) {
 		hacer_store(clave);
+
+		aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
+				blocked_ESIs) };
+
+		liberar_ESI(&blocked_ESIs, unlock.id);
+
+		enviar_aviso(socket_planificador, unlock);
 	}
+
+	log_debug(logger, "%i", response.packed);
 
 	enviar_packed(response, socket_cliente);
 }
@@ -285,6 +306,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 			if (puntero->block_id != id) {
 				log_trace(logger, "%i %i", puntero->block_id, id);
 				loggear("Bloqueando ESI.");
+				bloquear_ESI(clave, id);
 				return 5;
 			}
 
@@ -301,6 +323,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 int get_packed(char* clave, uint32_t id) {
 	if (!existe(clave)) {
 		loggear("Bloqueando ESI.");
+		bloquear_ESI(clave, id);
 		return 5;
 	}
 
@@ -309,16 +332,19 @@ int get_packed(char* clave, uint32_t id) {
 
 		if (blocker == -1) {
 			loggear("Bloqueando ESI.");
+			bloquear_ESI(clave, id);
 			return 5;
 		}
 
 		if (blocker != id) {
 			loggear("Bloqueando ESI.");
+			bloquear_ESI(clave, id);
 			return 5;
 		}
 
 		else if (!esta_bloqueada(clave)) {
 			loggear("Bloqueando ESI.");
+			bloquear_ESI(clave, id);
 			return 5;
 		}
 
@@ -334,6 +360,72 @@ void hacer_store(char* clave) {
 	//MATIIIIIIIIIIIIIIIIII te toca hacer esto
 }
 
+void bloquear_ESI(char* clave, uint32_t id) {
+	blocked bloqueado = { .clave = clave, .id = id };
+
+	agregar_blocked(&blocked_ESIs, bloqueado);
+}
+
+void liberar_ESI(t_blocked_list* lista, uint32_t id) {
+	if (id != -5) {
+		eliminar_blocked(lista, id);
+	}
+}
+
+void destruir_blocked_node(t_blocked_node* nodo) {
+	free(nodo);
+}
+
+void eliminar_blocked(t_blocked_list* lista, uint32_t id) {
+	if (lista->head != NULL) {
+		uint32_t head = head_id(*lista);
+		if (id == head) {
+			t_blocked_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_blocked_node(eliminado);
+		} else {
+			t_blocked_node* puntero = lista->head;
+
+			while (puntero->id != id) {
+				puntero = puntero->sgte;
+			}
+
+			t_blocked_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_blocked_node(eliminado);
+		}
+	}
+}
+
+void agregar_blocked(t_blocked_list* lista, blocked bloqueado) {
+	t_blocked_node* nodo = crear_blocked_node(bloqueado);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_blocked_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+}
+
+t_blocked_node* crear_blocked_node(blocked bloqueado) {
+	t_blocked_node* nodo = (t_blocked_node*) malloc(sizeof(t_blocked_node));
+	nodo->clave = bloqueado.clave;
+	nodo->id = bloqueado.id;
+
+	return nodo;
+}
+
+uint32_t head_id(t_blocked_list lista) {
+	t_blocked_node* head = lista.head;
+
+	return head->id;
+}
+
 uint32_t get_clave_id(char* clave) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
@@ -347,14 +439,16 @@ uint32_t get_clave_id(char* clave) {
 }
 
 void* atender_Planificador(void* un_socket) {
-	int socket_cliente = (int) un_socket;
+	socket_planificador = (int) un_socket;
 
 	loggear("Hilo de planificador inicializado correctamente.");
 
 	aviso_con_ID aviso_plani;
 
 	while (1) {
-		aviso_plani = recibir_aviso(socket_cliente);
+		aviso_plani = recibir_aviso(socket_planificador);
+
+		log_debug(logger, "%i", aviso_plani.aviso);
 
 		if (aviso_plani.aviso == 0) {
 			loggear("Fin de Planificador. Cerrando sesión y terminando.");
@@ -363,11 +457,11 @@ void* atender_Planificador(void* un_socket) {
 		}
 
 		else if (aviso_plani.aviso == 25) {
-			bloquear_clave(socket_cliente);
+			bloquear_clave(socket_planificador);
 		}
 
 		else if (aviso_plani.aviso == 27) {
-			desbloquear_clave(socket_cliente);
+			desbloquear_clave(socket_planificador);
 		}
 
 	}
@@ -378,11 +472,11 @@ void* atender_Planificador(void* un_socket) {
 }
 
 void desbloquear_clave(int socket_cliente) {
-	aviso_con_ID aviso_ok = { .aviso = 25 };
+	aviso_con_ID aviso_ok = { .aviso = 27 };
 
 	package_int size_package = { .packed = -1 };
 
-	package_int unlock_ok = { .packed = 28 };
+	aviso_con_ID unlock_ok = { .aviso = 28 };
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
@@ -391,8 +485,28 @@ void desbloquear_clave(int socket_cliente) {
 
 	desbloquear(clave);
 
-	enviar_packed(unlock_ok, socket_cliente);
+	unlock_ok.id = dame_desbloqueado(clave, blocked_ESIs);
 
+	if (unlock_ok.id != -5) {
+		liberar_ESI(&blocked_ESIs, unlock_ok.id);
+	}
+
+	enviar_aviso(socket_cliente, unlock_ok);
+
+}
+
+uint32_t dame_desbloqueado(char* clave, t_blocked_list lista) {
+	t_blocked_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (strcmp(clave, puntero->clave) == 0) {
+			return puntero->id;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return -5;
 }
 
 void desbloquear(char* clave) {
@@ -554,11 +668,11 @@ void* atender_Instancia(void* un_socket) {
 
 	int i;
 
-	for(i=0; i < 4; i++){
+	for (i = 0; i < 4; i++) {
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket);
+		enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+		enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
 
@@ -567,8 +681,7 @@ void* atender_Instancia(void* un_socket) {
 
 	tamanio_parametros_set += 6;
 
-
-	for(i=0; i < 4; i++){
+	for (i = 0; i < 4; i++) {
 
 		enviar_orden_instancia(tamanio_parametros_set, un_socket);
 
@@ -582,7 +695,7 @@ void* atender_Instancia(void* un_socket) {
 
 void asignar_parametros_a_enviar() {
 
-	//Aca estaria la logica de recibir las claves y valores
+//Aca estaria la logica de recibir las claves y valores
 	valor_set.clave = "Clave";
 	valor_set.tamanio_clave = strlen(valor_set.clave);
 	valor_set.valor = "UnValor";
@@ -603,7 +716,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
 	orden_del_coordinador * buffer_orden = malloc(
 			sizeof(orden_del_coordinador));
 
-	//Serializacion de la orden
+//Serializacion de la orden
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 
@@ -637,64 +750,68 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 }
 
-void agregameInstancia(int unSocket){
+void agregameInstancia(int unSocket) {
 	instancia * auxiliar;
 	auxiliar = miLista;
-	if (find(auxiliar, unSocket) != NULL)	(auxiliar->disponible) = 1;
-	else add (miLista, unSocket);
+	if (find(auxiliar, unSocket) != NULL)
+		(auxiliar->disponible) = 1;
+	else
+		add(miLista, unSocket);
 }
-void * find (instancia * lista, int unSocket){
-	while(lista!=NULL){
-		if (lista -> socket == unSocket) return lista;
-		else lista = lista->siguiente;
+void * find(instancia * lista, int unSocket) {
+	while (lista != NULL) {
+		if (lista->socket == unSocket)
+			return lista;
+		else
+			lista = lista->siguiente;
 	}
 	return NULL;
 }
-void add(instancia * instancias, int unSocket){
+void add(instancia * instancias, int unSocket) {
 	instancia * nodo;
 	nodo = malloc(sizeof(instancia));
-	nodo -> socket = unSocket;
-	nodo -> vecesLlamado = 0;
-	nodo -> disponible = 1;
-	nodo -> espacio_usado = 0;
-	nodo -> siguiente = NULL;
-	if (instancias == NULL){
+	nodo->socket = unSocket;
+	nodo->vecesLlamado = 0;
+	nodo->disponible = 1;
+	nodo->espacio_usado = 0;
+	nodo->siguiente = NULL;
+	if (instancias == NULL) {
 		instancias = nodo;
-		}
-	else {
+	} else {
 		instancia * auxiliar;
 		auxiliar = instancias;
-		while (auxiliar -> siguiente != NULL){
-			auxiliar = auxiliar -> siguiente;
+		while (auxiliar->siguiente != NULL) {
+			auxiliar = auxiliar->siguiente;
 		}
-		auxiliar -> siguiente = nodo;
+		auxiliar->siguiente = nodo;
 	}
 }
-int instanciasDisponibles(){
+int instanciasDisponibles() {
 	int i;
 	instancia * aux;
 	aux = malloc(sizeof(instancia));
 	aux = miLista;
-	while(aux != NULL){
-		if(aux -> disponible) i++;
-		aux = aux -> siguiente;
+	while (aux != NULL) {
+		if (aux->disponible)
+			i++;
+		aux = aux->siguiente;
 	}
 	free(aux);
 	return i;
 }
-int equitativeLoad(void){
+int equitativeLoad(void) {
 	instancia * aux;
 	aux = miLista;
-	int i = aux -> vecesLlamado;
-	int retorno = aux -> socket;
+	int i = aux->vecesLlamado;
+	int retorno = aux->socket;
 
-	while(aux -> siguiente != NULL){
-		if(aux -> vecesLlamado << i) {
-			i = aux -> vecesLlamado;
-			retorno = aux -> socket;
+	while (aux->siguiente != NULL) {
+		if (aux->vecesLlamado << i) {
+			i = aux->vecesLlamado;
+			retorno = aux->socket;
 		}
 	}
-	aux -> vecesLlamado++;
+	aux->vecesLlamado++;
 	return (retorno);
 }
 int leastSpaceUsed(void) { //acá me falta que reciba una cantidad de memoria que va a ocupar así se la puedo sumar
@@ -702,36 +819,38 @@ int leastSpaceUsed(void) { //acá me falta que reciba una cantidad de memoria qu
 	aux = miLista;
 	int i = aux->espacio_usado;
 	int retorno = aux->socket;
-	while (aux -> siguiente != NULL) {
-		if (aux -> espacio_usado << i) {
-			i = aux -> espacio_usado;
-			retorno = aux -> socket;
+	while (aux->siguiente != NULL) {
+		if (aux->espacio_usado << i) {
+			i = aux->espacio_usado;
+			retorno = aux->socket;
+		} else {
+			if (aux->espacio_usado == i)
+				retorno = desempatar(aux, retorno);
+			aux = aux->siguiente;
 		}
-		else {
-			if(aux -> espacio_usado == i) retorno = desempatar(aux, retorno);
-			aux = aux -> siguiente;
-			}
-		}
-	return(retorno);
+	}
+	return (retorno);
 }
-int desempatar (instancia * a, int b){
+int desempatar(instancia * a, int b) {
 	instancia * aux;
 	aux = miLista;
-	while (aux -> socket != b) {
-		aux = aux -> siguiente;
+	while (aux->socket != b) {
+		aux = aux->siguiente;
 	}
-	if (a -> vecesLlamado >> aux -> vecesLlamado) return aux -> socket;
-	return a -> socket;
+	if (a->vecesLlamado >> aux->vecesLlamado)
+		return aux->socket;
+	return a->socket;
 }
-int keyExplicit (char * clave){
-	int cantidadDeLetras = 26/instanciasDisponibles();
-	int instanciaN = (clave[0] - 97)/cantidadDeLetras;
+int keyExplicit(char * clave) {
+	int cantidadDeLetras = 26 / instanciasDisponibles();
+	int instanciaN = (clave[0] - 97) / cantidadDeLetras;
 	instancia * aux;
 	aux = miLista;
-	while(instanciaN > 1){
-		if (aux -> disponible) instanciaN--;
-		aux = aux -> siguiente;
+	while (instanciaN > 1) {
+		if (aux->disponible)
+			instanciaN--;
+		aux = aux->siguiente;
 	}
-	//Creo que acá me falta verificar que estemos mandando una instancia que esté disponible
-	return aux -> socket;
+//Creo que acá me falta verificar que estemos mandando una instancia que esté disponible
+	return aux->socket;
 }
