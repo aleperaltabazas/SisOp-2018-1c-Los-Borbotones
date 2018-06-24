@@ -239,7 +239,7 @@ void avisar_cierre(int server_socket) {
 	loggear("Aviso exitoso.");
 }
 
-int levantar_servidor(char* puerto) {
+int levantar_servidor(char* puerto, int tries) {
 	struct addrinfo hints;
 	struct addrinfo *server_info;
 
@@ -258,13 +258,22 @@ int levantar_servidor(char* puerto) {
 	freeaddrinfo(server_info);
 
 	if (bindeo < 0) {
-		salir_con_error("Falló el bindeo.", 0);
+		if (tries == 5) {
+			salir_con_error(
+					"El bindeo falló 5 veces. Intente de vuelta más tarde. Cerrando proceso...",
+					0);
+		}
+
+		log_warning(logger, "Falló el bindeo. Intentando de nuevo...");
+		sleep(1);
+
+		levantar_servidor(puerto, tries + 1);
 	}
 
 	return listening_socket;
 }
 
-int conectar_a(char *ip, char *puerto, package_int id) {
+int conectar_a(char *ip, char *puerto, package_int id, int tries) {
 	struct addrinfo hints;
 	struct addrinfo *serverInfo;
 	memset(&hints, 0, sizeof(hints));
@@ -280,7 +289,17 @@ int conectar_a(char *ip, char *puerto, package_int id) {
 			serverInfo->ai_addrlen);
 
 	if (conexion < 0) {
-		salir_con_error("Fallo la conexion con el servidor.", server_socket);
+		if (tries == 5) {
+			salir_con_error(
+					"Falló la conexión con el servidor. Por favor intente de nuevo más tarde. Cerrando proceso...",
+					server_socket);
+		}
+
+		log_warning(logger,
+				"Falló la conexión con el servidor. Intentando de nuevo...");
+		sleep(1);
+
+		conectar_a(ip, puerto, id, tries + 1);
 	}
 
 	loggear("Conectó sin problemas.");

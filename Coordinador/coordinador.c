@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 }
 
 void coordinar(void) {
-	int listening_socket = levantar_servidor(PUERTO_COORDINADOR);
+	int listening_socket = levantar_servidor(PUERTO_COORDINADOR, 0);
 	int socketCliente;
 
 	while (seguir_ejecucion) {
@@ -541,10 +541,11 @@ char* first(t_clave_list lista) {
 }
 
 void* atender_Instancia(void* un_socket) {
+	int sockfd = (int) un_socket;
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
-	agregameInstancia(un_socket);
+	agregameInstancia(sockfd);
 
 	asignar_parametros_a_enviar();
 

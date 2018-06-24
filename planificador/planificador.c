@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 }
 
 void manejar_conexiones(void) {
-	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR);
+	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR, 0);
 	int socketCliente;
 
 	while (seguir_ejecucion) {
@@ -125,7 +125,7 @@ algoritmo_planificacion dame_algoritmo(char* algoritmo_src) {
 
 void* atender_coordinador(void* nada) {
 	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
-			id_planificador);
+			id_planificador, 0);
 
 	int status = 1;
 

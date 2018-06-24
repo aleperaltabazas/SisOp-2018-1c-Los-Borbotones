@@ -51,25 +51,28 @@ package_int id_instancia = {
 
 //Funciones servidor
 
-int levantar_servidor(char* puerto);
+int levantar_servidor(char* puerto, int tries);
 	/*
 	 * Descripción: crea un socket escuchante y llama a bind() para atarlo al puerto y crear
-	 * 		un servidor en dicho puerto.
+	 * 		un servidor en dicho puerto. En caso que falle el bindeo, se intenta de nuevo. Si falla 5
+	 * 		veces, se cierra el proceso.
 	 * Argumentos:
 	 * 		char* puerto: puerto en el que se encuentra el servidor.
+	 * 		int tries: número de intentos realizados.
 	 */
 
 //Funciones cliente
 
-int conectar_a(char* ip, char* puerto, package_int id);
+int conectar_a(char* ip, char* puerto, package_int id, int tries);
 	/*
 	 * Descripción: establece una conexión con un servidor y le envía un mensaje, y devuelve
-	 * 		el socket servidor. En caso que falle la conexión con el servidor o el envío
-	 * 		de mensajes, llama a salir_con_error().
+	 * 		el socket servidor. En caso que falle la conexión, se intenta de nuevo. Si falla 5 veces,
+	 * 		se cierra el proceso.
 	 * Argumentos:
 	 * 		char* ip: ip del servidor.
 	 * 		char* puerto: puerto por el que escucha el servidor.
 	 * 		package_int id: mensaje a enviar al servidor.
+	 * 		int tries: número de intentos realizados.
 	 */
 
 void chequear_servidor(package_int id, int server_socket);

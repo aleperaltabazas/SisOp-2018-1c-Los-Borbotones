@@ -41,9 +41,9 @@ void ejecutar_sentencias(void) {
 void establecer_conexiones(void) {
 	loggear("Estableciendo conexiones...");
 
-	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id_ESI);
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id_ESI, 0);
 	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
-			id_ESI);
+			id_ESI, 0);
 
 	loggear("Conexiones realizadas.");
 }

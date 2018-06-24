@@ -314,7 +314,7 @@ void * find ();
 int instanciasDisponibles(void);
 int equitativeLoad(void); //Devuelve el socket que corresponde
 int leastSpaceUsed(void);
-instancia * desempatar (instancia * a, int b);
+int desempatar (instancia * a, int b);
 int keyEplicit (char * clave);
 
 
