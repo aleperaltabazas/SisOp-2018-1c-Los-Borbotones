@@ -188,24 +188,26 @@ void iniciar_semaforos() {
 int manejar_cliente(int listening_socket, int socket_cliente,
 		package_int server_packed) {
 
-	loggear("Esperando cliente...");
+	log_info(logger, "Esperando cliente...");
 
 	listen(listening_socket, BACKLOG);
 
-	log_trace(logger, "Esperando...");
+	loggear("Esperando...");
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 
 	socket_cliente = accept(listening_socket, (struct sockaddr *) &addr,
 			&addrlen);
 
-	loggear("Cliente conectado.");
+	log_info(logger, "Cliente conectado.");
 
 	loggear("Esperando mensaje del cliente.");
 
 	package_int cliente_packed = { .packed = -1 };
 
 	cliente_packed = recibir_packed(socket_cliente);
+
+	log_debug(logger, "%i", cliente_packed.packed);
 
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(cliente_packed, socket_cliente);
@@ -214,13 +216,15 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 
 	enviar_packed(server_packed, socket_cliente);
 
-	loggear("Mensaje enviado. Cerrando sesion con el cliente actual.");
+	loggear("Mensaje enviado. Handshake realizado.");
 
 	return socket_cliente;
 }
 
 void identificar_cliente(package_int id, int socket_cliente) {
 	pthread_t hilo_ESI;
+
+	log_debug(logger, "%i", id);
 
 	if (id.packed == 2) {
 		loggear(mensajeESI);
@@ -274,8 +278,9 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	log_trace(logger, "Mensaje recibidio del ESI numero: %i", id);
 
 	if (aviso.aviso == 0) {
-		loggear(
-				"ESI terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.");
+		log_info(logger,
+				"ESI número %i terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.",
+				id);
 
 		agregar_ESI(&finished_ESIs, esi);
 
@@ -322,8 +327,8 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		pthread_mutex_unlock(&sem_ESIs_size);
 		pthread_mutex_unlock(&sem_new_ESIs);
 
-		log_trace(logger,
-				"ESI número %i listo para ejecutar añadido a la cola.", id);
+		log_info(logger, "ESI número %i listo para ejecutar añadido a la cola.",
+				id);
 
 		if (ALGORITMO_PLANIFICACION.desalojo) {
 			desalojar();
@@ -348,7 +353,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 		agregar_ESI(&blocked_ESIs, esi);
 
-		log_trace(logger, "ESI número %i fue bloqueado.", id);
+		log_info(logger, "ESI número %i fue bloqueado.", id);
 
 		vaciar_ESI();
 	}
@@ -364,14 +369,14 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 		executing_ESI.rafaga_real++;
 
-		log_trace(logger, "ESI número %i ejecutó correctamente.", id);
+		log_info(logger, "ESI número %i ejecutó correctamente.", id);
 
 		pthread_mutex_unlock(&sem_ejecucion);
 	}
 
 	else {
 
-		loggear("El ESI se volvió loco. Terminando.");
+		log_warning(logger, "El ESI se volvió loco. Terminando.");
 		kill_ESI(esi);
 
 		return 0;
@@ -401,16 +406,21 @@ void desalojar(void) {
 
 		ESI new_ESI = executing_ESI;
 
-		log_debug(logger, "%f", ALFA);
+		log_debug(logger, "Alfa: %f", ALFA);
 
-		log_debug(logger, "%i", new_ESI.rafaga_real);
-		log_debug(logger, "%f", new_ESI.rafaga_estimada);
-		log_debug(logger, "%f", estimated_time(new_ESI));
-
-		log_debug(logger, "%f", tiempo_real(new_ESI));
-		log_debug(logger, "%f", estimado(new_ESI));
+		log_debug(logger, "Rafaga real: %i", new_ESI.rafaga_real);
+		log_debug(logger, "Rafaga estimada anterior: %f",
+				new_ESI.rafaga_estimada);
+		log_debug(logger, "Estimación de la próxima ráfaga: %f",
+				estimated_time(new_ESI));
 
 		new_ESI.rafaga_estimada = estimated_time(new_ESI);
+
+		log_debug(logger, "Rafaga real: %i", new_ESI.rafaga_real);
+		log_debug(logger, "Rafaga estimada anterior: %f",
+				new_ESI.rafaga_estimada);
+		log_debug(logger, "Estimación de la próxima ráfaga: %f",
+				estimated_time(new_ESI));
 
 		agregar_ESI(&new_ESIs, new_ESI);
 
@@ -418,7 +428,7 @@ void desalojar(void) {
 
 		vaciar_ESI();
 
-		loggear("ESI desalojado.");
+		log_info(logger, "ESI desalojado.");
 	}
 }
 
@@ -443,11 +453,11 @@ void kill_ESI(ESI esi) {
 	int envio = send(socket_ESI, package, packageSize, 0);
 
 	if (envio < 0) {
-		loggear("Fallo la terminación. Intentando de vuelta.");
+		loggear("Falló la terminación. Intentando de vuelta.");
 		kill_ESI(esi);
 	}
 
-	log_trace(logger, "ESI número %i has fainted!", esi.id);
+	log_info(logger, "ESI número %i has fainted!", esi.id);
 }
 
 int asignar_ID(ESI esi) {
@@ -461,6 +471,8 @@ int asignar_ID(ESI esi) {
 	enviar_aviso(socket_ESI, aviso_id);
 	pthread_mutex_unlock(&sem_ID);
 
+	log_debug(logger, "%i", aviso_id.id);
+
 	return (int) aviso_id.id;
 
 }
@@ -471,7 +483,7 @@ void planificar(void) {
 
 		ESI next_esi = dame_proximo_ESI();
 
-		log_trace(logger, "ESI número %i elegido.", next_esi.id);
+		log_info(logger, "ESI número %i elegido.", next_esi.id);
 
 		ejecutar(next_esi);
 	}
@@ -492,7 +504,7 @@ ESI dame_proximo_ESI() {
 			next_esi = highest_RR(new_ESIs);
 			break;
 		default:
-			loggear("FALLO EN EL ALGORITMO.");
+			log_error(logger, "FALLO EN EL ALGORITMO.");
 			break;
 		}
 	}

@@ -116,11 +116,11 @@ void deserializar_aviso(aviso_con_ID *aviso, char** package);
 	 * 		char** message: buffer de memoria con el mensaje a deserializar.
 	 */
 
-void avisar_cierre(int server_socket);
+void avisar_cierre(int sockfd);
 	/*
-	 * Descripción: manda un mensaje al servidor avisando su terminación.
+	 * Descripción: informa a un proceso que éste va a cerrar.
 	 * Argumentos:
-	 * 		int server_socket: socket del servidor.
+	 * 		int sockfd: socket al cual se ennviará el mensaje de cierre.
 	 */
 
 void salir_con_error(char* mensaje, int socket);

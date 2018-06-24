@@ -51,6 +51,8 @@ void establecer_conexiones(void) {
 int recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
+	log_debug(logger, "%i", aviso.id);
+
 	if (aviso.aviso == 0) {
 		salir_con_error("Fin de este ESI por parte del planificador",
 				server_socket);
@@ -80,14 +82,16 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	orden = recibir_aviso(socket_planificador);
 
+	log_debug(logger, "%i", orden.aviso);
+
 	if (orden.aviso == -1) {
-		loggear("Orden de terminación.");
+		log_info(logger, "Orden de terminación.");
 		enviar_aviso(socket_coordinador, aviso_fin);
 
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(
-				"Orden de ejecucion recibida. Solicitando permiso al coordinador.");
+				"Orden de ejecucion recibida.");
 	} else {
 		enviar_aviso(socket_coordinador, aviso_fin);
 		salir_con_error("Orden desconocida.", socket_planificador);
@@ -105,16 +109,16 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
-			log_trace(logger, "GET %s", parsed.argumentos.GET.clave);
+			log_info(logger, "GET %s", parsed.argumentos.GET.clave);
 			res = get(parsed, socket_coordinador);
 			break;
 		case SET:
-			log_trace(logger, "SET %s %s", parsed.argumentos.SET.clave,
+			log_info(logger, "SET %s %s", parsed.argumentos.SET.clave,
 					parsed.argumentos.SET.valor);
 			res = set(parsed, socket_coordinador);
 			break;
 		case STORE:
-			log_trace(logger, "STORE %s", parsed.argumentos.STORE.clave);
+			log_info(logger, "STORE %s", parsed.argumentos.STORE.clave);
 			res = store(parsed, socket_coordinador);
 			break;
 		default:
@@ -275,36 +279,6 @@ FILE* levantar_archivo(char* archivo) {
 	loggear("Archivo abierto correctamente.");
 
 	return fp;
-}
-
-bool solicitar_permiso(int socket_coordinador) {
-	aviso_con_ID pedido_permiso = { .aviso = 1, .id = this_id };
-
-	aviso_con_ID respuesta;
-
-	int packageSize = sizeof(pedido_permiso.aviso) + sizeof(pedido_permiso.id);
-	char *message = malloc(packageSize);
-	char *package = malloc(packageSize);
-
-	serializar_aviso(pedido_permiso, &message);
-
-	send(socket_coordinador, message, packageSize, 0);
-
-	loggear("Solicitud enviada.");
-
-	int res = recv(socket_coordinador, (void*) package, packageSize, 0);
-
-	if (res != 0) {
-		loggear("Solicitud confirmada.");
-	} else {
-		salir_con_error("Fallo la solicitud.", socket_coordinador);
-	}
-
-	deserializar_aviso(&(respuesta), &(package));
-
-	free(package);
-
-	return respuesta.aviso == 1;
 }
 
 t_esi_operacion parsear(char* line) {

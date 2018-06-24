@@ -18,7 +18,7 @@ void enviar_aviso(int sockfd, aviso_con_ID aviso) {
 	int envio = send(sockfd, message, packageSize, 0);
 
 	if (envio < 0) {
-		salir_con_error("Fallo el envio", sockfd);
+		salir_con_error("Falló el envío.", sockfd);
 	}
 
 	free(message);
@@ -34,7 +34,7 @@ aviso_con_ID recibir_aviso(int sockfd) {
 	int res = recv(sockfd, package, packageSize, 0);
 
 	if (res <= 0) {
-		salir_con_error("Falló el recibo del aviso.", sockfd);
+		salir_con_error("Falló la recepción del aviso.", sockfd);
 	}
 
 	deserializar_aviso(&(ret_aviso), &(package));
@@ -111,7 +111,7 @@ void terminar_conexion(int sockfd) {
 	int envio = send(sockfd, package, packageSize, 0);
 
 	if (envio < 0) {
-		loggear("Fallo la terminación. Intentando de vuelta.");
+		log_warning(logger, "Fallo la terminación. Intentando de vuelta.");
 		terminar_conexion(sockfd);
 	}
 
@@ -270,6 +270,8 @@ int levantar_servidor(char* puerto, int tries) {
 		levantar_servidor(puerto, tries + 1);
 	}
 
+	log_info(logger, "Servidor levantado.");
+
 	return listening_socket;
 }
 
@@ -302,7 +304,7 @@ int conectar_a(char *ip, char *puerto, package_int id, int tries) {
 		conectar_a(ip, puerto, id, tries + 1);
 	}
 
-	loggear("Conectó sin problemas.");
+	log_info(logger, "Conectó sin problemas.");
 
 	freeaddrinfo(serverInfo);
 
@@ -315,19 +317,21 @@ int conectar_a(char *ip, char *puerto, package_int id, int tries) {
 
 	chequear_servidor(server_package, server_socket);
 
-	loggear("Handshake realizado sin problemas.");
+	log_info(logger, "Handshake realizado sin problemas.");
 
 	return server_socket;
 }
 
 void chequear_servidor(package_int id, int server_socket) {
 
+	log_debug(logger, "%i", id);
+
 	if (id.packed == 0) {
-		loggear("Servidor reconocido.");
-		loggear(mensajeCoordinador);
+		log_info(logger, "Servidor reconocido.");
+		log_info(logger, mensajeCoordinador);
 	} else if (id.packed == 1) {
-		loggear("Servidor reconocido.");
-		loggear(mensajePlanificador);
+		log_info(logger, "Servidor reconocido.");
+		log_info(logger, mensajePlanificador);
 	} else {
 		salir_con_error("Servidor desconocido, cerrando conexión.",
 				server_socket);

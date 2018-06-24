@@ -55,7 +55,8 @@ void cargar_configuracion(void) {
 	RETARDO = dame_retardo(retardo);
 	log_info(logger, "Retardo: %i (en microsegundos)", retardo);
 
-	PUERTO_PLANIFICADOR = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	PUERTO_PLANIFICADOR = config_get_string_value(config,
+			"PUERTO_PLANIFICADOR");
 	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
 
 	loggear("Configuración cargada.");
@@ -88,7 +89,7 @@ float dame_retardo(int retardo_int) {
 
 int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 
-	loggear("Esperando cliente...");
+	log_info(logger, "Esperando cliente...");
 
 	listen(listening_socket, BACKLOG);
 
@@ -99,7 +100,7 @@ int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 	socketCliente = accept(listening_socket, (struct sockaddr *) &addr,
 			&addrlen);
 
-	loggear("Cliente conectado.");
+	log_info(logger, "Cliente conectado.");
 
 	loggear("Esperando mensaje del cliente.");
 
@@ -107,32 +108,34 @@ int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 
 	id_cliente = recibir_packed(socketCliente);
 
-	loggear("Mensaje recibido exitosamente. Identificando cliente...");
+	log_info(logger, "Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(id_cliente, socketCliente);
 
 	loggear("Enviando id al cliente.");
 
 	enviar_packed(id, socketCliente);
 
+	log_info(logger, "Handshake realizado correctamente.");
+
 	return socketCliente;
 }
 
 void identificar_cliente(package_int id, int socket_cliente) {
 	if (id.packed == 1) {
-		loggear(mensajePlanificador);
+		log_info(logger, mensajePlanificador);
 		pthread_create(&hilo_planificador, NULL, atender_Planificador,
 				(void*) socket_cliente);
 		pthread_detach(hilo_planificador);
 	}
 
 	else if (id.packed == 2) {
-		loggear(mensajeESI);
+		log_info(logger, mensajeESI);
 		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
 		pthread_detach(hilo_ESI);
 	}
 
 	else if (id.packed == 3) {
-		loggear(mensajeInstancia);
+		log_info(logger, mensajeInstancia);
 		pthread_create(&hilo_instancia, NULL, atender_Instancia,
 				(void*) socket_cliente);
 		pthread_detach(hilo_instancia);
@@ -163,38 +166,34 @@ void* atender_ESI(void* un_socket) {
 int chequear_solicitud(int socket_cliente) {
 	aviso_con_ID aviso_cliente = recibir_aviso(socket_cliente);
 
+	log_debug(logger, "%i", aviso_cliente.aviso);
+
 	if (aviso_cliente.aviso == 0) {
-		loggear("Fin de ESI.");
+		log_info(logger, "Fin de ESI.");
 		return 0;
 	}
 
 	else if (aviso_cliente.aviso == 1) {
-		loggear("Ejecución de ESI.");
+		log_info(logger, "Ejecución de ESI.");
 	}
 
 	else if (aviso_cliente.aviso == 11) {
-		loggear("GET.");
-
 		log_debug(logger, "%i", aviso_cliente.id);
 		get(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 12) {
-		loggear("SET.");
-
 		log_debug(logger, "%i", aviso_cliente.id);
 		set(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 13) {
-		loggear("STORE");
-
 		log_debug(logger, "%i", aviso_cliente.id);
 		store(socket_cliente, aviso_cliente.id);
 	}
 
 	else {
-		loggear("Mensaje erróneo. Abortando ESI.");
+		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
 		terminar_conexion(socket_cliente);
 		return 0;
 	}
@@ -235,7 +234,7 @@ int dame_response(char* clave, uint32_t id) {
 	}
 
 	else {
-		loggear("Bloqueando ESI.");
+		log_warning(logger, "Bloqueando ESI %i.", id);
 		bloquear_ESI(clave, id);
 		return 5;
 	}
@@ -255,8 +254,6 @@ void set(int socket_cliente, uint32_t id) {
 	char* valor = recibir_cadena(socket_cliente, valor_size);
 
 	package_int response;
-
-	log_trace(logger, "%s %s", clave, valor);
 
 	response.packed = settear(valor, clave, id);
 
@@ -304,17 +301,21 @@ int settear(char* valor, char* clave, uint32_t id) {
 	while (puntero != NULL) {
 		if (strcmp(puntero->clave, clave) == 0) {
 			if (puntero->block_id != id) {
-				log_trace(logger, "%i %i", puntero->block_id, id);
-				loggear("Bloqueando ESI.");
+				log_debug(logger, "%i %i", puntero->block_id, id);
+
+				log_warning(logger, "Bloqueando ESI %i.", id);
 				bloquear_ESI(clave, id);
 				return 5;
 			}
 
 			puntero->valor = valor;
 
-			loggear("Set exitoso.");
+			log_info(logger, "SET %s %s", clave, valor);
+
 			return 20;
 		}
+
+		puntero = puntero->sgte;
 	}
 
 	return 5;
@@ -322,7 +323,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 
 int get_packed(char* clave, uint32_t id) {
 	if (!existe(clave)) {
-		loggear("Bloqueando ESI.");
+		log_warning(logger, "Bloqueando ESI %i.", id);
 		bloquear_ESI(clave, id);
 		return 5;
 	}
@@ -331,26 +332,26 @@ int get_packed(char* clave, uint32_t id) {
 		int blocker = get_clave_id(clave);
 
 		if (blocker == -1) {
-			loggear("Bloqueando ESI.");
+			log_warning(logger, "Bloqueando ESI %i.", id);
 			bloquear_ESI(clave, id);
 			return 5;
 		}
 
 		if (blocker != id) {
-			loggear("Bloqueando ESI.");
+			log_warning(logger, "Bloqueando ESI %i.", id);
 			bloquear_ESI(clave, id);
 			return 5;
 		}
 
 		else if (!esta_bloqueada(clave)) {
-			loggear("Bloqueando ESI.");
+			log_warning(logger, "Bloqueando ESI %i.", id);
 			bloquear_ESI(clave, id);
 			return 5;
 		}
 
 		else {
 			desbloquear(clave);
-			loggear("Store exitoso.");
+			log_info(logger, "STORE %s.", clave);
 			return 20;
 		}
 	}
@@ -451,7 +452,7 @@ void* atender_Planificador(void* un_socket) {
 		log_debug(logger, "%i", aviso_plani.aviso);
 
 		if (aviso_plani.aviso == 0) {
-			loggear("Fin de Planificador. Cerrando sesión y terminando.");
+			log_info(logger, "Fin de Planificador. Cerrando sesión y terminando.");
 			exit(42);
 			break;
 		}
@@ -519,7 +520,7 @@ void desbloquear(char* clave) {
 		eliminar_clave(&claves_bloqueadas, clave);
 		agregar_clave(&claves_disponibles, clave, -1);
 
-		log_trace(logger, "La clave %s fue desbloqueada.", clave);
+		log_info(logger, "La clave %s fue desbloqueada.", clave);
 	}
 
 }
@@ -552,7 +553,7 @@ void bloquear(char* clave, uint32_t id) {
 		eliminar_clave(&claves_disponibles, clave);
 		agregar_clave(&claves_bloqueadas, clave, id);
 
-		log_trace(logger, "La clave %s fue bloqueada por %i.", clave, id);
+		log_info(logger, "La clave %s fue bloqueada por %i (0 indica usuario).", clave, id);
 	}
 
 }

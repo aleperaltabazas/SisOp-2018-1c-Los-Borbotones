@@ -125,21 +125,6 @@ FILE* levantar_archivo(char* archivo);
 	 * 		char* archivo: el archivo a abrir.
 	 */
 
-bool solicitar_permiso(int socket_coordinador);
-	/*
-	 * Descripción: devuelve un booleano si puede ejecutar la pr�xima instrucción o no.
-	 * Argumentos:
-	 * 		int socket_coordinador: socket del coordinador, quien le informa si el recurso que
-	 * 			solicit� est� disponible
-	 */
-
-void avisar_cierre(int sockfd);
-	/*
-	 * Descripción: informa a proceso que �ste va a cerrar.
-	 * Argumentos:
-	 * 		int sockfd: socket al cu�l se enviar� el mensaje de cierre.
-	 */
-
 void esperar_ejecucion(int socket_coordinador, int socket_planificador);
 	/*
 	 * Descripción: espera a recibir una orden de ejecución por parte del planificador y llama a
