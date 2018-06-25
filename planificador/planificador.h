@@ -407,4 +407,11 @@ ESI get_ESI(uint32_t id, t_esi_list lista);
 	 * 		t_esi_list lista: la lista donde buscar.
 	 */
 
+void mostrar(t_esi_node* puntero);
+	/*
+	 * Descripción: muestra el id de los ESIs de una lista.
+	 * Argumentos:
+	 * 		t_esi_node* puntero: puntero de la lista.
+	 */
+
 #endif /* PLANIFICADOR_H_ */

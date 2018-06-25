@@ -12,6 +12,8 @@
 
 //Variables locales
 
+uint32_t this_id;
+
 char* IP_COORDINADOR;
 char* PUERTO_COORDINADOR;
 char* IP_PLANIFICADOR;
@@ -96,7 +98,7 @@ t_esi_operacion parsear(char* line);
 	 * 		char* line: linea a parsear.
 	 */
 
-int recibir_ID(int server_socket);
+uint32_t recibir_ID(int server_socket);
 	/*
 	 * Descripción: recibe un aviso del servidor y en caso de ser un id, lo almacena en this_id.
 	 * Argumentos:
@@ -186,7 +188,7 @@ void cargar_configuracion(void);
 	 * 		void
 	 */
 
-int get(t_esi_operacion parsed, int socket_coordinador);
+uint32_t get(t_esi_operacion parsed, int socket_coordinador);
 	/*
 	 * Descripción: hace la operación de get sobre la clave del parseo y le informa al coordinador.
 	 * Argumentos:
@@ -194,7 +196,7 @@ int get(t_esi_operacion parsed, int socket_coordinador);
 	 * 		int socket_coordinador: socket del coordinador.
 	 */
 
-int set(t_esi_operacion parsed, int socket_coordinador);
+uint32_t set(t_esi_operacion parsed, int socket_coordinador);
 	/*
 	 * Descripción: hace la operación de set sobre la clave del parseo y le informa al coordinador.
 	 * Argumentos:
@@ -202,12 +204,19 @@ int set(t_esi_operacion parsed, int socket_coordinador);
 	 * 		int socket_coordinador: socket del coordinador.
 	 */
 
-int store(t_esi_operacion parsed, int socket_coordinador);
+uint32_t store(t_esi_operacion parsed, int socket_coordinador);
 	/*
 	 * Descripción: hace la operación de store sobre la clave del parseo y le informa al coordinador.
 	 * Argumentos:
 	 * 		t_esi_operacion parsed: la sentencia parseada.
 	 * 		int socket_coordinador: socket del coordinador.
+	 */
+
+void clear(t_parsed_list* lista);
+	/*
+	 * Descripción: libera la memoria ocupada por la lista.
+	 * Argumentos:
+	 * 		t_parsed_list* lista: puntero a la lista.
 	 */
 
 

@@ -7,8 +7,6 @@
 
 #include "esi.h"
 
-int this_id;
-
 int main(int argc, char** argv) {
 
 	iniciar(argv);
@@ -48,15 +46,17 @@ void establecer_conexiones(void) {
 	loggear("Conexiones realizadas.");
 }
 
-int recibir_ID(int server_socket) {
+uint32_t recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
-	log_debug(logger, "%i", aviso.id);
+	log_debug(logger, "%i", aviso.aviso);	
 
 	if (aviso.aviso == 0) {
+		clear(&parsed_ops);
 		salir_con_error("Fin de este ESI por parte del planificador",
 				server_socket);
 	} else if (aviso.aviso != 1) {
+		clear(&parsed_ops);
 		salir_con_error("Orden desconocida.", server_socket);
 	}
 
@@ -88,11 +88,14 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		log_info(logger, "Orden de terminación.");
 		enviar_aviso(socket_coordinador, aviso_fin);
 
+		clear(&parsed_ops);
+
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear(
 				"Orden de ejecucion recibida.");
 	} else {
+		clear(&parsed_ops);
 		enviar_aviso(socket_coordinador, aviso_fin);
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
@@ -130,8 +133,6 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 	if (res == 20) {
 		eliminar_parseo(&parsed_ops);
 
-		sleep(2);
-
 		enviar_aviso(socket_planificador, aviso_ejecute);
 	}
 
@@ -140,18 +141,20 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 	}
 
 	else {
+		clear(&parsed_ops);
 		log_error(logger, "Falló el retorno de la operación.");
 		exit(-1);
 	}
 
 }
 
-int get(t_esi_operacion parsed, int socket_coordinador) {
+uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_get);
 
 	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
 
 	if (aviso_coordi.aviso != 10) {
+		clear(&parsed_ops);
 		salir_con_error("Aviso desconocido", socket_coordinador);
 	}
 
@@ -161,7 +164,7 @@ int get(t_esi_operacion parsed, int socket_coordinador) {
 	package_int size_package = { .packed = clave_size };
 
 	enviar_packed(size_package, socket_coordinador);
-	sleep(3);
+	sleep(1);
 	enviar_cadena(clave, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);
@@ -169,12 +172,13 @@ int get(t_esi_operacion parsed, int socket_coordinador) {
 	return response.packed;
 }
 
-int set(t_esi_operacion parsed, int socket_coordinador) {
+uint32_t set(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_set);
 
 	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
 
 	if (aviso_coordi.aviso != 10) {
+		clear(&parsed_ops);
 		salir_con_error("Aviso desconocido", socket_coordinador);
 	}
 
@@ -188,11 +192,11 @@ int set(t_esi_operacion parsed, int socket_coordinador) {
 	package_int valor_size_package = { .packed = valor_size };
 
 	enviar_packed(clave_size_package, socket_coordinador);
-	sleep(3);
+	sleep(1);
 	enviar_cadena(clave, socket_coordinador);
-	sleep(3);
+	sleep(1);
 	enviar_packed(valor_size_package, socket_coordinador);
-	sleep(3);
+	sleep(1);
 	enviar_cadena(valor, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);
@@ -200,7 +204,7 @@ int set(t_esi_operacion parsed, int socket_coordinador) {
 	return response.packed;
 }
 
-int store(t_esi_operacion parsed, int socket_coordinador) {
+uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
 	enviar_aviso(socket_coordinador, aviso_store);
 
 	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
@@ -215,7 +219,7 @@ int store(t_esi_operacion parsed, int socket_coordinador) {
 	package_int size_package = { .packed = clave_size };
 
 	enviar_packed(size_package, socket_coordinador);
-	sleep(3);
+	sleep(1);
 	enviar_cadena(clave, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);
@@ -304,6 +308,12 @@ t_esi_operacion parsear(char* line) {
 	}
 
 	return parsed;
+}
+
+void clear(t_parsed_list* lista){
+	while(lista->head != NULL){
+		eliminar_parseo(lista);
+	}
 }
 
 t_parsed_node* crear_nodo(t_esi_operacion parsed) {

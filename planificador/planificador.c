@@ -756,6 +756,10 @@ void desbloquear_ESI(uint32_t id) {
 
 	eliminar_ESI(&blocked_ESIs, desbloqueado);
 
+	pthread_mutex_lock(&sem_clock);
+	desbloqueado.tiempo_arribo = tiempo;
+	pthread_mutex_unlock(&sem_clock);
+
 	pthread_mutex_lock(&sem_new_ESIs);
 	pthread_mutex_lock(&sem_ESIs_size);
 	agregar_ESI(&new_ESIs, desbloqueado);
@@ -812,32 +816,24 @@ void avisar_bloqueo(int server_socket, char* clave) {
 }
 
 void dame_datos() {
-	t_esi_node* puntero = new_ESIs.head;
-
 	printf("ESI ejecutando: %i \n", executing_ESI.id);
-	printf("ESIs listos para ejecutar: ");
-	while (puntero != NULL) {
-		printf("%i, ", new_ESIs.head->esi.id);
-		puntero = puntero->sgte;
-	}
 
-	printf("\n");
+	t_esi_node* puntero = new_ESIs.head;
+	printf("ESIs listos para ejecutar: ");
+	mostrar(puntero);
 
 	puntero = blocked_ESIs.head;
-
 	printf("ESIs bloqueados: ");
-	while (puntero != NULL) {
-		printf("%i, ", new_ESIs.head->esi.id);
-		puntero = puntero->sgte;
-	}
-
-	printf("\n");
+	mostrar(puntero);
 
 	puntero = finished_ESIs.head;
-
 	printf("ESIs terminados: ");
+	mostrar(puntero);
+}
+
+void mostrar(t_esi_node* puntero) {
 	while (puntero != NULL) {
-		printf("%i, ", new_ESIs.head->esi.id);
+		printf("%i, ", puntero->esi.id);
 		puntero = puntero->sgte;
 	}
 
@@ -892,6 +888,7 @@ void listarOpciones() {
 			"11: Muestra datos de la ejecución (ESI ejecutando, ESIs listos, bloqueados y terminados \n");
 	printf("12: Bloquea una clave \n");
 	printf("13: Desbloquea una clave \n");
+	printf("14: Desaloja al ESI actual \n");
 	printf("Introduzca la opcion deseada \n");
 
 }

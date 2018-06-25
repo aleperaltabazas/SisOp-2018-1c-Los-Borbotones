@@ -24,7 +24,7 @@
 //Variables super globales
 
 #define PACKAGE_SIZE 1024
-#define BACKLOG 5
+#define BACKLOG 20
 
 t_log * logger;
 char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";
