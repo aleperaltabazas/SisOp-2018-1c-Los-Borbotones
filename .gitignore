@@ -32,7 +32,6 @@
 *.dylib
 
 #gitignores
-*.gitignore
 Coordinador/.gitignore
 shared-library/.gitignore
 Instancias/.gitignore
@@ -49,7 +48,7 @@ planificador/.gitignore
 coordinador
 instancia
 planificador
-esi
+ESI
 
 # Debug files
 *.dSYM/
