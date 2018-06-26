@@ -213,7 +213,7 @@ uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
 		salir_con_error("Aviso desconocido", socket_coordinador);
 	}
 
-	char* clave = parsed.argumentos.GET.clave;
+	char* clave = parsed.argumentos.STORE.clave;
 	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
 
 	package_int size_package = { .packed = clave_size };

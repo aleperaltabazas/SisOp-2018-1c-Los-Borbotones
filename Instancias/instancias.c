@@ -51,7 +51,9 @@ int main(int argc, char** argv) {
 void iniciar(void) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
+
 	cargar_configuracion();
+	crear_punto_de_montaje();
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
@@ -62,6 +64,28 @@ void iniciar(void) {
 
 	log_trace(logger, "Posicion de memoria inicial en main: %d \n",
 			*almacenamiento_de_valores);
+}
+
+void crear_punto_de_montaje(void){
+	log_info(logger, "Creando punto de montaje...");
+
+	struct stat sb;
+
+	sleep(1);
+
+	if(stat(PUNTO_MONTAJE, &sb) == 0){
+		log_warning(logger, "Ya existe una carpeta %s.", PUNTO_MONTAJE);
+		return;
+	}
+
+	int status = mkdir(PUNTO_MONTAJE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+	if(status < 0){
+		log_error(logger, "Falló la creación de punto de montaje.");
+		exit(-1);
+	}
+
+	log_info(logger, "Punto de montaje creado exitósamente.");
 }
 
 algoritmo_reemplazo dame_algoritmo(char* algoritmo_src){

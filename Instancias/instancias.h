@@ -91,6 +91,14 @@ algoritmo_reemplazo dame_algoritmo(char* algoritmo_src);
 /*
  * Se selecciona el algoritmo dentro de las 3 opciones posibles
  */
+
+void crear_punto_de_montaje(void);
+	/*
+	 * Descripción: crea la carpeta indicada en el punto de montaje.
+	 * Argumentos:
+	 * 		void
+	 */
+
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
 /*
  * Se deserializa dinamicamente los parametros enviados por el coordinador para el caso SET

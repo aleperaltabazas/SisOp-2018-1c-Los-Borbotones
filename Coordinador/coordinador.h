@@ -356,6 +356,13 @@ void eliminar_blocked(t_blocked_list* lista, uint32_t id);
 	 * 		uint32_t id: el id del nodo a eliminar.
 	 */
 
+bool esta_vacia(t_blocked_list* lista);
+	/*
+	 * Descripción: devuelve si una lista está vacía, o sea que su head apunte a NULL.
+	 * Argumentos:
+	 * 		t_blocked_list* lista: puntero a la lista.
+	 */
+
 void asignar_parametros_a_enviar();
 	/*
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.

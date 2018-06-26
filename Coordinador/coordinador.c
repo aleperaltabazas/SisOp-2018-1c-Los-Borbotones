@@ -281,9 +281,12 @@ void store(int socket_cliente, uint32_t id) {
 		aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
 				blocked_ESIs) };
 
-		liberar_ESI(&blocked_ESIs, unlock.id);
+		if (!esta_vacia(&blocked_ESIs)) {
+			liberar_ESI(&blocked_ESIs, unlock.id);
+			enviar_aviso(socket_planificador, unlock);
 
-		enviar_aviso(socket_planificador, unlock);
+		}
+
 	}
 
 	log_debug(logger, "%i", response.packed);
@@ -365,6 +368,10 @@ void bloquear_ESI(char* clave, uint32_t id) {
 	blocked bloqueado = { .clave = clave, .id = id };
 
 	agregar_blocked(&blocked_ESIs, bloqueado);
+}
+
+bool esta_vacia(t_blocked_list* lista) {
+	return lista->head == NULL;
 }
 
 void liberar_ESI(t_blocked_list* lista, uint32_t id) {
@@ -452,7 +459,8 @@ void* atender_Planificador(void* un_socket) {
 		log_debug(logger, "%i", aviso_plani.aviso);
 
 		if (aviso_plani.aviso == 0) {
-			log_info(logger, "Fin de Planificador. Cerrando sesión y terminando.");
+			log_info(logger,
+					"Fin de Planificador. Cerrando sesión y terminando.");
 			exit(42);
 			break;
 		}
@@ -553,7 +561,8 @@ void bloquear(char* clave, uint32_t id) {
 		eliminar_clave(&claves_disponibles, clave);
 		agregar_clave(&claves_bloqueadas, clave, id);
 
-		log_info(logger, "La clave %s fue bloqueada por %i (0 indica usuario).", clave, id);
+		log_info(logger, "La clave %s fue bloqueada por %i (0 indica usuario).",
+				clave, id);
 	}
 
 }

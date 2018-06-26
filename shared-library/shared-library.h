@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <readline/readline.h>
