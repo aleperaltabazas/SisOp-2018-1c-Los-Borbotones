@@ -67,8 +67,9 @@ void iniciar(void) {
 }
 
 FILE* open_file(char* file_name){
-	char* path = strcat(PUNTO_MONTAJE, file_name);
-
+	char* file_txt = strcat(file_name, ".txt");
+	char* path = strcat(PUNTO_MONTAJE, file_txt);
+	
 	FILE* fd = fopen(path, "w");
 
 	if(fd == NULL){
