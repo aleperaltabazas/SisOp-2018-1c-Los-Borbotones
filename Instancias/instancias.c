@@ -53,7 +53,7 @@ void iniciar(void) {
 	loggear("Cargando configuración.");
 
 	cargar_configuracion();
-	crear_punto_de_montaje();
+	setup_montaje();
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
@@ -66,7 +66,7 @@ void iniciar(void) {
 			*almacenamiento_de_valores);
 }
 
-FILE* crear_archivo(char* file_name){
+FILE* open_file(char* file_name){
 	char* path = strcat(PUNTO_MONTAJE, file_name);
 
 	FILE* fd = fopen(path, "w");
@@ -92,7 +92,7 @@ void write_file(FILE* fd, char* valor){
 	loggear("Archivo escrito correctamente");
 }
 
-void crear_punto_de_montaje(void){
+void setup_montaje(void){
 	log_info(logger, "Creando punto de montaje...");
 
 	struct stat sb;

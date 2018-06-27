@@ -92,14 +92,14 @@ algoritmo_reemplazo dame_algoritmo(char* algoritmo_src);
  * Se selecciona el algoritmo dentro de las 3 opciones posibles
  */
 
-void crear_punto_de_montaje(void);
+void setup_montaje(void);
 	/*
-	 * Descripción: crea la carpeta indicada en el punto de montaje.
+	 * Descripción: crea el punto de montaje.
 	 * Argumentos:
 	 * 		void
 	 */
 
-FILE* crear_archivo(char* name);
+FILE* open_file(char* name);
 	/*
 	 * Descripción: devuelve un file descriptor del archivo creado con name en el punto de montaje.
 	 * Argumentos:

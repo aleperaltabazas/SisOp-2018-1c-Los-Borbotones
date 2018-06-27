@@ -481,9 +481,13 @@ void planificar(void) {
 	if (consola_planificacion && ESIs_size > 0 && !ejecutando) {
 		pthread_mutex_lock(&sem_ejecucion);
 
-		ESI next_esi = dame_proximo_ESI();
+		ESI next_esi = executing_ESI;
 
-		log_info(logger, "ESI número %i elegido.", next_esi.id);
+		if(no_hay_ESI()){
+			next_esi = dame_proximo_ESI();
+			log_info(logger, "ESI número %i elegido.", next_esi.id);
+
+		}
 
 		ejecutar(next_esi);
 	}
@@ -769,6 +773,10 @@ void desbloquear_ESI(uint32_t id) {
 	pthread_mutex_unlock(&sem_ESIs_size);
 
 	log_trace(logger, "El ESI número %i fue desbloqueado.", id);
+
+	if(ALGORITMO_PLANIFICACION.desalojo){
+		desalojar();
+	}
 }
 
 ESI get_ESI(uint32_t id, t_esi_list lista) {
