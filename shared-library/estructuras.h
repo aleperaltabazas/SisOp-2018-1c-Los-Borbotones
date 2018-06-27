@@ -25,6 +25,7 @@ typedef struct ESI {
 
 typedef struct entrada {
 	char * clave;
+	int tiempo_sin_ser_referenciado;
 	int pos_valor;
 	int tamanio_valor;
 } entrada;

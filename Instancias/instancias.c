@@ -63,7 +63,7 @@ void iniciar(void) {
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
-	cantidad_entradas = 10;
+	cantidad_entradas = 3;
 	tamanio_entrada = 8;
 
 	inicializar(cantidad_entradas, tamanio_entrada);
@@ -182,6 +182,8 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 
 	entradas_asignadas.head = NULL;
 
+	puntero_entrada = 0;
+
 }
 
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
@@ -258,8 +260,6 @@ int posicion_de_entrada_con_clave(parametros_set parametros){
 		nodo_auxiliar = nodo_auxiliar -> siguiente;
 	}
 
-	loggear("No hay entradas con la clave:");
-
 	return -1;
 }
 
@@ -302,8 +302,111 @@ void generar_entrada(parametros_set parametros){
 
 	//Aplicaria el algoritmo de reemplazo y volveria a intentar
 
-	//generar_entrada(parametros);
+	eliminar_entrada_segun_algoritmo();
+
+	generar_entrada(parametros);
 }
+
+void eliminar_entrada_segun_algoritmo(){
+	switch(ALGORITMO_REEMPLAZO){
+		case CIRC:
+				borrar_entrada(obtener_entrada_segun_CIRC());
+				log_trace(logger, "CIRC, Puntero: %i", puntero_entrada);
+				break;
+		case LRU:
+				borrar_entrada(obtener_entrada_segun_LRU());
+				break;
+		case BSU:
+				borrar_entrada(obtener_entrada_segun_BSU());
+				break;
+		default:
+				break;
+	}
+}
+
+entrada obtener_entrada_segun_CIRC(){
+
+	entradas_node* puntero = entradas_asignadas.head;
+
+	while (puntero->una_entrada.pos_valor != puntero_entrada) {
+
+		puntero = puntero->siguiente;
+
+		//Si no encontre ninguna entrada pruebo en el siguiente, porque a lo mejor justo no hay algun valor
+		//donde apunta el puntero.
+		if(puntero == NULL){
+
+			//Termine la lista y no lo encontre, tengo que posicionarme al principio
+			puntero = entradas_asignadas.head;
+			puntero_entrada++;
+
+			//Si me pase de la cantidad de entradas reseteo el puntero haciendolo circular
+			if(puntero_entrada >= cantidad_entradas){
+				puntero_entrada = 0;
+			}
+		}
+
+	}
+
+	puntero_entrada += obtener_entradas_que_ocupa(puntero->una_entrada.tamanio_valor);
+
+	return puntero -> una_entrada;
+}
+
+entrada obtener_entrada_segun_LRU(){
+	return entradas_asignadas.head-> una_entrada;
+}
+
+entrada obtener_entrada_segun_BSU(){
+	return entradas_asignadas.head -> una_entrada;
+}
+
+void borrar_entrada(entrada entrada_a_eliminar) {
+	if (entradas_asignadas.head != NULL) {
+
+		entrada head = first();
+
+		if (entrada_a_eliminar.pos_valor == head.pos_valor) {
+			entradas_node* eliminado = entradas_asignadas.head;
+			entradas_asignadas.head = entradas_asignadas.head->siguiente;
+			liberar_entradas_disponibles(eliminado);
+			destruir_nodo_entrada(eliminado);
+		}
+
+		else {
+
+			entradas_node* puntero = entradas_asignadas.head;
+
+			while (puntero->una_entrada.pos_valor != entrada_a_eliminar.pos_valor) {
+				puntero = puntero->siguiente;
+			}
+
+			entradas_node* eliminado = puntero->siguiente;
+			puntero->siguiente = eliminado->siguiente;
+			liberar_entradas_disponibles(eliminado);
+			destruir_nodo_entrada(eliminado);
+		}
+	}
+
+}
+
+void liberar_entradas_disponibles(entradas_node * entrada_a_eliminar){
+	int posicion = entrada_a_eliminar -> una_entrada.pos_valor;
+	int entradas_a_liberar = obtener_entradas_que_ocupa(entrada_a_eliminar -> una_entrada.tamanio_valor);
+
+	int i;
+
+	for(i = 0; posicion + i < entradas_a_liberar; i++){
+		entradas_disponibles[posicion + i] = 0;
+	}
+}
+
+entrada first(){
+	entrada primer_entrada = entradas_asignadas.head->una_entrada;
+
+	return primer_entrada;
+}
+
 
 int obtener_entradas_que_ocupa(int tamanio_valor){
 	return 1 + (tamanio_valor - 1) / tamanio_entrada;
@@ -314,6 +417,7 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tama
 	nueva_entrada.clave = parametros.clave;
 	nueva_entrada.pos_valor = entrada_seleccionada;
 	nueva_entrada.tamanio_valor = tamanio_valor;
+	nueva_entrada.tiempo_sin_ser_referenciado = 0;
 
 	loggear("Entrada creada, agregando a la lista...");
 

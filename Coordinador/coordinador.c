@@ -707,10 +707,12 @@ void* atender_Instancia(void* un_socket) {
 
 	valor_set.clave = "OtraClaveSUPERGIGANTE";
 	valor_set.tamanio_clave = 21;
-	valor_set.valor = "PALABRAGRANDEDEMASIADOGRANDE";
-	valor_set.tamanio_valor = 28;
+	valor_set.valor = "APARECE";
+	valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 21 + 28 + 2*4;
+	tamanio_parametros_set = 21 + 7 + 2*4;
+
+	enviar_orden_instancia(0, un_socket, 15);
 
 	for(i=0; i < 4; i++){
 

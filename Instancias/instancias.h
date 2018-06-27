@@ -143,11 +143,22 @@ void destruir_nodo_entrada(entradas_node* nodo);
 void compactacion();
 char * leer_clave_valor(entradas_node * puntero);
 
+void eliminar_entrada_segun_algoritmo();
+entrada obtener_entrada_segun_CIRC();
+entrada obtener_entrada_segun_LRU();
+entrada obtener_entrada_segun_BSU();
+entrada first();
+void borrar_entrada(entrada entrada_a_eliminar);
+void liberar_entradas_disponibles(entradas_node * entrada_a_eliminar);
+
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar;
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_entrada_list entradas_asignadas;
+
+//Planteo el puntero entrada como un simple int que coincide con la posicion de la entrada
+int puntero_entrada;
 
 //Funciones para el coordinador
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);
