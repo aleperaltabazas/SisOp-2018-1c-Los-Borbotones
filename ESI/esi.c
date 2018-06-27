@@ -39,7 +39,8 @@ void ejecutar_sentencias(void) {
 void establecer_conexiones(void) {
 	loggear("Estableciendo conexiones...");
 
-	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id_ESI, 0);
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR, id_ESI,
+			0);
 	socket_planificador = conectar_a(IP_PLANIFICADOR, PUERTO_PLANIFICADOR,
 			id_ESI, 0);
 
@@ -49,7 +50,7 @@ void establecer_conexiones(void) {
 uint32_t recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
-	log_debug(logger, "%i", aviso.aviso);	
+	log_debug(logger, "%i", aviso.aviso);
 
 	if (aviso.aviso == 0) {
 		clear(&parsed_ops);
@@ -92,8 +93,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 		exit(1);
 	} else if (orden.aviso == 2) {
-		loggear(
-				"Orden de ejecucion recibida.");
+		loggear("Orden de ejecucion recibida.");
 	} else {
 		clear(&parsed_ops);
 		enviar_aviso(socket_coordinador, aviso_fin);
@@ -310,8 +310,8 @@ t_esi_operacion parsear(char* line) {
 	return parsed;
 }
 
-void clear(t_parsed_list* lista){
-	while(lista->head != NULL){
+void clear(t_parsed_list* lista) {
+	while (lista->head != NULL) {
 		eliminar_parseo(lista);
 	}
 }

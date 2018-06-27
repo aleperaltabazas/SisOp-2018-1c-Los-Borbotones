@@ -275,13 +275,14 @@ void store(int socket_cliente, uint32_t id) {
 	package_int response;
 	response.packed = get_packed(clave, id);
 
+	enviar_packed(response, socket_cliente);
+
 	if (response.packed != 5) {
 		hacer_store(clave);
 
-		aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
-				blocked_ESIs) };
-
 		if (!esta_vacia(&blocked_ESIs)) {
+			aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
+					blocked_ESIs) };
 			liberar_ESI(&blocked_ESIs, unlock.id);
 			enviar_aviso(socket_planificador, unlock);
 
@@ -291,7 +292,6 @@ void store(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "%i", response.packed);
 
-	enviar_packed(response, socket_cliente);
 }
 
 int settear(char* valor, char* clave, uint32_t id) {
@@ -333,6 +333,7 @@ int get_packed(char* clave, uint32_t id) {
 
 	else {
 		int blocker = get_clave_id(clave);
+		log_trace(logger, "%i", blocker);
 
 		if (blocker == -1) {
 			log_warning(logger, "Bloqueando ESI %i.", id);
@@ -441,6 +442,8 @@ uint32_t get_clave_id(char* clave) {
 		if (strcmp(puntero->clave, clave) == 0) {
 			return puntero->block_id;
 		}
+
+		puntero = puntero->sgte;
 	}
 
 	return -1;
