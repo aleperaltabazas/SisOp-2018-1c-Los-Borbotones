@@ -99,6 +99,21 @@ void crear_punto_de_montaje(void);
 	 * 		void
 	 */
 
+FILE* crear_archivo(char* name);
+	/*
+	 * Descripción: devuelve un file descriptor del archivo creado con name en el punto de montaje.
+	 * Argumentos:
+	 * 		char* name: nombre del archivo.
+	 */
+
+void write_file(FILE* fd, char* valor);
+	/*
+	 * Descripción: escribe una cadena en un archivo.
+	 * Argumentos:
+	 * 		FILE* fd: file descriptor del archivo.
+	 * 		char* valor: valor a escribir en el archivo.
+	 */
+
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
 /*
  * Se deserializa dinamicamente los parametros enviados por el coordinador para el caso SET

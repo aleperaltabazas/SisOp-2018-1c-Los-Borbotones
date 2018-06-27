@@ -66,6 +66,32 @@ void iniciar(void) {
 			*almacenamiento_de_valores);
 }
 
+FILE* crear_archivo(char* file_name){
+	char* path = strcat(PUNTO_MONTAJE, file_name);
+
+	FILE* fd = fopen(path, "w");
+
+	if(fd == NULL){
+		log_error(logger, "Falló la creación del archivo %s.", file_name);
+		exit(-1);
+	}
+
+	log_info(logger, "Archivo creado exiotsamente");
+
+	return fd;
+}
+
+void write_file(FILE* fd, char* valor){
+	int res = fputs(valor, fd);
+
+	if(res < 0){
+		log_error(logger, "Falló la escritura en el archivo");
+		exit(-1);
+	}
+
+	loggear("Archivo escrito correctamente");
+}
+
 void crear_punto_de_montaje(void){
 	log_info(logger, "Creando punto de montaje...");
 

@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <parsi/parser.h>
 #include "estructuras.h"
+#include <fcntl.h>
 
 //Variables super globales
 
