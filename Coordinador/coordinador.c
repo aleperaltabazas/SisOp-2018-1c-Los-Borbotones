@@ -681,29 +681,50 @@ void* atender_Instancia(void* un_socket) {
 
 	int i;
 
-	for (i = 0; i < 4; i++) {
+	for(i=0; i < 3; i++){
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket);
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-		enviar_valores_set(tamanio_parametros_set, un_socket);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
 
+	valor_set.clave = "OtraClave";
+	valor_set.tamanio_clave = 9;
 	valor_set.valor = "PALABRAGRANDE";
-	valor_set.tamanio_valor += 6;
+	valor_set.tamanio_valor = 13;
 
-	tamanio_parametros_set += 6;
+	tamanio_parametros_set = 9 + 13 + 2*4;
 
-	for (i = 0; i < 4; i++) {
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket);
+	for(i=0; i < 4; i++){
+
+		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
 		enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
+
+	valor_set.clave = "OtraClaveSUPERGIGANTE";
+	valor_set.tamanio_clave = 21;
+	valor_set.valor = "PALABRAGRANDEDEMASIADOGRANDE";
+	valor_set.tamanio_valor = 28;
+
+	tamanio_parametros_set = 21 + 28 + 2*4;
+
+	for(i=0; i < 4; i++){
+
+		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+		enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	}
+
+	enviar_orden_instancia(0, un_socket, 14);
+
+	enviar_orden_instancia(0, un_socket, 15);
 
 	return NULL;
-
 }
 
 void asignar_parametros_a_enviar() {
@@ -715,11 +736,10 @@ void asignar_parametros_a_enviar() {
 	valor_set.tamanio_valor = strlen(valor_set.valor);
 
 }
-
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion) {
 
 	orden_del_coordinador orden;
-	orden.codigo_operacion = 11;
+	orden.codigo_operacion = codigo_de_operacion;
 	orden.tamanio_a_enviar = tamanio_parametros_set;
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
@@ -729,7 +749,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket) {
 	orden_del_coordinador * buffer_orden = malloc(
 			sizeof(orden_del_coordinador));
 
-//Serializacion de la orden
+	//Serializacion de la orden
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 
@@ -751,11 +771,6 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 			&(valor_set));
 
 	loggear("Enviando parametros a la instancia");
-
-	log_trace(logger, "UNVALOR: COORDI: %c, %c, %c, %c, %c, %c, %c",
-			buffer_parametros[13], buffer_parametros[14], buffer_parametros[15],
-			buffer_parametros[16], buffer_parametros[17], buffer_parametros[18],
-			buffer_parametros[19]);
 
 	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
 

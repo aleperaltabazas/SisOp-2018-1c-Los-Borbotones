@@ -368,7 +368,7 @@ void asignar_parametros_a_enviar();
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.
  	 */
 
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket);
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
 
 

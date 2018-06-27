@@ -131,8 +131,23 @@ int obtener_primera_entrada_disponible();
  * Se obtiene la primer entrada libre que se utilizara como referencia para compactar
  */
 
+entradas_node * buscar_entrada_en_posicion(int posicion);
+int obtener_cantidad_de_entradas_ocupadas();
+void agregar_entrada(entrada una_entrada);
+void actualizar_entradas_disponibles(int entradas_ocupadas);
+int posicion_de_entrada_con_clave(parametros_set parametros);
+void generar_entrada(parametros_set parametros);
+void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave);
+void actualizar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor);
+void destruir_nodo_entrada(entradas_node* nodo);
+void compactacion();
+char * leer_clave_valor(entradas_node * puntero);
+
+//Nodo para recorrer lista
+entradas_node * nodo_auxiliar;
+
 //Aca guardo todos los structs entrada para poder referenciarlos
-t_list * entradas;
+t_entrada_list entradas_asignadas;
 
 //Funciones para el coordinador
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);

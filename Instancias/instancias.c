@@ -21,27 +21,33 @@ int main(int argc, char** argv) {
 		orden_del_coordinador orden;
 		orden = recibir_orden_coordinador(socket_coordinador);
 		switch (orden.codigo_operacion) {
-		case 11:
-			loggear("SET");
-			set(orden.tamanio_a_enviar, socket_coordinador);
-			break;
-			//case 12: loggear("STORE"); store(orden.tamanio_a_enviar, socket_coordinador); break;
-		case 13:
-			loggear("Fallo");
-			break;
-		default:
-			loggear("ERROR");
-			break;
-		}
+			case 11:
+				loggear("SET");
+				set(orden.tamanio_a_enviar, socket_coordinador);
+				break;
+				//case 12: loggear("STORE"); store(orden.tamanio_a_enviar, socket_coordinador); break;
+			case 13:
+				loggear("Fallo");
+				break;
+			case 14:
+				loggear("Compactar");
+				compactacion();
+				break;
+			case 15:
+				loggear("Mostrando lo almacenado...");
+				leer_valores_almacenados();
+				break;
+			default:
+				loggear("ERROR");
+				break;
+			}
 	}
 
-	//caso_de_prueba_5();
-
-	//leer_valores_almacenados();
-
-	loggear("Cerrando conexion con servidor y terminando.");
-
 	close(socket_coordinador);
+
+	//Deberia vaciar la lista...
+
+	destruir_nodo_entrada(nodo_auxiliar);
 
 	free(almacenamiento_de_valores);
 
@@ -166,13 +172,15 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 
 	entradas_disponibles = malloc(sizeof(int) * cantidad_entradas);
 
-	//Inicializo todas las posiciones en 0 (osea que estan libres) y el tama�o de todos los valores en 0
+	//Inicializo todas las posiciones en 0 (osea que estan libres) y el tamanio de todos los valores en 0
 	int i;
 	for (i = 0; i < cantidad_entradas; i++) {
 		entradas_disponibles[i] = 0;
 	}
 
-	list_create(entradas);
+	nodo_auxiliar = (entradas_node*) malloc(sizeof(entradas_node));
+
+	entradas_asignadas.head = NULL;
 
 }
 
@@ -194,11 +202,7 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	loggear("Orden recibida!");
 
-	log_trace(logger, "cod. op: %d", buffer_orden->codigo_operacion);
-
-	log_trace(logger, "tamanio: %d", buffer_orden->tamanio_a_enviar);
-
-	sleep(2);
+	log_trace(logger, "cod. op: %d, tamanio: %d", buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
 
 	orden.codigo_operacion = buffer_orden->codigo_operacion;
 
@@ -216,27 +220,76 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		loggear("Fallo en la recepcion de los parametros");
 	}
 
-	log_trace(logger, "Clave: %c, %c, %c %c %c", parametros.clave[0], parametros.clave[1], parametros.clave[2], parametros.clave[3], parametros.clave[4]);
-
-	log_trace(logger, "Valor: %c, %c, %c %c %c %c %c", parametros.valor[0], parametros.valor[1], parametros.valor[2], parametros.valor[3], parametros.valor[4], parametros.valor[5], parametros.valor[6]);
-
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
-	//Esta verificacion la hago cuando entienda como usar list_find sin usar bools
+	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros);
 
-	//list_find(entradas, existe_la_clave);
+	log_trace(logger, "tamanio_valor %d, tamanio_clave %d", parametros.tamanio_valor, parametros.tamanio_clave);
 
-	//Si no existe tengo que crearla, por lo que me fijo si puedo almacenar el valor (veo si entra)
+	if(posicion_entrada_clave >= 0){
+		loggear("La entrada ya existe, actualizando...");
+		actualizar_entrada(parametros, posicion_entrada_clave);
+	}
+
+	else{
+		loggear("La entrada no existe, generando nueva entrada...");
+		generar_entrada(parametros);
+	}
+}
+
+int posicion_de_entrada_con_clave(parametros_set parametros){
+
+	if(entradas_asignadas.head == NULL){
+		loggear("No hay entradas en la lista");
+		return -1;
+	}
+
+	nodo_auxiliar = entradas_asignadas.head;
+
+	while(nodo_auxiliar != NULL){
+		entrada posible_entrada = nodo_auxiliar -> una_entrada;
+
+		int comparacion_de_claves = strcmp(parametros.clave, posible_entrada.clave);
+
+		if(comparacion_de_claves == 0){
+			return posible_entrada.pos_valor;
+		}
+
+		nodo_auxiliar = nodo_auxiliar -> siguiente;
+	}
+
+	loggear("No hay entradas con la clave:");
+
+	return -1;
+}
+
+
+
+void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave){
+
+	entradas_node * puntero_entrada_a_actualizar;
+	puntero_entrada_a_actualizar = buscar_entrada_en_posicion(posicion_entrada_clave);
+
+	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
+
+	puntero_entrada_a_actualizar -> una_entrada.tamanio_valor = nuevo_tamanio_valor;
+
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(nuevo_tamanio_valor);
+
+	//Tendria que desactualizar como estaba antes pero Adriano dijo que no habia problema con eso
+
+	actualizar_entradas(puntero_entrada_a_actualizar -> una_entrada.pos_valor, entradas_que_ocupa);
+
+	almacenar_valor(puntero_entrada_a_actualizar -> una_entrada.pos_valor, entradas_que_ocupa, parametros.valor);
+}
+
+void generar_entrada(parametros_set parametros){
 
 	int tamanio_valor = strlen(parametros.valor);
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
 
 	int entrada_seleccionada = verificar_disponibilidad_entradas_contiguas(entradas_que_ocupa);
-
-	//Si puedo almacenar creo un struct entrada con los valores que me dieron y dandole una posicion por la cual acceder
-
-	log_trace(logger, "tamanio_valor: %i entradas que ocupa: %i, entrada_seleccionada: %i", tamanio_valor, entradas_que_ocupa, entrada_seleccionada);
 
 	if(entrada_seleccionada >= 0){
 		almacenar_valor(entrada_seleccionada, entradas_que_ocupa, parametros.valor);
@@ -245,7 +298,11 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		return;
 	}
 
-	loggear("No puedo almacenar el valor");
+	loggear("No puedo almacenar el valor, empleando algoritmo de reemplazo...");
+
+	//Aplicaria el algoritmo de reemplazo y volveria a intentar
+
+	//generar_entrada(parametros);
 }
 
 int obtener_entradas_que_ocupa(int tamanio_valor){
@@ -260,22 +317,13 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tama
 
 	loggear("Entrada creada, agregando a la lista...");
 
-	int tamanio_de_entrada = strlen(parametros.clave) + sizeof(entrada_seleccionada) + sizeof(tamanio_valor);
-
-	char * buffer_entrada = malloc(tamanio_de_entrada);
-
-	memcpy(buffer_entrada, &(nueva_entrada), tamanio_de_entrada);
-
-	log_trace(logger, "En la entrada %d esta guardado el valor %s", nueva_entrada.pos_valor, leer_valor(nueva_entrada));
+	agregar_entrada(nueva_entrada);
 
 	//Cada vez que leo libero el buffer auxiliar para leer
 	free(auxiliar);
 
-	//list_add(entradas, buffer_entrada);
-
 	//Una vez que lo agregue a la lista tengo que liberarlo?
 
-	free(buffer_entrada);
 }
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
@@ -284,28 +332,28 @@ int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
 	int buffer_size;
 	char *buffer = malloc(buffer_size = sizeof(uint32_t));
 
-	uint32_t tamanio_clave;
+	//uint32_t tamanio_clave;
 	status = recv(socketCliente, buffer, sizeof(parametros-> tamanio_clave), 0);
-	memcpy(&(tamanio_clave), buffer, buffer_size);
+	memcpy(&(parametros->tamanio_clave), buffer, buffer_size);
 	if (!status) return -1;
 
-	log_trace(logger, "Tamanio clave recibido: %d", tamanio_clave);
+	log_trace(logger, "Tamanio clave recibido: %d", parametros ->tamanio_clave);
 
-	parametros -> clave = malloc(tamanio_clave);
+	parametros -> clave = malloc(parametros ->tamanio_clave);
 
-	status = recv(socketCliente, parametros -> clave, tamanio_clave, 0);
+	status = recv(socketCliente, parametros -> clave, parametros ->tamanio_clave, 0);
 	if (!status) return -1;
 
-	uint32_t tamanio_valor;
+	//uint32_t tamanio_valor;
 	status = recv(socketCliente, buffer, sizeof(parametros -> tamanio_valor), 0);
-	memcpy(&(tamanio_valor), buffer, buffer_size);
+	memcpy(&(parametros->tamanio_valor), buffer, buffer_size);
 	if (!status) return -1;
 
-	parametros -> valor = malloc(tamanio_valor);
+	parametros -> valor = malloc(parametros -> tamanio_valor);
 
-	log_trace(logger, "Tamanio valor recibido %d", tamanio_valor);
+	log_trace(logger, "Tamanio valor recibido %d", parametros -> tamanio_valor);
 
-	status = recv(socketCliente, parametros -> valor, tamanio_valor, 0);
+	status = recv(socketCliente, parametros -> valor, parametros -> tamanio_valor, 0);
 	if (!status) return -1;
 
 	free(buffer);
@@ -322,11 +370,6 @@ void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * va
 
 	int offset = entrada_seleccionada * tamanio_entrada;
 
-	loggear("Posicion de memoria seleccionada");
-	log_trace(logger, "Ubicacion memoria: %d",
-	almacenamiento_de_valores + offset);
-
-	loggear("Copio el valor dentro de esa posicion de memoria");
 	memcpy(almacenamiento_de_valores + offset, valor, tamanio_entrada * entradas_que_ocupa);
 
 	loggear("Valor copiado");
@@ -374,26 +417,6 @@ void actualizar_entradas(int pos_entrada, int entradas_que_ocupa) {
 	}
 }
 
-char * leer_valor(entrada unaEntrada) {
-	int tamanio_del_valor_a_leer = unaEntrada.tamanio_valor;
-
-	int posicion = unaEntrada.pos_valor;
-
-	// + 1 por el '\0' que agrego al final para leer
-	auxiliar = malloc(tamanio_del_valor_a_leer + 1);
-
-	log_trace(logger, "Estoy por mostrar la entrada: %d que ocupa: %d",
-			posicion, tamanio_del_valor_a_leer);
-
-	memcpy(auxiliar, almacenamiento_de_valores + posicion * tamanio_entrada,
-			tamanio_del_valor_a_leer);
-
-	//Sobre el final de lo que copie pongo un \0 para que sepa que se termina ahi
-	auxiliar[tamanio_del_valor_a_leer] = '\0';
-
-	return auxiliar;
-}
-
 void compactacion(){
 
 	int primera_entrada_disponible = obtener_primera_entrada_disponible();
@@ -404,21 +427,22 @@ void compactacion(){
 
 	loggear("Estoy por compactar");
 
+	int total_de_entradas_ocupadas = obtener_cantidad_de_entradas_ocupadas();
+
 	//Como ya se que esta libre le sumo 1
 	int i = primera_entrada_disponible + 1;
 
 	while(entradas_disponibles[i] < cantidad_entradas){
 
 		if(entradas_disponibles[i]){
-			//entrada entrada_a_desplazar = list_find(entradas, entrada_que_esta_en(i));
-			entrada entrada_a_desplazar;
+			entradas_node * puntero_entrada_a_desplazar = buscar_entrada_en_posicion(i);
 
-			desplazar(entrada_a_desplazar, primera_entrada_disponible);
+			desplazar(puntero_entrada_a_desplazar -> una_entrada, primera_entrada_disponible);
 
-			primera_entrada_disponible += entrada_a_desplazar.tamanio_valor;
+			primera_entrada_disponible += puntero_entrada_a_desplazar -> una_entrada.tamanio_valor;
 
 			// -1 porque despues le hago el i++
-			i += entrada_a_desplazar.tamanio_valor - 1;
+			i += puntero_entrada_a_desplazar -> una_entrada.tamanio_valor - 1;
 
 		}
 
@@ -426,8 +450,123 @@ void compactacion(){
 
 	}
 
-	//int total_de_espacio_ocupado = list_sum(entradas);
+	actualizar_entradas_disponibles(total_de_entradas_ocupadas);
 
+}
+
+entradas_node * buscar_entrada_en_posicion(int posicion){
+
+	/*
+	if(entradas_asignadas.head == NULL){
+		//Si se verifico que esta nunca deberia entrar por aca
+		entradas_node * entrada_error;
+		entrada_error -> una_entrada.clave = "ERRORMSG";
+		entrada_error -> una_entrada.pos_valor = -1;
+		entrada_error -> una_entrada.tamanio_valor = -1;
+		return entrada_error;
+	}
+	*/
+
+	nodo_auxiliar = entradas_asignadas.head;
+
+	while(nodo_auxiliar != NULL){
+
+		if(nodo_auxiliar->una_entrada.pos_valor == posicion){
+			log_trace(logger, "Posicion de la entrada encontrada: %d, primer caracter Clave: %c", nodo_auxiliar->una_entrada.pos_valor, nodo_auxiliar->una_entrada.clave[0]);
+			return nodo_auxiliar;
+		}
+
+		nodo_auxiliar = nodo_auxiliar -> siguiente;
+	}
+
+	loggear("Error en encontrar la entrada");
+
+	return nodo_auxiliar;
+}
+
+entradas_node* crear_nodo_entrada(entrada una_entrada) {
+	entradas_node * nodo = (entradas_node*) malloc(sizeof(entradas_node));
+	nodo->una_entrada = una_entrada;
+	nodo->siguiente = NULL;
+	return nodo;
+}
+
+int obtener_cantidad_de_entradas_ocupadas(){
+
+	int contador_entradas_ocupadas = 0;
+	int i;
+
+	for(i = 0; i < cantidad_entradas; i++){
+		if(entradas_disponibles[i] == 1){
+			contador_entradas_ocupadas++;
+		}
+	}
+
+	return contador_entradas_ocupadas;
+}
+
+void actualizar_entradas_disponibles(int entradas_ocupadas){
+
+	int i;
+	int j;
+
+	for(i = 0; i < entradas_ocupadas; i++){
+		entradas_disponibles[i] = 1;
+	}
+
+	//Tendria que ver si se hizo el ultimo i++
+	log_trace(logger, "El valor de i es: %d", i);
+
+	for(j = i; j < cantidad_entradas; j++){
+		entradas_disponibles[j] = 0;
+	}
+}
+
+/*
+int sumar_tamanios_de_valores(){
+
+	entradas_node *nodo_entrada = entradas_asignadas.head;
+
+	if(nodo_entrada == NULL){
+		return 0;
+	}
+
+	int suma_de_tamanios = 0;
+
+	while(nodo_entrada -> siguiente != NULL){
+		suma_de_tamanios += nodo_entrada -> una_entrada.tamanio_valor;
+		nodo_entrada = nodo_entrada -> siguiente;
+	}
+
+	return suma_de_tamanios;
+}*/
+
+void agregar_entrada(entrada una_entrada){
+	entradas_node* nodo = crear_nodo_entrada(una_entrada);
+
+	if (entradas_asignadas.head == NULL) {
+		entradas_asignadas.head = nodo;
+	}
+
+	else {
+
+		entradas_node* puntero = entradas_asignadas.head;
+
+		while (puntero->siguiente != NULL) {
+
+			puntero = puntero->siguiente;
+
+		}
+
+	puntero->siguiente = nodo;
+
+	}
+
+	return;
+}
+
+void destruir_nodo_entrada(entradas_node* nodo) {
+	free(nodo);
 }
 
 int obtener_primera_entrada_disponible(){
@@ -452,10 +591,6 @@ void desplazar(entrada una_entrada, int nueva_posicion){
 	//Actualizo las estructuras administrativas
 	una_entrada.pos_valor = nueva_posicion;
 
-	//ACTUALIZAR EL VECTOR DE ENTRADAS, aunque se podria hacer al final de compactar si se el tamanio de todo
-	//Y seria [1,1,1,1,1,1,1,0,0,0,0]
-	//entradas_disponibles[nueva_posicion] = ??
-
 	//Actualizo la memoria
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(una_entrada.tamanio_valor);
 
@@ -466,21 +601,52 @@ void desplazar(entrada una_entrada, int nueva_posicion){
 void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual, int entradas_del_valor){
 
 	//Magia con memcpy y malloc
+	//O quizas memmove...
+	return;
 }
 
-/*
+char * leer_clave_valor(entradas_node * puntero){
+
+	int tamanio_de_la_clave_a_leer = strlen(puntero -> una_entrada.clave);
+	int tamanio_del_valor_a_leer = puntero -> una_entrada.tamanio_valor;
+
+	int posicion = puntero -> una_entrada.pos_valor;
+
+	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer + 1;
+
+	auxiliar = malloc(tamanio_total);
+
+	memcpy(auxiliar, puntero ->una_entrada.clave, tamanio_de_la_clave_a_leer);
+
+	auxiliar[tamanio_de_la_clave_a_leer] = ':';
+
+	memcpy(auxiliar + tamanio_de_la_clave_a_leer + 1, almacenamiento_de_valores + posicion * tamanio_entrada,
+			tamanio_del_valor_a_leer);
+
+	//Sobre el final de lo que copie pongo un \0 para que sepa que se termina ahi
+	auxiliar[tamanio_total] = '\0';
+
+	return auxiliar;
+}
+
 void leer_valores_almacenados() {
 
 	loggear("Se almacenaron los siguientes valores: ");
-	int k;
-	for (k = 0; k < cantidad_entradas; k++) {
-		log_trace(logger,
-				"En la entrada %d se encuentra almacenado el valor: %s", k,
-				leer_valor(k));
+
+	nodo_auxiliar = entradas_asignadas.head;
+
+	while(nodo_auxiliar != NULL){
+
+		log_trace(logger, "En la entrada %d se encuentra:      %s", nodo_auxiliar->una_entrada.pos_valor, leer_clave_valor(nodo_auxiliar));
 		free(auxiliar);
+		nodo_auxiliar = nodo_auxiliar -> siguiente;
 	}
+
 }
 
+
+/*
 //Lleno con el valor ejemplo
 void caso_de_prueba_1() {
 	valor = "EjemploX";

@@ -153,18 +153,14 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 	int size_to_send;
 
 	size_to_send = sizeof(valor_set->tamanio_clave);
-	log_trace(logger, "%i", size_to_send);
+
 	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave),
 			size_to_send);
 	offset += size_to_send;
 
-	loggear("tamanio clave serializado");
-
 	size_to_send = valor_set->tamanio_clave;
 	memcpy(buffer_parametros + offset, valor_set->clave, size_to_send);
 	offset += size_to_send;
-
-	loggear("clave serializada");
 
 	size_to_send = sizeof(valor_set->tamanio_valor);
 
@@ -172,13 +168,9 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 			size_to_send);
 	offset += size_to_send;
 
-	loggear("tamanio valor serializado");
-
 	size_to_send = valor_set->tamanio_valor;
 	memcpy(buffer_parametros + offset, valor_set->valor, size_to_send);
 	offset += size_to_send;
-
-	loggear("valor serializado");
 
 	return buffer_parametros;
 }

@@ -29,6 +29,14 @@ typedef struct entrada {
 	int tamanio_valor;
 } entrada;
 
+typedef struct entradas_node{
+	entrada una_entrada;
+	struct entradas_node * siguiente;
+} entradas_node;
+
+typedef struct t_entrada_list {
+	entradas_node* head;
+} t_entrada_list;
 typedef struct blocked {
 	char* clave;
 	uint32_t id;
