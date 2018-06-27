@@ -381,6 +381,10 @@ typedef struct instancia{
 	struct instancia * siguiente;
 } instancia;
 
+typedef struct t_instancia_list {
+	instancia* head;
+} t_instancia_list;
+
 instancia * miLista;
 
 void agregameInstancia(int unSocket);

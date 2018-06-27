@@ -483,7 +483,7 @@ void planificar(void) {
 
 		ESI next_esi = executing_ESI;
 
-		if(no_hay_ESI()){
+		if (no_hay_ESI()) {
 			next_esi = dame_proximo_ESI();
 			log_info(logger, "ESI número %i elegido.", next_esi.id);
 
@@ -494,23 +494,21 @@ void planificar(void) {
 }
 
 ESI dame_proximo_ESI() {
-	ESI next_esi = executing_ESI;
+	ESI next_esi;
+	switch (ALGORITMO_PLANIFICACION.tipo) {
+	case FIFO:
+		next_esi = first(new_ESIs);
+		break;
+	case SJF:
+		next_esi = shortest(new_ESIs);
+		break;
+	case HRRN:
+		next_esi = highest_RR(new_ESIs);
+		break;
+	default:
+		log_error(logger, "FALLO EN EL ALGORITMO.");
+		break;
 
-	if (no_hay_ESI()) {
-		switch (ALGORITMO_PLANIFICACION.tipo) {
-		case FIFO:
-			next_esi = first(new_ESIs);
-			break;
-		case SJF:
-			next_esi = shortest(new_ESIs);
-			break;
-		case HRRN:
-			next_esi = highest_RR(new_ESIs);
-			break;
-		default:
-			log_error(logger, "FALLO EN EL ALGORITMO.");
-			break;
-		}
 	}
 
 	return next_esi;
@@ -774,7 +772,7 @@ void desbloquear_ESI(uint32_t id) {
 
 	log_trace(logger, "El ESI número %i fue desbloqueado.", id);
 
-	if(ALGORITMO_PLANIFICACION.desalojo){
+	if (ALGORITMO_PLANIFICACION.desalojo) {
 		desalojar();
 	}
 }
