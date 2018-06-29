@@ -181,11 +181,11 @@ bool esta_vacia(t_parsed_list* lista);
 	 * 		t_parsed_list* lista: lista a verificar.
 	 */
 
-void cargar_configuracion(void);
+void cargar_configuracion(char** argv);
 	/*
 	 * Descripción: carga el archivo de configuración en variables globales.
 	 * Argumentos:
-	 * 		void
+	 * 		char** argv: array que contiene el archivo de configuración.
 	 */
 
 uint32_t get(t_esi_operacion parsed, int socket_coordinador);

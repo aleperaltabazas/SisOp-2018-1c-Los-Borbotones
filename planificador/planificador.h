@@ -148,12 +148,12 @@ void* atender_coordinador(void*);
 
 //Funciones
 
-void iniciar(void);
+void iniciar(char** argv);
 	/*
 	 * Descripción: crea el logger y las listas de ESIs, y carga los datos del archivo
 	 * 		de configuración en variables globales.
 	 * Argumentos:
-	 * 		void
+	 * 		char** argv: array que contiene el archivo de configuración.
 	 */
 
 void planificar(void);
@@ -317,11 +317,11 @@ void cerrar_ESIs(void);
 	 * 		void
 	 */
 
-void cargar_configuracion(void);
+void cargar_configuracion(char** argv);
 	/*
 	 * Descripción: carga los datos del archivo de configuracion en variables globales.
 	 * Argumentos:
-	 * 		void
+	 * 		char** argv: array que contiene el archivo de configuración.
 	 */
 
 void iniciar_hilos(void);

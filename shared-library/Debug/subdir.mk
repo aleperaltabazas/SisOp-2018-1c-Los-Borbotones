@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../getPokemon.c \
 ../shared-library.c 
 
 OBJS += \
+./getPokemon.o \
 ./shared-library.o 
 
 C_DEPS += \
+./getPokemon.d \
 ./shared-library.d 
 
 

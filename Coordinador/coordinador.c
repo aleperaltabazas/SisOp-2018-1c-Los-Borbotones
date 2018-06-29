@@ -8,7 +8,7 @@
 #include "coordinador.h"
 
 int main(int argc, char** argv) {
-	iniciar();
+	iniciar(argv);
 
 	coordinar();
 
@@ -30,13 +30,13 @@ void coordinar(void) {
 	close(listening_socket);
 }
 
-void iniciar(void) {
+void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
-	cargar_configuracion();
+	cargar_configuracion(argv);
 }
 
-void cargar_configuracion(void) {
-	t_config* config = config_create("coordinador.config");
+void cargar_configuracion(char** argv) {
+	t_config* config = config_create(argv[1]);
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);

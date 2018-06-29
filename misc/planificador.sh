@@ -10,5 +10,5 @@ make all
 
 clear
 
-valgrind ./planificador
+valgrind ./planificador planificador.config
 

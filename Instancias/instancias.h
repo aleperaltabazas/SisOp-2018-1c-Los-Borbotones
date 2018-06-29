@@ -79,11 +79,11 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tama
 /*
  * Se genera una entrada (estructura) en base a los parametros recibidos
  */
-void cargar_configuracion(void);
+void cargar_configuracion(char** argv);
 /*
  * Se lee lo que esta en el archivo de configuracion para setear las variables correspondientes
  */
-void iniciar(void);
+void iniciar(char** argv);
 /*
  * Se cargan los archivos de configuracion y se inicializan las estructuras administrativas
  */

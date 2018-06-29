@@ -8,4 +8,4 @@ make
 make clean
 make all
 
-valgrind ./instancia
+valgrind ./instancia instancia.config

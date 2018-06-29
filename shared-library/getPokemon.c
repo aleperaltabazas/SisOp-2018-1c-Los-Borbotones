@@ -5,6 +5,7 @@
  *      Author: utnso
  */
 
+#include <stdint.h>
 
 char* getPokemon(uint32_t id){
 	char* pokemon;

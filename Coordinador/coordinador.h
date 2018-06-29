@@ -106,18 +106,18 @@ int chequear_solicitud(int socket_cliente);
 	 * 		int socket_cliente: socket del proceso ESI.
 	 */
 
-void iniciar(void);
+void iniciar(char** argv);
 	/*
 	 * Descripción: carga las configuraciones iniciales del proceso.
 	 * Argumentos:
-	 * 		void
+	 * 		char** argv: array que contiene el archivo de configuración.
 	 */
 
-void cargar_configuracion(void);
+void cargar_configuracion(char** argv);
 	/*
 	 * Descripción: abre el archivo de configuración y carga los valores en variables globales.
 	 * Argumentos:
-	 * 		void
+	 * 		char** argv: array que contiene el archivo de configuración.
 	 */
 
 algoritmo_distribucion dame_algoritmo(char* algoritmo_src);

@@ -230,13 +230,13 @@ uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
 void iniciar(char** argv) {
 	iniciar_log("ESI", "ESI on duty!");
 	loggear("Cargando configuración.");
-	cargar_configuracion();
+	cargar_configuracion(argv);
 
 	char* line = NULL;
 	size_t len = 0;
 	ssize_t read;
 
-	FILE* archivo_de_parseo = levantar_archivo(argv[1]);
+	FILE* archivo_de_parseo = levantar_archivo(argv[2]);
 
 	t_esi_operacion parsed;
 
@@ -254,8 +254,8 @@ void iniciar(char** argv) {
 	return;
 }
 
-void cargar_configuracion(void) {
-	t_config* config = config_create("esi.config");
+void cargar_configuracion(char** argv) {
+	t_config* config = config_create(argv[1]);
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);

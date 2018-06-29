@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv) {
 
-	iniciar();
+	iniciar(argv);
 
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			id_instancia, 0);
@@ -54,11 +54,11 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void iniciar(void) {
+void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
 
-	cargar_configuracion();
+	cargar_configuracion(argv);
 	setup_montaje();
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
@@ -139,8 +139,8 @@ algoritmo_reemplazo dame_algoritmo(char* algoritmo_src){
 	return algoritmo_ret;
 }
 
-void cargar_configuracion(void){
-	t_config* config = config_create("instancia.config");
+void cargar_configuracion(char** argv){
+	t_config* config = config_create(argv[1]);
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);

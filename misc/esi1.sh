@@ -10,4 +10,4 @@ make all
 
 clear 
 
-valgrind ./ESI ESI_1
+valgrind ./ESI esi.config ESI_1

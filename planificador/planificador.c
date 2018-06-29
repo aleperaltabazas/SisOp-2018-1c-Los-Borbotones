@@ -7,7 +7,7 @@
 #include "planificador.h"
 
 int main(int argc, char** argv) {
-	iniciar();
+	iniciar(argv);
 
 	manejar_conexiones();
 	cerrar();
@@ -37,10 +37,10 @@ void cerrar(void) {
 
 }
 
-void iniciar(void) {
+void iniciar(char** argv) {
 	iniciar_log("Planificador", "Nace el planificador...");
 
-	cargar_configuracion();
+	cargar_configuracion(argv);
 	iniciar_semaforos();
 	iniciar_hilos();
 
@@ -59,7 +59,7 @@ void iniciar_hilos(void) {
 	pthread_create(&hilo_coordinador, &coordi_attr, atender_coordinador, NULL);
 }
 
-void cargar_configuracion(void) {
+void cargar_configuracion(char** argv) {
 
 	executing_ESI = esi_vacio;
 
@@ -68,7 +68,7 @@ void cargar_configuracion(void) {
 	ESIs_size = 0;
 	tiempo = 0;
 
-	t_config* config = config_create("planificador.config");
+	t_config* config = config_create(argv[1]);
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);

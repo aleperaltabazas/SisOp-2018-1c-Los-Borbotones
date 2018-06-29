@@ -10,4 +10,4 @@ make all
 
 clear
 
-valgrind ./ESI ESI_MultiClave
+valgrind ./ESI esi.config ESI_MultiClave
