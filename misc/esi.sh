@@ -10,4 +10,4 @@ make all
 
 clear 
 
-valgrind ./ESI esi.config $1
+valgrind ./ESI $1 $2

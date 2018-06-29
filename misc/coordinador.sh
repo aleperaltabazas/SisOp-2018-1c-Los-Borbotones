@@ -10,4 +10,4 @@ make all
 
 clear
 
-valgrind ./coordinador coordinador.config
+valgrind ./coordinador $1
