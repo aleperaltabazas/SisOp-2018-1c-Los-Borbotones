@@ -49,7 +49,7 @@ void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * va
 /*
  * Almacena un valor asociado a una clave en la posicion de memoria correspondiente a la entrada
  */
-char * leer_valor(entrada unaEntrada);
+char * leer_valor(entradas_node * unaEntrada);
 /*
  * Se llama a un buffer auxiliar para ver lo almacenado en una entrada particular
  * Siempre debe liberarse el puntero auxiliar al llamarse
@@ -114,6 +114,8 @@ void write_file(FILE* fd, char* valor);
 	 * 		char* valor: valor a escribir en el archivo.
 	 */
 
+void store(uint32_t longitud_parametros, int socket_coordinador);
+
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
 /*
  * Se deserializa dinamicamente los parametros enviados por el coordinador para el caso SET
@@ -135,7 +137,7 @@ entradas_node * buscar_entrada_en_posicion(int posicion);
 int obtener_cantidad_de_entradas_ocupadas();
 void agregar_entrada(entrada una_entrada);
 void actualizar_entradas_disponibles(int entradas_ocupadas);
-int posicion_de_entrada_con_clave(parametros_set parametros);
+int posicion_de_entrada_con_clave(char * clave);
 void generar_entrada(parametros_set parametros);
 void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave);
 void actualizar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor);

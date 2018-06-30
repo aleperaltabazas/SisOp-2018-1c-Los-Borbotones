@@ -25,7 +25,10 @@ int main(int argc, char** argv) {
 				loggear("SET");
 				set(orden.tamanio_a_enviar, socket_coordinador);
 				break;
-				//case 12: loggear("STORE"); store(orden.tamanio_a_enviar, socket_coordinador); break;
+			case 12:
+				loggear("STORE");
+				store(orden.tamanio_a_enviar, socket_coordinador);
+				break;
 			case 13:
 				loggear("Fallo");
 				break;
@@ -54,6 +57,31 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
+void store(uint32_t tamanio_a_enviar, int socket_coordinador){
+
+	package_int clave_size = recibir_packed(socket_coordinador);
+	char* clave = recibir_cadena(socket_coordinador, clave_size.packed);
+
+	int posicion_de_entrada = posicion_de_entrada_con_clave(clave);
+
+	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(posicion_de_entrada);
+
+	entrada entrada_con_la_clave = entrada_seleccionada -> una_entrada;
+
+	int tamanio_valor = entrada_con_la_clave.tamanio_valor;
+
+	char * valor = malloc(tamanio_valor);
+
+	int offset = posicion_de_entrada * tamanio_entrada;
+
+	memcpy(valor, almacenamiento_de_valores + offset ,tamanio_valor);
+
+	FILE* fd = open_file(clave);
+
+	write_file(fd, valor);
+}
+
+
 void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
@@ -73,8 +101,7 @@ void iniciar(char** argv) {
 }
 
 FILE* open_file(char* file_name){
-	char* file_txt = strcat(file_name, ".txt");
-	char* path = strcat(PUNTO_MONTAJE, file_txt);
+	char* path = strcat(PUNTO_MONTAJE, file_name);
 	
 	FILE* fd = fopen(path, "w");
 
@@ -224,7 +251,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
-	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros);
+	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros.clave);
 
 	log_trace(logger, "tamanio_valor %d, tamanio_clave %d", parametros.tamanio_valor, parametros.tamanio_clave);
 
@@ -239,7 +266,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	}
 }
 
-int posicion_de_entrada_con_clave(parametros_set parametros){
+int posicion_de_entrada_con_clave(char* clave){
 
 	if(entradas_asignadas.head == NULL){
 		loggear("No hay entradas en la lista");
@@ -251,7 +278,7 @@ int posicion_de_entrada_con_clave(parametros_set parametros){
 	while(nodo_auxiliar != NULL){
 		entrada posible_entrada = nodo_auxiliar -> una_entrada;
 
-		int comparacion_de_claves = strcmp(parametros.clave, posible_entrada.clave);
+		int comparacion_de_claves = strcmp(clave, posible_entrada.clave);
 
 		if(comparacion_de_claves == 0){
 			return posible_entrada.pos_valor;

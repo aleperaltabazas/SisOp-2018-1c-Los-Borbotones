@@ -368,33 +368,49 @@ void asignar_parametros_a_enviar();
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.
  	 */
 
+void do_set(char* valor, char* clave);
+
+int dame_instancia(char* clave);
+
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
+void tuvieja(void* un_socket);
+void asignar_entradas(int sockfd);
 
 
-
-typedef struct instancia{
+typedef struct t_instancia_node{
 	int socket;
 	int vecesLlamado;
 	int espacio_usado;
 	int disponible;
-	struct instancia * siguiente;
-} instancia;
+	int id;
+	struct t_instancia_node* sgte;
+} t_instancia_node;
 
 typedef struct t_instancia_list {
-	instancia* head;
+	t_instancia_node* head;
 } t_instancia_list;
 
-instancia * miLista;
+t_instancia_list instancias;
+
+int instancia_id;
 
 void agregameInstancia(int unSocket);
-void add (instancia * unaLista, int unSocket);
+void add (t_instancia_list unaLista, int unSocket);
 void * find ();
 int instanciasDisponibles(void);
 int equitativeLoad(void); //Devuelve el socket que corresponde
 int leastSpaceUsed(void);
-int desempatar (instancia * a, int b);
-int keyEplicit (char * clave);
+int desempatar (t_instancia_node* a, int b);
+int keyExplicit (char * clave);
+
+t_instancia_node* crear_instancia_node(int sockfd);
+void destruir_instancia_node(t_instancia_node* nodo);
+void agregar_instancia(t_instancia_list* lista, int sockfd);
+t_instancia_node* instancia_head(t_instancia_list lista);
+void eliminar_instancia(t_instancia_list* lista, int id);
+int instanciasDisponibles(void);
+
 
 
 #endif /* COORDINADOR_H_ */

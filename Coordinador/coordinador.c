@@ -33,6 +33,8 @@ void coordinar(void) {
 void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 	cargar_configuracion(argv);
+
+	instancia_id = 0;
 }
 
 void cargar_configuracion(char** argv) {
@@ -314,14 +316,71 @@ int settear(char* valor, char* clave, uint32_t id) {
 			puntero->valor = valor;
 
 			log_info(logger, "SET %s %s", clave, valor);
+			do_set(valor, clave);
 
 			return 20;
 		}
-
 		puntero = puntero->sgte;
 	}
 
 	return 5;
+}
+
+void do_set(char* valor, char* clave) {
+	uint32_t valor_size = (uint32_t) strlen(valor) + 1;
+	uint32_t clave_size = (uint32_t) strlen(valor) + 1;
+
+	valor_set.tamanio_clave = clave_size;
+	valor_set.tamanio_valor = valor_size;
+	valor_set.clave = clave;
+	valor_set.valor = valor;
+
+	int sockfd = dame_instancia(clave);
+
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
+			+ valor_set.tamanio_valor;
+
+	enviar_orden_instancia(tamanio_parametros_set, (void*) sockfd, 11);
+	enviar_valores_set(tamanio_parametros_set, (void*) sockfd);
+
+	enviar_orden_instancia(0, (void*) sockfd, 15);
+}
+
+int dame_instancia(char* clave) {
+	int ret_sockfd;
+
+	switch (ALGORITMO_DISTRIBUCION) {
+	case EL:
+		ret_sockfd = equitativeLoad();
+		break;
+
+	case LSU:
+		ret_sockfd = leastSpaceUsed();
+		break;
+	case KE:
+		ret_sockfd = keyExplicit(clave);
+		break;
+	default:
+		log_warning(logger, "Fallo en el algoritmo");
+		break;
+	}
+
+	t_instancia_node* ret_node = instancia_head(instancias);
+	ret_sockfd = ret_node->socket;
+
+	return ret_sockfd;
+}
+
+int equitativeLoad(void){
+	return 0;
+}
+
+int leastSpaceUsed(void){
+	return 0;
+}
+
+int keyExplicit(char* clave){
+	return 0;
 }
 
 int get_packed(char* clave, uint32_t id) {
@@ -362,7 +421,21 @@ int get_packed(char* clave, uint32_t id) {
 }
 
 void hacer_store(char* clave) {
-	//MATIIIIIIIIIIIIIIIIII te toca hacer esto
+	t_instancia_node* node = instancia_head(instancias);
+	int sockfd = node->socket;
+
+	enviar_orden_instancia(0, (void*) sockfd, 12);
+	sleep(1);
+
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	package_int package_size = {
+			.packed = clave_size
+	};
+
+	enviar_packed(package_size, sockfd);
+	sleep(1);
+	enviar_cadena(clave, sockfd);
 }
 
 void bloquear_ESI(char* clave, uint32_t id) {
@@ -658,6 +731,8 @@ void eliminar_clave(t_clave_list* lista, char* clave) {
 }
 
 void destruir_nodo(t_clave_node* nodo) {
+	free(nodo->clave);
+	free(nodo->valor);
 	free(nodo);
 }
 
@@ -672,7 +747,22 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
-	agregameInstancia(sockfd);
+	agregar_instancia(&instancias, sockfd);
+
+	instancia_id++;
+
+	asignar_entradas(sockfd);
+
+	loggear("Instancia agregada correctamente");
+
+	return NULL;
+}
+
+void asignar_entradas(int sockfd) {
+
+}
+
+void tuvieja(void* un_socket) {
 
 	asignar_parametros_a_enviar();
 
@@ -681,11 +771,11 @@ void* atender_Instancia(void* un_socket) {
 
 	int i;
 
-	for(i=0; i < 3; i++){
+	for (i = 0; i < 3; i++) {
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+		enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
 
@@ -694,10 +784,9 @@ void* atender_Instancia(void* un_socket) {
 	valor_set.valor = "PALABRAGRANDE";
 	valor_set.tamanio_valor = 13;
 
-	tamanio_parametros_set = 9 + 13 + 2*4;
+	tamanio_parametros_set = 9 + 13 + 2 * 4;
 
-
-	for(i=0; i < 4; i++){
+	for (i = 0; i < 4; i++) {
 
 		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
@@ -710,11 +799,11 @@ void* atender_Instancia(void* un_socket) {
 	valor_set.valor = "APARECE";
 	valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 21 + 7 + 2*4;
+	tamanio_parametros_set = 21 + 7 + 2 * 4;
 
 	enviar_orden_instancia(0, un_socket, 15);
 
-	for(i=0; i < 4; i++){
+	for (i = 0; i < 4; i++) {
 
 		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
@@ -726,7 +815,6 @@ void* atender_Instancia(void* un_socket) {
 
 	enviar_orden_instancia(0, un_socket, 15);
 
-	return NULL;
 }
 
 void asignar_parametros_a_enviar() {
@@ -738,7 +826,8 @@ void asignar_parametros_a_enviar() {
 	valor_set.tamanio_valor = strlen(valor_set.valor);
 
 }
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion) {
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
+		int codigo_de_operacion) {
 
 	orden_del_coordinador orden;
 	orden.codigo_operacion = codigo_de_operacion;
@@ -780,107 +869,69 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 }
 
-void agregameInstancia(int unSocket) {
-	instancia * auxiliar;
-	auxiliar = miLista;
-	if (find(auxiliar, unSocket) != NULL)
-		(auxiliar->disponible) = 1;
-	else
-		add(miLista, unSocket);
-}
-void * find(instancia * lista, int unSocket) {
-	while (lista != NULL) {
-		if (lista->socket == unSocket)
-			return lista;
-		else
-			lista = lista->siguiente;
-	}
-	return NULL;
-}
-void add(instancia * instancias, int unSocket) {
-	instancia * nodo;
-	nodo = malloc(sizeof(instancia));
-	nodo->socket = unSocket;
-	nodo->vecesLlamado = 0;
-	nodo->disponible = 1;
-	nodo->espacio_usado = 0;
-	nodo->siguiente = NULL;
-	if (instancias == NULL) {
-		instancias = nodo;
-	} else {
-		instancia * auxiliar;
-		auxiliar = instancias;
-		while (auxiliar->siguiente != NULL) {
-			auxiliar = auxiliar->siguiente;
-		}
-		auxiliar->siguiente = nodo;
-	}
-}
-int instanciasDisponibles() {
-	int i;
-	instancia * aux;
-	aux = malloc(sizeof(instancia));
-	aux = miLista;
-	while (aux != NULL) {
-		if (aux->disponible)
-			i++;
-		aux = aux->siguiente;
-	}
-	free(aux);
-	return i;
-}
-int equitativeLoad(void) {
-	instancia * aux;
-	aux = miLista;
-	int i = aux->vecesLlamado;
-	int retorno = aux->socket;
+t_instancia_node* crear_instancia_node(int sockfd) {
+	t_instancia_node* nodo = (t_instancia_node*) malloc(
+			sizeof(t_instancia_node));
+	nodo->socket = sockfd;
 
-	while (aux->siguiente != NULL) {
-		if (aux->vecesLlamado << i) {
-			i = aux->vecesLlamado;
-			retorno = aux->socket;
-		}
-	}
-	aux->vecesLlamado++;
-	return (retorno);
+	return nodo;
 }
-int leastSpaceUsed(void) { //acá me falta que reciba una cantidad de memoria que va a ocupar así se la puedo sumar
-	instancia * aux;
-	aux = miLista;
-	int i = aux->espacio_usado;
-	int retorno = aux->socket;
-	while (aux->siguiente != NULL) {
-		if (aux->espacio_usado << i) {
-			i = aux->espacio_usado;
-			retorno = aux->socket;
+
+void destruir_instancia_node(t_instancia_node* nodo) {
+	free(nodo);
+}
+
+void agregar_instancia(t_instancia_list* lista, int sockfd) {
+
+	t_instancia_node* nodo = crear_instancia_node(sockfd);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_instancia_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+}
+
+t_instancia_node* instancia_head(t_instancia_list lista){
+	t_instancia_node* instancia = lista.head;
+
+	return instancia;
+}
+
+void eliminar_instancia(t_instancia_list* lista, int id) {
+	if (lista->head != NULL) {
+		t_instancia_node* head = instancia_head(*lista);
+		if (id == head->id) {
+			t_instancia_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_instancia_node(eliminado);
 		} else {
-			if (aux->espacio_usado == i)
-				retorno = desempatar(aux, retorno);
-			aux = aux->siguiente;
+			t_instancia_node* puntero = lista->head;
+
+			while (puntero->id != head->id) {
+				puntero = puntero->sgte;
+			}
+
+			t_instancia_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_instancia_node(eliminado);
 		}
 	}
-	return (retorno);
 }
-int desempatar(instancia * a, int b) {
-	instancia * aux;
-	aux = miLista;
-	while (aux->socket != b) {
-		aux = aux->siguiente;
+
+int instanciasDisponibles() {
+	t_instancia_node* puntero = instancias.head;
+	int size = 0;
+
+	while (puntero != NULL) {
+		size++;
 	}
-	if (a->vecesLlamado >> aux->vecesLlamado)
-		return aux->socket;
-	return a->socket;
-}
-int keyExplicit(char * clave) {
-	int cantidadDeLetras = 26 / instanciasDisponibles();
-	int instanciaN = (clave[0] - 97) / cantidadDeLetras;
-	instancia * aux;
-	aux = miLista;
-	while (instanciaN > 1) {
-		if (aux->disponible)
-			instanciaN--;
-		aux = aux->siguiente;
-	}
-//Creo que acá me falta verificar que estemos mandando una instancia que esté disponible
-	return aux->socket;
+
+	return size;
 }
