@@ -76,9 +76,9 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 
 	memcpy(valor, almacenamiento_de_valores + offset ,tamanio_valor);
 
-	FILE* fd = open_file(clave);
+	log_trace(logger, "%s", valor);
 
-	write_file(fd, valor);
+	write_file(clave, valor);
 }
 
 
@@ -115,15 +115,20 @@ FILE* open_file(char* file_name){
 	return fd;
 }
 
-void write_file(FILE* fd, char* valor){
-	int res = fputs(valor, fd);
+void write_file(char* file_name, char* text){
+	FILE* fd = open_file(file_name);
+
+	int res = fputs(text, fd);
 
 	if(res < 0){
 		log_error(logger, "Falló la escritura en el archivo");
 		exit(-1);
 	}
 
+	log_trace(logger, "%s", text);
+
 	loggear("Archivo escrito correctamente");
+	fclose(fd);
 }
 
 void setup_montaje(void){
@@ -146,6 +151,7 @@ void setup_montaje(void){
 	}
 
 	log_info(logger, "Punto de montaje creado exitósamente.");
+
 }
 
 algoritmo_reemplazo dame_algoritmo(char* algoritmo_src){

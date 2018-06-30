@@ -106,11 +106,11 @@ FILE* open_file(char* name);
 	 * 		char* name: nombre del archivo.
 	 */
 
-void write_file(FILE* fd, char* valor);
+void write_file(char* file_name, char* text);
 	/*
-	 * Descripción: escribe una cadena en un archivo.
+	 * Descripción: llama a open_file() para abrir un archivo con file_name y le escribe text.
 	 * Argumentos:
-	 * 		FILE* fd: file descriptor del archivo.
+	 * 		char* file_name: nombre del archivo.
 	 * 		char* valor: valor a escribir en el archivo.
 	 */
 
