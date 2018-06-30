@@ -210,7 +210,7 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 
 	entradas_disponibles = malloc(sizeof(int) * cantidad_entradas);
 
-	//Inicializo todas las posiciones en 0 (osea que estan libres) y el tamanio de todos los valores en 0
+	//Inicializo todas las es en 0 (osea que estan libres) y el tamanio de todos los valores en 0
 	int i;
 	for (i = 0; i < cantidad_entradas; i++) {
 		entradas_disponibles[i] = 0;
@@ -434,7 +434,7 @@ void liberar_entradas_disponibles(entradas_node * entrada_a_eliminar){
 
 	int i;
 
-	for(i = 0; posicion + i < entradas_a_liberar; i++){
+	for(i = 0; i < entradas_a_liberar; i++){
 		entradas_disponibles[posicion + i] = 0;
 	}
 }
