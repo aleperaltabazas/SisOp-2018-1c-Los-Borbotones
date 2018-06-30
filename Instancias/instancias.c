@@ -60,7 +60,10 @@ int main(int argc, char** argv) {
 void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 
 	package_int clave_size = recibir_packed(socket_coordinador);
+
 	char* clave = recibir_cadena(socket_coordinador, clave_size.packed);
+
+	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
 
 	int posicion_de_entrada = posicion_de_entrada_con_clave(clave);
 
@@ -79,6 +82,8 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 	log_trace(logger, "%s", valor);
 
 	write_file(clave, valor);
+
+	free(valor);
 }
 
 
@@ -91,8 +96,8 @@ void iniciar(char** argv) {
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
-	cantidad_entradas = 3;
-	tamanio_entrada = 8;
+	cantidad_entradas = 10;
+	tamanio_entrada = 15;
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
