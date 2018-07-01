@@ -79,20 +79,21 @@ pthread_t hilo_coordinador;
 void* consola(void*);
 void listarOpciones(void);
 void pausarOContinuar(void);
-void bloquear(float codigo);
-void desbloquear(float codigo);
-void listar(void);
-void kill(float codigo);
-void status(float codigo);
+void bloquear(int codigo);
+void desbloquear(int codigo);
+void listar(char * clave);
+void kill(int codigo);
+void status(int codigo);
 void deadlock(void);
 float recibirCodigo(void);
-void interpretarYEjecutarCodigo(float comando);
+void interpretarYEjecutarCodigo(int comando);
 void terminar(void);
 void mostrame_clock(void);
 void display_console(void);
 void dame_datos(void);
 void bloquear_clave(void);
 void desbloquear_clave(void);
+ESI copiarEsi (t_esi_node * lista, ESI esiACopiar);
 
 //Funciones de servidor
 

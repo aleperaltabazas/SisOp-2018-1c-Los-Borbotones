@@ -654,14 +654,14 @@ void ejecutar(ESI esi_a_ejecutar) {
  */
 
 float recibirCodigo() {
-	float code = 0;
-	scanf("%f", &code);
+	int code = 0;
+	scanf("%i", &code);
 	return code;
 }
-void interpretarYEjecutarCodigo(float comando) {
+void interpretarYEjecutarCodigo(int comando) {
 	int opcionElegida;
-	float codigoSubsiguiente;
-	opcionElegida = (int) comando;
+	int codigoSubsiguiente;
+	char * clave;
 	switch (opcionElegida) {
 	case 0:
 		pthread_cancel(pthread_self()); //Usar esto lo hace no portable, preguntarle a Lean
@@ -670,22 +670,28 @@ void interpretarYEjecutarCodigo(float comando) {
 		pausarOContinuar();
 		break;
 	case 2:
-		codigoSubsiguiente = comando - opcionElegida;
+		printf("Introduzca el ESI ID \n");
+		scanf("%i", &codigoSubsiguiente);
 		bloquear(codigoSubsiguiente);
 		break;
 	case 3:
-		codigoSubsiguiente = comando - opcionElegida;
+		printf("Introduzca el ESI ID \n");
+		scanf("%i", &codigoSubsiguiente);
 		desbloquear(codigoSubsiguiente);
 		break;
 	case 4:
-		listar();
+		printf("Introduzca la clave \n");
+		scanf("%s", clave);
+		listar(clave);
 		break;
 	case 5:
-		codigoSubsiguiente = comando - opcionElegida;
+		printf("Introduzca el ESI ID \n");
+		scanf("%i", &codigoSubsiguiente);
 		kill(codigoSubsiguiente);
 		break;
 	case 6:
-		codigoSubsiguiente = comando - opcionElegida;
+		printf("Introduzca el ESI ID \n");
+		scanf("%i", &codigoSubsiguiente);
 		status(codigoSubsiguiente);
 		break;
 	case 7:
@@ -900,7 +906,7 @@ void listarOpciones() {
 }
 
 void* consola(void* nada) {
-	float comando;
+	int comando;
 	printf("Bienvenido a la consola interactiva para el planificador \n");
 	while (1) {
 		if (display) {
@@ -942,16 +948,74 @@ void pausarOContinuar(void) {
 	}
 
 }
-void bloquear(float codigo) {
+void bloquear(int codigo) {
 	printf("Eligio bloquear el ESI \n");
 }
-void desbloquear(float codigo) {
+void desbloquear(int codigo) {
 }
-void listar(void) {
+void listar(char* clave) {//Comunicarse con el coordi para que busque al ESI
+
 }
-void kill(float codigo) {
+void kill(int codigo) {
+	codigo = (uint32_t) codigo;
+	ESI aMatar;
+	aMatar.id = codigo;
+	if(executing_ESI.id == codigo){
+	//sarasa de semaforos y desalojos
+	}
+	else {
+	if (esta(new_ESIs, aMatar)){
+		aMatar = copiarEsi(&new_ESIs, aMatar);
+		kill_ESI(aMatar);
+		eliminar_ESI(&new_ESIs, aMatar);
+	}
+	else{if (esta(blocked_ESIs, aMatar)){
+		aMatar = copiarEsi(&blocked_ESIs, aMatar);
+		kill_ESI(aMatar);
+		eliminar_ESI(&blocked_ESIs, aMatar);
+	}
+	else loggear("No encuentro al ESI");
+	}
 }
-void status(float codigo) {
+}
+void status(int codigo) {
+	codigo = (uint32_t) codigo;
+	ESI  aux;
+	aux.id = codigo;
+	if (executing_ESI.id == codigo) printf("El ESI esta ejecutando \n");
+	else {
+		if (esta(new_ESIs, aux))
+				printf("El ESI esta en cola de ready \n");
+	else {
+		if (esta(blocked_ESIs, aux)) printf("El ESI esta en cola de bloqueados \n");
+	else {
+		if (esta(finished_ESIs, aux)) printf("El ESI ha terminado \n");
+		else printf("No conozco ese codigo. \n");
+	}
+	}
+}
 }
 void deadlock(void) {
+}
+void listarESI(t_esi_node lista){
+	/*printf("Los ESI esperando la clave pedida son: \n");
+	while (lista.sgte != NULL){
+		printf("%i", lista.esi.id);
+		printf("\n");
+		lista = lista.sgte;
+	}*/
+}
+ESI copiarEsi (t_esi_node * lista, ESI esiACopiar){
+	while(lista->sgte != NULL) {
+		if(lista->esi.id == esiACopiar.id){
+			esiACopiar.ejecutando = lista->esi.ejecutando;
+			esiACopiar.rafaga_estimada = lista->esi.rafaga_estimada;
+			esiACopiar.rafaga_real = lista->esi.rafaga_real;
+			esiACopiar.socket = lista->esi.socket;
+			esiACopiar.tiempo_arribo = lista->esi.tiempo_arribo;
+			return esiACopiar;
+		}
+		lista = lista->sgte;
+	}
+	return esiACopiar;
 }
