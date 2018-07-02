@@ -98,16 +98,18 @@ void iniciar(char** argv) {
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
-	cantidad_entradas = 3;
-	tamanio_entrada = 8;
+	cantidad_entradas = 10;
+	tamanio_entrada = 40;
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
 }
 
 FILE* open_file(char* file_name){
-	char* path = strcat(PUNTO_MONTAJE, file_name);
 	
+	char* path = PUNTO_MONTAJE;
+	path = strcat(PUNTO_MONTAJE, file_name);
+
 	FILE* fd = fopen(path, "w");
 
 	if(fd == NULL){
@@ -115,7 +117,9 @@ FILE* open_file(char* file_name){
 		exit(-1);
 	}
 
-	log_info(logger, "Archivo creado exiotsamente");
+	log_info(logger, "Archivo creado exitosamente");
+
+	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
 
 	return fd;
 }
@@ -264,6 +268,8 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros.clave);
 
 	log_trace(logger, "tamanio_valor %d, tamanio_clave %d", parametros.tamanio_valor, parametros.tamanio_clave);
+
+	log_trace(logger, "CLAVE RECIBIDA: %s", parametros.clave);
 
 	if(posicion_entrada_clave >= 0){
 		loggear("La entrada ya existe, actualizando...");

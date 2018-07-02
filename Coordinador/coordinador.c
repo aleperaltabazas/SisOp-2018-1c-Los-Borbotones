@@ -327,8 +327,8 @@ int settear(char* valor, char* clave, uint32_t id) {
 }
 
 void do_set(char* valor, char* clave) {
-	uint32_t valor_size = (uint32_t) strlen(valor) + 1;
-	uint32_t clave_size = (uint32_t) strlen(valor) + 1;
+	uint32_t valor_size = (uint32_t) strlen(valor);
+	uint32_t clave_size = (uint32_t) strlen(clave);
 
 	valor_set.tamanio_clave = clave_size;
 	valor_set.tamanio_valor = valor_size;
@@ -339,6 +339,8 @@ void do_set(char* valor, char* clave) {
 
 	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
 			+ valor_set.tamanio_valor;
+
+	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size, valor_size, tamanio_parametros_set);
 
 	enviar_orden_instancia(tamanio_parametros_set, (void*) sockfd, 11);
 	enviar_valores_set(tamanio_parametros_set, (void*) sockfd);
@@ -755,7 +757,7 @@ void* atender_instancia(void* un_socket) {
 
 	loggear("Instancia agregada correctamente");
 
-	enviar_ordenes_de_prueba(un_socket);
+	//enviar_ordenes_de_prueba(un_socket);
 
 	return NULL;
 }
