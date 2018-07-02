@@ -138,7 +138,7 @@ void identificar_cliente(package_int id, int socket_cliente) {
 
 	else if (id.packed == 3) {
 		log_info(logger, mensajeInstancia);
-		pthread_create(&hilo_instancia, NULL, atender_Instancia,
+		pthread_create(&hilo_instancia, NULL, atender_instancia,
 				(void*) socket_cliente);
 		pthread_detach(hilo_instancia);
 	}
@@ -742,7 +742,7 @@ char* first(t_clave_list lista) {
 	return key;
 }
 
-void* atender_Instancia(void* un_socket) {
+void* atender_instancia(void* un_socket) {
 	int sockfd = (int) un_socket;
 
 	loggear("Hilo de instancia inicializado correctamente.");
@@ -755,6 +755,8 @@ void* atender_Instancia(void* un_socket) {
 
 	loggear("Instancia agregada correctamente");
 
+	enviar_ordenes_de_prueba(un_socket);
+
 	return NULL;
 }
 
@@ -762,20 +764,19 @@ void asignar_entradas(int sockfd) {
 
 }
 
-void tuvieja(void* un_socket) {
+void enviar_ordenes_de_prueba(void* un_socket) {
 
-	asignar_parametros_a_enviar();
+	asignar_parametros_a_enviar_de_prueba();
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
-			+ valor_set.tamanio_valor;
+	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave + valor_set.tamanio_valor;
 
 	int i;
 
-	for (i = 0; i < 3; i++) {
+	for(i=0; i < 3; i++){
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-		enviar_valores_set(tamanio_parametros_set, un_socket);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
 
@@ -784,9 +785,10 @@ void tuvieja(void* un_socket) {
 	valor_set.valor = "PALABRAGRANDE";
 	valor_set.tamanio_valor = 13;
 
-	tamanio_parametros_set = 9 + 13 + 2 * 4;
+	tamanio_parametros_set = 9 + 13 + 2*4;
 
-	for (i = 0; i < 4; i++) {
+
+	for(i=0; i < 4; i++){
 
 		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
@@ -794,32 +796,110 @@ void tuvieja(void* un_socket) {
 
 	}
 
-	valor_set.clave = "OtraClaveSUPERGIGANTE";
+	valor_set.clave = "OtraClaveDe21Letras00";
 	valor_set.tamanio_clave = 21;
-	valor_set.valor = "APARECE";
-	valor_set.tamanio_valor = 7;
+	valor_set.valor = "NAPARECE";
+	valor_set.tamanio_valor = 8;
 
-	tamanio_parametros_set = 21 + 7 + 2 * 4;
+	tamanio_parametros_set = 21 + 8 + 2*4;
 
 	enviar_orden_instancia(0, un_socket, 15);
 
-	for (i = 0; i < 4; i++) {
+	for(i=0; i < 2; i++){
 
 		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
 		enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	}
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras01";
+	valor_set.tamanio_clave = 21;
+	valor_set.valor = "VALOR01";
+	valor_set.tamanio_valor = 7;
+
+	tamanio_parametros_set = 21 + 7 + 2*4;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras02";
+	valor_set.valor = "VALOR02";
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras03";
+	valor_set.valor = "APARECEGrande";
+	valor_set.tamanio_valor = 13;
+
+	tamanio_parametros_set = 21 + 13 + 2*4;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
 
 	enviar_orden_instancia(0, un_socket, 14);
 
 	enviar_orden_instancia(0, un_socket, 15);
 
+	valor_set.clave = "OtraClaveDe21Letras04";
+	valor_set.valor = "VALOR04";
+	valor_set.tamanio_valor = 7;
+
+	tamanio_parametros_set = 21 + 7 + 2*4;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 14);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras05";
+	valor_set.valor = "VALOR05";
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	enviar_orden_instancia(0, un_socket, 14);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras06";
+	valor_set.valor = "VALOR06";
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	valor_set.clave = "OtraClaveDe21Letras07";
+	valor_set.valor = "VALOR07";
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
 }
 
-void asignar_parametros_a_enviar() {
+void asignar_parametros_a_enviar_de_prueba() {
 
-//Aca estaria la logica de recibir las claves y valores
 	valor_set.clave = "Clave";
 	valor_set.tamanio_clave = strlen(valor_set.clave);
 	valor_set.valor = "UnValor";
@@ -835,10 +915,9 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
 
-	log_trace(logger, "tamanio a enviar: %d", orden.tamanio_a_enviar);
+	log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
 
-	orden_del_coordinador * buffer_orden = malloc(
-			sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
 
 	//Serializacion de la orden
 
@@ -846,13 +925,14 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((int) un_socket, (void*) buffer_orden,
-			sizeof(orden_del_coordinador), 0) < 0) {
+	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, 0) < 0) {
 		loggear("Error en el envio de la orden");
 		return;
 	}
 
 	loggear("Orden enviada!");
+
+	free(buffer_orden);
 
 }
 

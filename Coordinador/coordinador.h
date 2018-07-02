@@ -81,7 +81,7 @@ void *atender_ESI(void* un_socket);
 	 * 		void* un_socket: descriptor del socket que luego se castea a int.
 	 */
 
-void *atender_Instancia(void* un_socket);
+void *atender_instancia(void* un_socket);
 	/*
 	 * Descripción: atiende los mensajes enviados por un proces de instancia y le indica
 	 * 		los resultados de una ejecución de ESI.
@@ -363,7 +363,7 @@ bool esta_vacia(t_blocked_list* lista);
 	 * 		t_blocked_list* lista: puntero a la lista.
 	 */
 
-void asignar_parametros_a_enviar();
+void asignar_parametros_a_enviar_de_prueba();
 	/*
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.
  	 */
@@ -374,7 +374,7 @@ int dame_instancia(char* clave);
 
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
-void tuvieja(void* un_socket);
+void enviar_ordenes_de_prueba(void* un_socket);
 void asignar_entradas(int sockfd);
 
 

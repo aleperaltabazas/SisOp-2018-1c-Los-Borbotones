@@ -120,7 +120,7 @@ int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
 /*
  * Se deserializa dinamicamente los parametros enviados por el coordinador para el caso SET
  */
-void desplazar(entrada una_entrada, int nueva_posicion);
+void desplazar(entradas_node * puntero_entrada, int nueva_posicion);
 /*
  * Se actualizan las estructuras administrativas luego de una compactacion
  */
@@ -151,7 +151,7 @@ entrada obtener_entrada_segun_LRU();
 entrada obtener_entrada_segun_BSU();
 entrada first();
 void borrar_entrada(entrada entrada_a_eliminar);
-void liberar_entradas_disponibles(entradas_node * entrada_a_eliminar);
+void liberar_entradas_disponibles(int posicion, int tamanio_valor);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar;
