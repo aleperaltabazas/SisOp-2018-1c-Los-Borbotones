@@ -67,7 +67,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
 
-	int posicion_de_entrada = posicion_de_entrada_con_clave(clave);
+	int posicion_de_entrada = posicion_de_entrada_con_clave(clave, clave_size.packed);
 
 	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
 			posicion_de_entrada);
@@ -275,7 +275,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
 	int posicion_entrada_clave = posicion_de_entrada_con_clave(
-			parametros.clave);
+			parametros.clave, parametros.tamanio_clave);
 
 	log_trace(logger, "tamanio_valor %d, tamanio_clave %d",
 			parametros.tamanio_valor, parametros.tamanio_clave);
@@ -301,7 +301,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	}
 }
 
-int posicion_de_entrada_con_clave(char* clave) {
+int posicion_de_entrada_con_clave(char* clave, int tamanio_clave) {
 
 	if (entradas_asignadas.head == NULL) {
 		loggear("No hay entradas en la lista");
@@ -313,7 +313,8 @@ int posicion_de_entrada_con_clave(char* clave) {
 	while (nodo_auxiliar != NULL) {
 		entrada posible_entrada = nodo_auxiliar->una_entrada;
 
-		int comparacion_de_claves = strcmp(clave, posible_entrada.clave);
+		int comparacion_de_claves = comparar_claves(clave, tamanio_clave, posible_entrada.clave);
+		//comparar_claves(clave, tamanio_clave, posible_entrada.clave);
 
 		if (comparacion_de_claves == 0) {
 			return posible_entrada.pos_valor;
@@ -323,6 +324,15 @@ int posicion_de_entrada_con_clave(char* clave) {
 	}
 
 	return -1;
+}
+
+int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar){
+	char * auxiliar_clave = malloc(tamanio_clave + 1);
+	memcpy(auxiliar_clave, clave, tamanio_clave);
+	auxiliar_clave[tamanio_clave] = '\0';
+	int comparacion = strcmp(auxiliar_clave, clave_a_comparar);
+	free(auxiliar_clave);
+	return comparacion;
 }
 
 void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
@@ -371,7 +381,7 @@ void generar_entrada(parametros_set parametros) {
 		almacenar_valor(entrada_seleccionada, entradas_que_ocupa,
 				parametros.valor);
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
-		crear_entrada(parametros, entrada_seleccionada, tamanio_valor);
+		crear_entrada(parametros, entrada_seleccionada, tamanio_valor, parametros.tamanio_clave);
 		return;
 	}
 
@@ -524,10 +534,11 @@ int obtener_entradas_que_ocupa(int tamanio_valor) {
 	return 1 + (tamanio_valor - 1) / tamanio_entrada;
 }
 
-void crear_entrada(parametros_set parametros, int entrada_seleccionada,
-		int tamanio_valor) {
+void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor, int tamanio_clave) {
 	entrada nueva_entrada;
-	nueva_entrada.clave = parametros.clave;
+	nueva_entrada.clave = malloc(tamanio_clave + 1);
+	memcpy(nueva_entrada.clave, parametros.clave, tamanio_clave);
+	nueva_entrada.clave[tamanio_clave] = '\0';
 	nueva_entrada.pos_valor = entrada_seleccionada;
 	nueva_entrada.tamanio_valor = tamanio_valor;
 	nueva_entrada.tiempo_sin_ser_referenciado = reloj_interno;
@@ -848,16 +859,17 @@ void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual,
 
 char * leer_clave_valor(entradas_node * puntero) {
 
+	//Le resto el '\0' de la clave de la entrada
 	int tamanio_de_la_clave_a_leer = strlen(puntero->una_entrada.clave);
+
 	int tamanio_del_valor_a_leer = puntero->una_entrada.tamanio_valor;
 
 	int posicion = puntero->una_entrada.pos_valor;
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
-	int tamanio_total = tamanio_de_la_clave_a_leer + 1
-			+ tamanio_del_valor_a_leer + 1;
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer + 1;
 
-	auxiliar = malloc(tamanio_total);
+	auxiliar = malloc(tamanio_total + 1);
 
 	memcpy(auxiliar, puntero->una_entrada.clave, tamanio_de_la_clave_a_leer);
 
@@ -881,10 +893,11 @@ void leer_valores_almacenados() {
 
 	while (nodo_auxiliar != NULL) {
 
-		log_trace(logger, "En la entrada %d se encuentra:      %s",
-				nodo_auxiliar->una_entrada.pos_valor,
-				leer_clave_valor(nodo_auxiliar));
+		int entrada_a_leer = nodo_auxiliar->una_entrada.pos_valor;
+
+		log_trace(logger, "En la entrada %i se encuentra: \n%s", entrada_a_leer, leer_clave_valor(nodo_auxiliar));
 		free(auxiliar);
+
 		nodo_auxiliar = nodo_auxiliar->siguiente;
 	}
 
