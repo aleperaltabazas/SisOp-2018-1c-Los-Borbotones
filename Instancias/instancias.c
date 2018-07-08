@@ -21,29 +21,29 @@ int main(int argc, char** argv) {
 		orden_del_coordinador orden;
 		orden = recibir_orden_coordinador(socket_coordinador);
 		switch (orden.codigo_operacion) {
-			case 11:
-				loggear("SET");
-				set(orden.tamanio_a_enviar, socket_coordinador);
-				break;
-			case 12:
-				loggear("STORE");
-				store(orden.tamanio_a_enviar, socket_coordinador);
-				break;
-			case 13:
-				loggear("Fallo");
-				break;
-			case 14:
-				loggear("Compactar");
-				compactacion();
-				break;
-			case 15:
-				loggear("Mostrando lo almacenado...");
-				leer_valores_almacenados();
-				break;
-			default:
-				loggear("ERROR");
-				break;
-			}
+		case 11:
+			loggear("SET");
+			set(orden.tamanio_a_enviar, socket_coordinador);
+			break;
+		case 12:
+			loggear("STORE");
+			store(orden.tamanio_a_enviar, socket_coordinador);
+			break;
+		case 13:
+			loggear("Fallo");
+			break;
+		case 14:
+			loggear("Compactar");
+			compactacion();
+			break;
+		case 15:
+			loggear("Mostrando lo almacenado...");
+			leer_valores_almacenados();
+			break;
+		default:
+			loggear("ERROR");
+			break;
+		}
 	}
 
 	close(socket_coordinador);
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void store(uint32_t tamanio_a_enviar, int socket_coordinador){
+void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	package_int clave_size = recibir_packed(socket_coordinador);
 
@@ -69,9 +69,10 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 
 	int posicion_de_entrada = posicion_de_entrada_con_clave(clave);
 
-	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(posicion_de_entrada);
+	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
+			posicion_de_entrada);
 
-	entrada entrada_con_la_clave = entrada_seleccionada -> una_entrada;
+	entrada entrada_con_la_clave = entrada_seleccionada->una_entrada;
 
 	int tamanio_valor = entrada_con_la_clave.tamanio_valor;
 
@@ -79,7 +80,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 
 	int offset = posicion_de_entrada * tamanio_entrada;
 
-	memcpy(valor, almacenamiento_de_valores + offset ,tamanio_valor);
+	memcpy(valor, almacenamiento_de_valores + offset, tamanio_valor);
 
 	log_trace(logger, "%s", valor);
 
@@ -87,7 +88,6 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador){
 
 	free(valor);
 }
-
 
 void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
@@ -105,14 +105,14 @@ void iniciar(char** argv) {
 
 }
 
-FILE* open_file(char* file_name){
-	
-	char* path = PUNTO_MONTAJE;
-	path = strcat(PUNTO_MONTAJE, file_name);
+FILE* open_file(char* file_name) {
+	char* path = malloc(strlen(file_name) + strlen(PUNTO_MONTAJE) + 1);
+	strcpy(path, PUNTO_MONTAJE);
+	strcat(path, file_name);
 
 	FILE* fd = fopen(path, "w");
 
-	if(fd == NULL){
+	if (fd == NULL) {
 		log_error(logger, "Falló la creación del archivo %s.", file_name);
 		exit(-1);
 	}
@@ -124,12 +124,12 @@ FILE* open_file(char* file_name){
 	return fd;
 }
 
-void write_file(char* file_name, char* text){
+void write_file(char* file_name, char* text) {
 	FILE* fd = open_file(file_name);
 
 	int res = fputs(text, fd);
 
-	if(res < 0){
+	if (res < 0) {
 		log_error(logger, "Falló la escritura en el archivo");
 		exit(-1);
 	}
@@ -140,21 +140,21 @@ void write_file(char* file_name, char* text){
 	fclose(fd);
 }
 
-void setup_montaje(void){
+void setup_montaje(void) {
 	log_info(logger, "Creando punto de montaje...");
 
 	struct stat sb;
 
 	sleep(1);
 
-	if(stat(PUNTO_MONTAJE, &sb) == 0){
+	if (stat(PUNTO_MONTAJE, &sb) == 0) {
 		log_warning(logger, "Ya existe una carpeta %s.", PUNTO_MONTAJE);
 		return;
 	}
 
 	int status = mkdir(PUNTO_MONTAJE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-	if(status < 0){
+	if (status < 0) {
 		log_error(logger, "Falló la creación de punto de montaje.");
 		exit(-1);
 	}
@@ -163,25 +163,25 @@ void setup_montaje(void){
 
 }
 
-algoritmo_reemplazo dame_algoritmo(char* algoritmo_src){
+algoritmo_reemplazo dame_algoritmo(char* algoritmo_src) {
 	algoritmo_reemplazo algoritmo_ret;
 
-	if(strcmp(algoritmo_src, "CIRC") == 0){
+	if (strcmp(algoritmo_src, "CIRC") == 0) {
 		algoritmo_ret = CIRC;
 	}
 
-	else if(strcmp(algoritmo_src, "LRU") == 0){
+	else if (strcmp(algoritmo_src, "LRU") == 0) {
 		algoritmo_ret = LRU;
 	}
 
-	else if(strcmp(algoritmo_src, "BSU") == 0){
+	else if (strcmp(algoritmo_src, "BSU") == 0) {
 		algoritmo_ret = BSU;
 	}
 
 	return algoritmo_ret;
 }
 
-void cargar_configuracion(char** argv){
+void cargar_configuracion(char** argv) {
 	t_config* config = config_create(argv[1]);
 
 	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
@@ -195,6 +195,7 @@ void cargar_configuracion(char** argv){
 	log_info(logger, "Algoritmo: %s", algoritmo);
 
 	PUNTO_MONTAJE = config_get_string_value(config, "PUNTO_MONTAJE");
+	strcat(PUNTO_MONTAJE, "\0");
 	log_info(logger, "Punto de montaje: %s", PUNTO_MONTAJE);
 
 	NOMBRE = config_get_string_value(config, "NOMBRE");
@@ -231,11 +232,13 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	orden_del_coordinador orden;
-	orden_del_coordinador * buffer_orden = malloc(sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(
+			sizeof(orden_del_coordinador));
 
 	loggear("Esperando orden del coordinador...");
 
-	if (recv(socket_coordinador, buffer_orden, sizeof(orden_del_coordinador), 0) < 0) {
+	if (recv(socket_coordinador, buffer_orden, sizeof(orden_del_coordinador), 0)
+			< 0) {
 		loggear("Fallo en la recepcion de la orden");
 		orden.codigo_operacion = 13;
 		orden.tamanio_a_enviar = 0;
@@ -245,7 +248,8 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	loggear("Orden recibida!");
 
-	log_trace(logger, "cod. op: %d, tamanio: %d", buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
+	log_trace(logger, "cod. op: %d, tamanio: %d",
+			buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
 
 	orden.codigo_operacion = buffer_orden->codigo_operacion;
 
@@ -259,83 +263,89 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	parametros_set parametros;
-	if(recieve_and_deserialize_set(&(parametros), socket_coordinador) < 0){
+	if (recieve_and_deserialize_set(&(parametros), socket_coordinador) < 0) {
 		loggear("Fallo en la recepcion de los parametros");
 	}
 
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
-	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros.clave);
+	int posicion_entrada_clave = posicion_de_entrada_con_clave(
+			parametros.clave);
 
-	log_trace(logger, "tamanio_valor %d, tamanio_clave %d", parametros.tamanio_valor, parametros.tamanio_clave);
+	log_trace(logger, "tamanio_valor %d, tamanio_clave %d",
+			parametros.tamanio_valor, parametros.tamanio_clave);
 
 	log_trace(logger, "CLAVE RECIBIDA: %s", parametros.clave);
 
-	if(posicion_entrada_clave >= 0){
+	if (posicion_entrada_clave >= 0) {
 		loggear("La entrada ya existe, actualizando...");
 		actualizar_entrada(parametros, posicion_entrada_clave);
 	}
 
-	else{
+	else {
 		loggear("La entrada no existe, generando nueva entrada...");
 		generar_entrada(parametros);
 	}
 }
 
-int posicion_de_entrada_con_clave(char* clave){
+int posicion_de_entrada_con_clave(char* clave) {
 
-	if(entradas_asignadas.head == NULL){
+	if (entradas_asignadas.head == NULL) {
 		loggear("No hay entradas en la lista");
 		return -1;
 	}
 
 	nodo_auxiliar = entradas_asignadas.head;
 
-	while(nodo_auxiliar != NULL){
-		entrada posible_entrada = nodo_auxiliar -> una_entrada;
+	while (nodo_auxiliar != NULL) {
+		entrada posible_entrada = nodo_auxiliar->una_entrada;
 
 		int comparacion_de_claves = strcmp(clave, posible_entrada.clave);
 
-		if(comparacion_de_claves == 0){
+		if (comparacion_de_claves == 0) {
 			return posible_entrada.pos_valor;
 		}
 
-		nodo_auxiliar = nodo_auxiliar -> siguiente;
+		nodo_auxiliar = nodo_auxiliar->siguiente;
 	}
 
 	return -1;
 }
 
-
-
-void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave){
+void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	entradas_node * puntero_entrada_a_actualizar;
-	puntero_entrada_a_actualizar = buscar_entrada_en_posicion(posicion_entrada_clave);
+	puntero_entrada_a_actualizar = buscar_entrada_en_posicion(
+			posicion_entrada_clave);
 
 	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
 
-	puntero_entrada_a_actualizar -> una_entrada.tamanio_valor = nuevo_tamanio_valor;
+	puntero_entrada_a_actualizar->una_entrada.tamanio_valor =
+			nuevo_tamanio_valor;
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(nuevo_tamanio_valor);
 
 	//Tendria que desactualizar como estaba antes pero Adriano dijo que no habia problema con eso
 
-	actualizar_entradas(puntero_entrada_a_actualizar -> una_entrada.pos_valor, entradas_que_ocupa);
+	actualizar_entradas(puntero_entrada_a_actualizar->una_entrada.pos_valor,
+			entradas_que_ocupa);
 
-	almacenar_valor(puntero_entrada_a_actualizar -> una_entrada.pos_valor, entradas_que_ocupa, parametros.valor);
+	almacenar_valor(puntero_entrada_a_actualizar->una_entrada.pos_valor,
+			entradas_que_ocupa, parametros.valor);
 }
 
-void generar_entrada(parametros_set parametros){
+void generar_entrada(parametros_set parametros) {
 
 	int tamanio_valor = strlen(parametros.valor);
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
 
-	int entrada_seleccionada = verificar_disponibilidad_entradas_contiguas(entradas_que_ocupa);
+	int entrada_seleccionada = verificar_disponibilidad_entradas_contiguas(
+			entradas_que_ocupa);
 
-	if(entrada_seleccionada >= 0){
-		almacenar_valor(entrada_seleccionada, entradas_que_ocupa, parametros.valor);
+	if (entrada_seleccionada >= 0) {
+		almacenar_valor(entrada_seleccionada, entradas_que_ocupa,
+				parametros.valor);
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
 		crear_entrada(parametros, entrada_seleccionada, tamanio_valor);
 		return;
@@ -350,24 +360,24 @@ void generar_entrada(parametros_set parametros){
 	generar_entrada(parametros);
 }
 
-void eliminar_entrada_segun_algoritmo(){
-	switch(ALGORITMO_REEMPLAZO){
-		case CIRC:
-				borrar_entrada(obtener_entrada_segun_CIRC());
-				log_trace(logger, "CIRC, Puntero: %i", puntero_entrada);
-				break;
-		case LRU:
-				borrar_entrada(obtener_entrada_segun_LRU());
-				break;
-		case BSU:
-				borrar_entrada(obtener_entrada_segun_BSU());
-				break;
-		default:
-				break;
+void eliminar_entrada_segun_algoritmo() {
+	switch (ALGORITMO_REEMPLAZO) {
+	case CIRC:
+		borrar_entrada(obtener_entrada_segun_CIRC());
+		log_trace(logger, "CIRC, Puntero: %i", puntero_entrada);
+		break;
+	case LRU:
+		borrar_entrada(obtener_entrada_segun_LRU());
+		break;
+	case BSU:
+		borrar_entrada(obtener_entrada_segun_BSU());
+		break;
+	default:
+		break;
 	}
 }
 
-entrada obtener_entrada_segun_CIRC(){
+entrada obtener_entrada_segun_CIRC() {
 
 	entradas_node* puntero = entradas_asignadas.head;
 
@@ -377,14 +387,14 @@ entrada obtener_entrada_segun_CIRC(){
 
 		//Si no encontre ninguna entrada pruebo en el siguiente, porque a lo mejor justo no hay algun valor
 		//donde apunta el puntero.
-		if(puntero == NULL){
+		if (puntero == NULL) {
 
 			//Termine la lista y no lo encontre, tengo que posicionarme al principio
 			puntero = entradas_asignadas.head;
 			puntero_entrada++;
 
 			//Si me pase de la cantidad de entradas reseteo el puntero haciendolo circular
-			if(puntero_entrada >= cantidad_entradas){
+			if (puntero_entrada >= cantidad_entradas) {
 				puntero_entrada = 0;
 			}
 		}
@@ -395,15 +405,15 @@ entrada obtener_entrada_segun_CIRC(){
 	//puntero_entrada += obtener_entradas_que_ocupa(puntero->una_entrada.tamanio_valor);
 	puntero_entrada++;
 
-	return puntero -> una_entrada;
+	return puntero->una_entrada;
 }
 
-entrada obtener_entrada_segun_LRU(){
-	return entradas_asignadas.head-> una_entrada;
+entrada obtener_entrada_segun_LRU() {
+	return entradas_asignadas.head->una_entrada;
 }
 
-entrada obtener_entrada_segun_BSU(){
-	return entradas_asignadas.head -> una_entrada;
+entrada obtener_entrada_segun_BSU() {
+	return entradas_asignadas.head->una_entrada;
 }
 
 void borrar_entrada(entrada entrada_a_eliminar) {
@@ -414,7 +424,8 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 		if (entrada_a_eliminar.pos_valor == head.pos_valor) {
 			entradas_node* eliminado = entradas_asignadas.head;
 			entradas_asignadas.head = entradas_asignadas.head->siguiente;
-			liberar_entradas_disponibles(entrada_a_eliminar.pos_valor, entrada_a_eliminar.tamanio_valor);
+			liberar_entradas_disponibles(entrada_a_eliminar.pos_valor,
+					entrada_a_eliminar.tamanio_valor);
 			destruir_nodo_entrada(eliminado);
 		}
 
@@ -423,23 +434,27 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 			entradas_node* puntero = entradas_asignadas.head;
 			entradas_node * aux;
 
-			while (puntero->una_entrada.pos_valor != entrada_a_eliminar.pos_valor) {
+			while (puntero->una_entrada.pos_valor
+					!= entrada_a_eliminar.pos_valor) {
 				aux = puntero;
 				puntero = puntero->siguiente;
 			}
 
-			log_trace(logger, "Estoy por borrar la entrada: %d", entrada_a_eliminar.pos_valor);
+			log_trace(logger, "Estoy por borrar la entrada: %d",
+					entrada_a_eliminar.pos_valor);
 			entradas_node* eliminado = puntero->siguiente;
-			if(puntero -> siguiente != NULL){
+			if (puntero->siguiente != NULL) {
 				puntero->siguiente = eliminado->siguiente;
-				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor, entrada_a_eliminar.tamanio_valor);
+				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor,
+						entrada_a_eliminar.tamanio_valor);
 				destruir_nodo_entrada(eliminado);
 			}
 
-			else{
+			else {
 				loggear("Estoy borrando justo la ultima entrada de la lista");
-				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor, entrada_a_eliminar.tamanio_valor);
-				aux -> siguiente = NULL;
+				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor,
+						entrada_a_eliminar.tamanio_valor);
+				aux->siguiente = NULL;
 				destruir_nodo_entrada(puntero);
 			}
 		}
@@ -447,29 +462,29 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 
 }
 
-void liberar_entradas_disponibles(int posicion, int tamanio_valor){
+void liberar_entradas_disponibles(int posicion, int tamanio_valor) {
 
 	int entradas_a_liberar = obtener_entradas_que_ocupa(tamanio_valor);
 
 	int i;
 
-	for(i = 0; i < entradas_a_liberar; i++){
+	for (i = 0; i < entradas_a_liberar; i++) {
 		entradas_disponibles[posicion + i] = 0;
 	}
 }
 
-entrada first(){
+entrada first() {
 	entrada primer_entrada = entradas_asignadas.head->una_entrada;
 
 	return primer_entrada;
 }
 
-
-int obtener_entradas_que_ocupa(int tamanio_valor){
+int obtener_entradas_que_ocupa(int tamanio_valor) {
 	return 1 + (tamanio_valor - 1) / tamanio_entrada;
 }
 
-void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor){
+void crear_entrada(parametros_set parametros, int entrada_seleccionada,
+		int tamanio_valor) {
 	entrada nueva_entrada;
 	nueva_entrada.clave = parametros.clave;
 	nueva_entrada.pos_valor = entrada_seleccionada;
@@ -482,47 +497,55 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tama
 
 }
 
-int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente){
+int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente) {
 
 	int status;
 	int buffer_size;
 	char *buffer = malloc(buffer_size = sizeof(uint32_t));
 
 	//uint32_t tamanio_clave;
-	status = recv(socketCliente, buffer, sizeof(parametros-> tamanio_clave), 0);
+	status = recv(socketCliente, buffer, sizeof(parametros->tamanio_clave), 0);
 	memcpy(&(parametros->tamanio_clave), buffer, buffer_size);
-	if (!status) return -1;
+	if (!status)
+		return -1;
 
-	parametros -> clave = malloc(parametros ->tamanio_clave);
+	parametros->clave = malloc(parametros->tamanio_clave);
 
-	status = recv(socketCliente, parametros -> clave, parametros ->tamanio_clave, 0);
-	if (!status) return -1;
+	status = recv(socketCliente, parametros->clave, parametros->tamanio_clave,
+			0);
+	if (!status)
+		return -1;
 
 	//uint32_t tamanio_valor;
-	status = recv(socketCliente, buffer, sizeof(parametros -> tamanio_valor), 0);
+	status = recv(socketCliente, buffer, sizeof(parametros->tamanio_valor), 0);
 	memcpy(&(parametros->tamanio_valor), buffer, buffer_size);
-	if (!status) return -1;
+	if (!status)
+		return -1;
 
-	parametros -> valor = malloc(parametros -> tamanio_valor);
+	parametros->valor = malloc(parametros->tamanio_valor);
 
-	status = recv(socketCliente, parametros -> valor, parametros -> tamanio_valor, 0);
-	if (!status) return -1;
+	status = recv(socketCliente, parametros->valor, parametros->tamanio_valor,
+			0);
+	if (!status)
+		return -1;
 
 	free(buffer);
 	/*
-	int i;
-	for (i = 0; i < cantidad_entradas; i++) {
-		log_trace(logger, "%i", entradas_disponibles[i]);
-	}
-	*/
+	 int i;
+	 for (i = 0; i < cantidad_entradas; i++) {
+	 log_trace(logger, "%i", entradas_disponibles[i]);
+	 }
+	 */
 	return status;
 }
 
-void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor) {
+void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa,
+		char * valor) {
 
 	int offset = entrada_seleccionada * tamanio_entrada;
 
-	memcpy(almacenamiento_de_valores + offset, valor, tamanio_entrada * entradas_que_ocupa);
+	memcpy(almacenamiento_de_valores + offset, valor,
+			tamanio_entrada * entradas_que_ocupa);
 
 	loggear("Valor copiado");
 
@@ -532,19 +555,21 @@ int verificar_disponibilidad_entradas_contiguas(int entradas_que_ocupa) {
 	int entrada = 0;
 
 	while (entrada <= cantidad_entradas - entradas_que_ocupa) {
-		if(entradas_disponibles[entrada] == 0){
+		if (entradas_disponibles[entrada] == 0) {
 
 			int puedo_almacenar = 1;
 			int i;
 
-			for(i = 1; i < entradas_que_ocupa; i++){
+			for (i = 1; i < entradas_que_ocupa; i++) {
 				if (entradas_disponibles[entrada + i] != 0) {
 					puedo_almacenar = 0;
 				}
 			}
 
-			if(puedo_almacenar){
-				log_trace(logger, "Tengo suficientes entradas para almacenar en la entrada: %d", entrada);
+			if (puedo_almacenar) {
+				log_trace(logger,
+						"Tengo suficientes entradas para almacenar en la entrada: %d",
+						entrada);
 				return entrada;
 			}
 
@@ -569,11 +594,11 @@ void actualizar_entradas(int pos_entrada, int entradas_que_ocupa) {
 	}
 }
 
-void compactacion(){
+void compactacion() {
 
 	int primera_entrada_disponible = obtener_primera_entrada_disponible();
 
-	if(primera_entrada_disponible < 0){
+	if (primera_entrada_disponible < 0) {
 		return;
 	}
 
@@ -586,20 +611,22 @@ void compactacion(){
 	//Como ya se que esta libre le sumo 1
 	int i = primera_entrada_disponible + 1;
 
-	while(i < cantidad_entradas){
+	while (i < cantidad_entradas) {
 
-		if(entradas_disponibles[i]){
+		if (entradas_disponibles[i]) {
 
 			log_trace(logger, "Entrada encontrada: %i", i);
 
-			entradas_node * puntero_entrada_a_desplazar = buscar_entrada_en_posicion(i);
+			entradas_node * puntero_entrada_a_desplazar =
+					buscar_entrada_en_posicion(i);
 
 			desplazar(puntero_entrada_a_desplazar, primera_entrada_disponible);
 
-			primera_entrada_disponible += puntero_entrada_a_desplazar -> una_entrada.tamanio_valor;
+			primera_entrada_disponible +=
+					puntero_entrada_a_desplazar->una_entrada.tamanio_valor;
 
 			// -1 porque despues le hago el i++
-			i += puntero_entrada_a_desplazar -> una_entrada.tamanio_valor - 1;
+			i += puntero_entrada_a_desplazar->una_entrada.tamanio_valor - 1;
 
 		}
 
@@ -611,28 +638,28 @@ void compactacion(){
 
 }
 
-entradas_node * buscar_entrada_en_posicion(int posicion){
+entradas_node * buscar_entrada_en_posicion(int posicion) {
 
 	/*
-	if(entradas_asignadas.head == NULL){
-		//Si se verifico que esta nunca deberia entrar por aca
-		entradas_node * entrada_error;
-		entrada_error -> una_entrada.clave = "ERRORMSG";
-		entrada_error -> una_entrada.pos_valor = -1;
-		entrada_error -> una_entrada.tamanio_valor = -1;
-		return entrada_error;
-	}
-	*/
+	 if(entradas_asignadas.head == NULL){
+	 //Si se verifico que esta nunca deberia entrar por aca
+	 entradas_node * entrada_error;
+	 entrada_error -> una_entrada.clave = "ERRORMSG";
+	 entrada_error -> una_entrada.pos_valor = -1;
+	 entrada_error -> una_entrada.tamanio_valor = -1;
+	 return entrada_error;
+	 }
+	 */
 
 	nodo_auxiliar = entradas_asignadas.head;
 
-	while(nodo_auxiliar != NULL){
+	while (nodo_auxiliar != NULL) {
 
-		if(nodo_auxiliar->una_entrada.pos_valor == posicion){
+		if (nodo_auxiliar->una_entrada.pos_valor == posicion) {
 			return nodo_auxiliar;
 		}
 
-		nodo_auxiliar = nodo_auxiliar -> siguiente;
+		nodo_auxiliar = nodo_auxiliar->siguiente;
 	}
 
 	loggear("Error en encontrar la entrada");
@@ -647,13 +674,13 @@ entradas_node* crear_nodo_entrada(entrada una_entrada) {
 	return nodo;
 }
 
-int obtener_cantidad_de_entradas_ocupadas(){
+int obtener_cantidad_de_entradas_ocupadas() {
 
 	int contador_entradas_ocupadas = 0;
 	int i;
 
-	for(i = 0; i < cantidad_entradas; i++){
-		if(entradas_disponibles[i] == 1){
+	for (i = 0; i < cantidad_entradas; i++) {
+		if (entradas_disponibles[i] == 1) {
 			contador_entradas_ocupadas++;
 		}
 	}
@@ -661,43 +688,43 @@ int obtener_cantidad_de_entradas_ocupadas(){
 	return contador_entradas_ocupadas;
 }
 
-void actualizar_entradas_disponibles(int entradas_ocupadas){
+void actualizar_entradas_disponibles(int entradas_ocupadas) {
 
 	int i;
 	int j;
 
-	for(i = 0; i < entradas_ocupadas; i++){
+	for (i = 0; i < entradas_ocupadas; i++) {
 		entradas_disponibles[i] = 1;
 	}
 
 	//Tendria que ver si se hizo el ultimo i++
 	log_trace(logger, "El valor de i es: %d", i);
 
-	for(j = i; j < cantidad_entradas; j++){
+	for (j = i; j < cantidad_entradas; j++) {
 		entradas_disponibles[j] = 0;
 	}
 }
 
 /*
-int sumar_tamanios_de_valores(){
+ int sumar_tamanios_de_valores(){
 
-	entradas_node *nodo_entrada = entradas_asignadas.head;
+ entradas_node *nodo_entrada = entradas_asignadas.head;
 
-	if(nodo_entrada == NULL){
-		return 0;
-	}
+ if(nodo_entrada == NULL){
+ return 0;
+ }
 
-	int suma_de_tamanios = 0;
+ int suma_de_tamanios = 0;
 
-	while(nodo_entrada -> siguiente != NULL){
-		suma_de_tamanios += nodo_entrada -> una_entrada.tamanio_valor;
-		nodo_entrada = nodo_entrada -> siguiente;
-	}
+ while(nodo_entrada -> siguiente != NULL){
+ suma_de_tamanios += nodo_entrada -> una_entrada.tamanio_valor;
+ nodo_entrada = nodo_entrada -> siguiente;
+ }
 
-	return suma_de_tamanios;
-}*/
+ return suma_de_tamanios;
+ }*/
 
-void agregar_entrada(entrada una_entrada){
+void agregar_entrada(entrada una_entrada) {
 	entradas_node* nodo = crear_nodo_entrada(una_entrada);
 
 	if (entradas_asignadas.head == NULL) {
@@ -714,7 +741,7 @@ void agregar_entrada(entrada una_entrada){
 
 		}
 
-	puntero->siguiente = nodo;
+		puntero->siguiente = nodo;
 
 	}
 
@@ -722,15 +749,15 @@ void agregar_entrada(entrada una_entrada){
 }
 
 void destruir_nodo_entrada(entradas_node* nodo) {
-	free(nodo ->una_entrada.clave);
+	free(nodo->una_entrada.clave);
 	free(nodo);
 }
 
-int obtener_primera_entrada_disponible(){
+int obtener_primera_entrada_disponible() {
 
 	int i = 0;
-	while(i < cantidad_entradas){
-		if(entradas_disponibles[i] == 0){
+	while (i < cantidad_entradas) {
+		if (entradas_disponibles[i] == 0) {
 			return i;
 		}
 		i++;
@@ -741,7 +768,7 @@ int obtener_primera_entrada_disponible(){
 	return -1;
 }
 
-void desplazar(entradas_node * puntero_entrada, int nueva_posicion){
+void desplazar(entradas_node * puntero_entrada, int nueva_posicion) {
 
 	int posicion_actual = puntero_entrada->una_entrada.pos_valor;
 
@@ -749,41 +776,52 @@ void desplazar(entradas_node * puntero_entrada, int nueva_posicion){
 	puntero_entrada->una_entrada.pos_valor = nueva_posicion;
 
 	//Actualizo la memoria
-	int entradas_que_ocupa = obtener_entradas_que_ocupa(puntero_entrada->una_entrada.tamanio_valor);
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(
+			puntero_entrada->una_entrada.tamanio_valor);
 
-	log_trace(logger, "Posicion Actual: %i, Nueva posicion: %i, Entradas que ocupa: %i", posicion_actual, nueva_posicion, entradas_que_ocupa);
+	log_trace(logger,
+			"Posicion Actual: %i, Nueva posicion: %i, Entradas que ocupa: %i",
+			posicion_actual, nueva_posicion, entradas_que_ocupa);
 
 	desplazar_memoria(nueva_posicion, posicion_actual, entradas_que_ocupa);
 
 }
 
-void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual, int entradas_del_valor){
+void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual,
+		int entradas_del_valor) {
 
 	loggear("Estoy por mover la memoria");
 	log_trace(logger, "Destino: %d, Desde: %d, Tamanio: %i",
-	almacenamiento_de_valores + posicion_a_desplazarse * tamanio_entrada, almacenamiento_de_valores + posicion_actual * tamanio_entrada, entradas_del_valor * tamanio_entrada);
+			almacenamiento_de_valores
+					+ posicion_a_desplazarse * tamanio_entrada,
+			almacenamiento_de_valores + posicion_actual * tamanio_entrada,
+			entradas_del_valor * tamanio_entrada);
 
-	memcpy(almacenamiento_de_valores + posicion_a_desplazarse * tamanio_entrada, almacenamiento_de_valores + posicion_actual * tamanio_entrada, entradas_del_valor * tamanio_entrada);
+	memcpy(almacenamiento_de_valores + posicion_a_desplazarse * tamanio_entrada,
+			almacenamiento_de_valores + posicion_actual * tamanio_entrada,
+			entradas_del_valor * tamanio_entrada);
 	return;
 }
 
-char * leer_clave_valor(entradas_node * puntero){
+char * leer_clave_valor(entradas_node * puntero) {
 
-	int tamanio_de_la_clave_a_leer = strlen(puntero -> una_entrada.clave);
-	int tamanio_del_valor_a_leer = puntero -> una_entrada.tamanio_valor;
+	int tamanio_de_la_clave_a_leer = strlen(puntero->una_entrada.clave);
+	int tamanio_del_valor_a_leer = puntero->una_entrada.tamanio_valor;
 
-	int posicion = puntero -> una_entrada.pos_valor;
+	int posicion = puntero->una_entrada.pos_valor;
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
-	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer + 1;
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1
+			+ tamanio_del_valor_a_leer + 1;
 
 	auxiliar = malloc(tamanio_total);
 
-	memcpy(auxiliar, puntero ->una_entrada.clave, tamanio_de_la_clave_a_leer);
+	memcpy(auxiliar, puntero->una_entrada.clave, tamanio_de_la_clave_a_leer);
 
 	auxiliar[tamanio_de_la_clave_a_leer] = ':';
 
-	memcpy(auxiliar + tamanio_de_la_clave_a_leer + 1, almacenamiento_de_valores + posicion * tamanio_entrada,
+	memcpy(auxiliar + tamanio_de_la_clave_a_leer + 1,
+			almacenamiento_de_valores + posicion * tamanio_entrada,
 			tamanio_del_valor_a_leer);
 
 	//Sobre el final de lo que copie pongo un \0 para que sepa que se termina ahi
@@ -798,92 +836,93 @@ void leer_valores_almacenados() {
 
 	nodo_auxiliar = entradas_asignadas.head;
 
-	while(nodo_auxiliar != NULL){
+	while (nodo_auxiliar != NULL) {
 
-		log_trace(logger, "En la entrada %d se encuentra:      %s", nodo_auxiliar->una_entrada.pos_valor, leer_clave_valor(nodo_auxiliar));
+		log_trace(logger, "En la entrada %d se encuentra:      %s",
+				nodo_auxiliar->una_entrada.pos_valor,
+				leer_clave_valor(nodo_auxiliar));
 		free(auxiliar);
-		nodo_auxiliar = nodo_auxiliar -> siguiente;
+		nodo_auxiliar = nodo_auxiliar->siguiente;
 	}
 
 }
-
 
 /*
-//Lleno con el valor ejemplo
-void caso_de_prueba_1() {
-	valor = "EjemploX";
-	while (disponibilidad_de_conexion) {
-		resultado_almacenamiento = almacenar_valor(entrada_seleccionada, entradas_que_ocupa, valor);
-		if (resultado_almacenamiento == EXIT_FAILURE) {
-			disponibilidad_de_conexion = 0;
-		}
-	}
-}
+ //Lleno con el valor ejemplo
+ void caso_de_prueba_1() {
+ valor = "EjemploX";
+ while (disponibilidad_de_conexion) {
+ resultado_almacenamiento = almacenar_valor(entrada_seleccionada, entradas_que_ocupa, valor);
+ if (resultado_almacenamiento == EXIT_FAILURE) {
+ disponibilidad_de_conexion = 0;
+ }
+ }
+ }
 
-//Lleno con distintos tipos de valores que ocupan una entrada
-void caso_de_prueba_2() {
-	int t = 0;
-	while (disponibilidad_de_conexion) {
-		//Recibimos el valor
-		if (t == 0) {
-			valor = "Ejemplo1";
-		} else if (t == 1) {
-			valor = "Ejemplo2";
-		} else if (t == 8) {
-			valor = "Algo";
-		} else {
-			valor = "Default";
-		}
-		resultado_almacenamiento = almacenar_valor();
-		if (resultado_almacenamiento == EXIT_FAILURE) {
-			disponibilidad_de_conexion = 0;
-		}
-		t++;
-	}
-}
+ //Lleno con distintos tipos de valores que ocupan una entrada
+ void caso_de_prueba_2() {
+ int t = 0;
+ while (disponibilidad_de_conexion) {
+ //Recibimos el valor
+ if (t == 0) {
+ valor = "Ejemplo1";
+ } else if (t == 1) {
+ valor = "Ejemplo2";
+ } else if (t == 8) {
+ valor = "Algo";
+ } else {
+ valor = "Default";
+ }
+ resultado_almacenamiento = almacenar_valor();
+ if (resultado_almacenamiento == EXIT_FAILURE) {
+ disponibilidad_de_conexion = 0;
+ }
+ t++;
+ }
+ }
 
-//Valor que ocupa dos entradas
-void caso_de_prueba_3() {
-	valor = "EjemploEjemplo";
-	while (disponibilidad_de_conexion) {
-		resultado_almacenamiento = almacenar_valor();
-		if (resultado_almacenamiento == EXIT_FAILURE) {
-			disponibilidad_de_conexion = 0;
-		}
-	}
-}
+ //Valor que ocupa dos entradas
+ void caso_de_prueba_3() {
+ valor = "EjemploEjemplo";
+ while (disponibilidad_de_conexion) {
+ resultado_almacenamiento = almacenar_valor();
+ if (resultado_almacenamiento == EXIT_FAILURE) {
+ disponibilidad_de_conexion = 0;
+ }
+ }
+ }
 
-//Un valor que ocupa todas las entradas
-void caso_de_prueba_4() {
-	valor =
-			"80caracteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeees";
-	while (disponibilidad_de_conexion) {
-		resultado_almacenamiento = almacenar_valor();
-		if (resultado_almacenamiento == EXIT_FAILURE) {
-			disponibilidad_de_conexion = 0;
-		}
-	}
-}
+ //Un valor que ocupa todas las entradas
+ void caso_de_prueba_4() {
+ valor =
+ "80caracteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeees";
+ while (disponibilidad_de_conexion) {
+ resultado_almacenamiento = almacenar_valor();
+ if (resultado_almacenamiento == EXIT_FAILURE) {
+ disponibilidad_de_conexion = 0;
+ }
+ }
+ }
 
-//Lleno con distintos tipos de valores que ocupan una o mas entradas
-void caso_de_prueba_5() {
-	int t = 0;
-	while (disponibilidad_de_conexion) {
-		//Recibimos el valor
-		if (t == 0) {
-			valor = "20caractereeeeeeeees";
-		} else if (t == 1) {
-			valor = "15caractereeees";
-		} else if (t == 2) {
-			valor = "40caractereeeeeeeeeeeeeeeeeeeeeeeeeeeees";
-		} else {
-			valor = "1";
-		}
-		resultado_almacenamiento = almacenar_valor();
-		if (resultado_almacenamiento == EXIT_FAILURE) {
-			disponibilidad_de_conexion = 0;
-		}
-		t++;
-	}
-}
-*/
+ //Lleno con distintos tipos de valores que ocupan una o mas entradas
+ void caso_de_prueba_5() {
+ int t = 0;
+ while (disponibilidad_de_conexion) {
+ //Recibimos el valor
+ if (t == 0) {
+ valor = "20caractereeeeeeeees";
+ } else if (t == 1) {
+ valor = "15caractereeees";
+ } else if (t == 2) {
+ valor = "40caractereeeeeeeeeeeeeeeeeeeeeeeeeeeees";
+ } else {
+ valor = "1";
+ }
+ resultado_almacenamiento = almacenar_valor();
+ if (resultado_almacenamiento == EXIT_FAILURE) {
+ disponibilidad_de_conexion = 0;
+ }
+ t++;
+ }
+ }
+ */
