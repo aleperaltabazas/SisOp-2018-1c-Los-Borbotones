@@ -72,6 +72,10 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
 			posicion_de_entrada);
 
+	entrada_seleccionada ->una_entrada.tiempo_sin_ser_referenciado = reloj_interno;
+
+	reloj_interno++;
+
 	entrada entrada_con_la_clave = entrada_seleccionada->una_entrada;
 
 	int tamanio_valor = entrada_con_la_clave.tamanio_valor;
@@ -98,8 +102,8 @@ void iniciar(char** argv) {
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
-	cantidad_entradas = 10;
-	tamanio_entrada = 40;
+	cantidad_entradas = 3;
+	tamanio_entrada = 8;
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
@@ -227,6 +231,7 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 
 	puntero_entrada = 0;
 
+	reloj_interno = 0;
 }
 
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
@@ -275,7 +280,15 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	log_trace(logger, "tamanio_valor %d, tamanio_clave %d",
 			parametros.tamanio_valor, parametros.tamanio_clave);
 
-	log_trace(logger, "CLAVE RECIBIDA: %s", parametros.clave);
+	char * mostrar_clave = malloc(parametros.tamanio_clave + 1);
+
+	memcpy(mostrar_clave, parametros.clave, parametros.tamanio_clave);
+
+	mostrar_clave[parametros.tamanio_clave] = '\0';
+
+	log_trace(logger, "CLAVE RECIBIDA: %s", mostrar_clave);
+
+	free(mostrar_clave);
 
 	if (posicion_entrada_clave >= 0) {
 		loggear("La entrada ya existe, actualizando...");
@@ -320,8 +333,11 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
 
-	puntero_entrada_a_actualizar->una_entrada.tamanio_valor =
-			nuevo_tamanio_valor;
+	puntero_entrada_a_actualizar->una_entrada.tamanio_valor = nuevo_tamanio_valor;
+
+	puntero_entrada_a_actualizar -> una_entrada.tiempo_sin_ser_referenciado = reloj_interno;
+
+	reloj_interno++;
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(nuevo_tamanio_valor);
 
@@ -336,7 +352,15 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 void generar_entrada(parametros_set parametros) {
 
-	int tamanio_valor = strlen(parametros.valor);
+	char * auxiliar = malloc(parametros.tamanio_valor + 1);
+
+	memcpy(auxiliar, parametros.valor, parametros.tamanio_valor);
+
+	auxiliar[parametros.tamanio_valor] = '\0';
+
+	int tamanio_valor = strlen(auxiliar);
+
+	free(auxiliar);
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
 
@@ -409,7 +433,24 @@ entrada obtener_entrada_segun_CIRC() {
 }
 
 entrada obtener_entrada_segun_LRU() {
-	return entradas_asignadas.head->una_entrada;
+	entradas_node* puntero = entradas_asignadas.head;
+	//entradas_node* puntero_auxiliar = malloc(sizeof(entradas_node));
+	entradas_node *puntero_auxiliar = entradas_asignadas.head;
+
+	while (puntero_auxiliar != NULL) {
+
+		//Busco el que tenga el mayor tiempo sin ser referenciado, o sea el que tenga el menor tiempo de ultimo acceso
+		if(puntero->una_entrada.tiempo_sin_ser_referenciado > puntero_auxiliar->una_entrada.tiempo_sin_ser_referenciado){
+			puntero = puntero_auxiliar;
+		}
+
+		puntero_auxiliar = puntero_auxiliar->siguiente;
+
+	}
+
+	log_trace(logger, "TIEMPO DE LA ENTRADA SELECCIONADA: %i", puntero->una_entrada.tiempo_sin_ser_referenciado);
+
+	return puntero -> una_entrada;
 }
 
 entrada obtener_entrada_segun_BSU() {
@@ -489,7 +530,9 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada,
 	nueva_entrada.clave = parametros.clave;
 	nueva_entrada.pos_valor = entrada_seleccionada;
 	nueva_entrada.tamanio_valor = tamanio_valor;
-	nueva_entrada.tiempo_sin_ser_referenciado = 0;
+	nueva_entrada.tiempo_sin_ser_referenciado = reloj_interno;
+
+	reloj_interno++;
 
 	loggear("Entrada creada, agregando a la lista...");
 

@@ -21,6 +21,9 @@ int DUMP;
 int cantidad_entradas;
 int tamanio_entrada;
 
+//Para llevar registro de tiempo de las entradas para el LRU
+int reloj_interno;
+
 //El valor que se desea almacenar en la instancia
 char * valor;
 
