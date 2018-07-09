@@ -156,6 +156,7 @@ entrada first();
 void borrar_entrada(entrada entrada_a_eliminar);
 void liberar_entradas_disponibles(int posicion, int tamanio_valor);
 int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar);
+void avanzar_puntero_CIRC();
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar;

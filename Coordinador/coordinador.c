@@ -745,6 +745,7 @@ char* first(t_clave_list lista) {
 }
 
 void* atender_instancia(void* un_socket) {
+
 	int sockfd = (int) un_socket;
 
 	loggear("Hilo de instancia inicializado correctamente.");
