@@ -375,6 +375,7 @@ int dame_instancia(char* clave);
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
 void enviar_ordenes_de_prueba(void* un_socket);
+void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
 
 

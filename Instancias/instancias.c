@@ -104,7 +104,7 @@ void iniciar(char** argv) {
 
 	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
 
-	cantidad_entradas = 3;
+	cantidad_entradas = 17;
 	tamanio_entrada = 8;
 
 	inicializar(cantidad_entradas, tamanio_entrada);
@@ -445,8 +445,6 @@ int el_nuevo_supera_segun_CIRC(entradas_node * puntero_actual, entradas_node * p
 	int posicion_entrada_nueva = puntero_nuevo->una_entrada.pos_valor;
 	int referencia_puntero = puntero_entrada;
 
-	log_trace(logger, "Estoy comparando: %i %i", posicion_entrada_actual, posicion_entrada_nueva);
-
 	while(1){
 
 		if(posicion_entrada_actual == referencia_puntero){
@@ -458,7 +456,7 @@ int el_nuevo_supera_segun_CIRC(entradas_node * puntero_actual, entradas_node * p
 		}
 
 		referencia_puntero++;
-		referencia_puntero = referencia_puntero%8;
+		referencia_puntero = referencia_puntero%cantidad_entradas;
 
 	}
 }
@@ -530,8 +528,6 @@ entrada obtener_entrada_segun_BSU() {
 	puntero_entrada = puntero->una_entrada.pos_valor;
 	avanzar_puntero_CIRC();
 
-	log_trace(logger, "TAMANIO DE ENTRADA SELECCIONADA: %i, entrada a reemplazar: %i", entradas_que_ocupa_actual, puntero->una_entrada.pos_valor);
-
 	return puntero -> una_entrada;
 }
 
@@ -559,7 +555,6 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 			}
 
 			log_trace(logger, "Estoy por borrar la entrada: %d", puntero->una_entrada.pos_valor);
-			entradas_node* eliminado = puntero->siguiente;
 
 			if (puntero->siguiente != NULL) {
 				aux->siguiente = puntero->siguiente;

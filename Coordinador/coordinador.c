@@ -760,6 +760,8 @@ void* atender_instancia(void* un_socket) {
 
 	//enviar_ordenes_de_prueba(un_socket);
 
+	//enviar_ordenes_de_prueba_compactacion(un_socket);
+
 	return NULL;
 }
 
@@ -767,6 +769,117 @@ void asignar_entradas(int sockfd) {
 
 }
 
+void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
+		int codigo_de_operacion) {
+
+	orden_del_coordinador orden;
+	orden.codigo_operacion = codigo_de_operacion;
+	orden.tamanio_a_enviar = tamanio_parametros_set;
+
+	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
+
+	log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
+
+	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
+
+	//Serializacion de la orden
+
+	memcpy(buffer_orden, &orden, tamanio_orden);
+
+	loggear("Enviando orden a la instancia...");
+
+	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, 0) < 0) {
+		loggear("Error en el envio de la orden");
+		return;
+	}
+
+	loggear("Orden enviada!");
+
+	free(buffer_orden);
+
+}
+
+void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
+
+	buffer_parametros = serializar_valores_set(tamanio_parametros_set,
+			&(valor_set));
+
+	loggear("Enviando parametros a la instancia");
+
+	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+
+	loggear("Parametros enviados!");
+
+}
+
+t_instancia_node* crear_instancia_node(int sockfd) {
+	t_instancia_node* nodo = (t_instancia_node*) malloc(
+			sizeof(t_instancia_node));
+	nodo->socket = sockfd;
+
+	return nodo;
+}
+
+void destruir_instancia_node(t_instancia_node* nodo) {
+	free(nodo);
+}
+
+void agregar_instancia(t_instancia_list* lista, int sockfd) {
+
+	t_instancia_node* nodo = crear_instancia_node(sockfd);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_instancia_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+}
+
+t_instancia_node* instancia_head(t_instancia_list lista){
+	t_instancia_node* instancia = lista.head;
+
+	return instancia;
+}
+
+void eliminar_instancia(t_instancia_list* lista, int id) {
+	if (lista->head != NULL) {
+		t_instancia_node* head = instancia_head(*lista);
+		if (id == head->id) {
+			t_instancia_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_instancia_node(eliminado);
+		} else {
+			t_instancia_node* puntero = lista->head;
+
+			while (puntero->id != head->id) {
+				puntero = puntero->sgte;
+			}
+
+			t_instancia_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_instancia_node(eliminado);
+		}
+	}
+}
+
+int instanciasDisponibles() {
+	t_instancia_node* puntero = instancias.head;
+	int size = 0;
+
+	while (puntero != NULL) {
+		size++;
+	}
+
+	return size;
+}
+
+//PARA 3 Entradas de tamanio 8
 void enviar_ordenes_de_prueba(void* un_socket) {
 
 	asignar_parametros_a_enviar_de_prueba();
@@ -909,112 +1022,100 @@ void asignar_parametros_a_enviar_de_prueba() {
 	valor_set.tamanio_valor = strlen(valor_set.valor);
 
 }
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
-		int codigo_de_operacion) {
 
-	orden_del_coordinador orden;
-	orden.codigo_operacion = codigo_de_operacion;
-	orden.tamanio_a_enviar = tamanio_parametros_set;
+//PARA 17 Entradas de tamanio 8 y BSU
+void enviar_ordenes_de_prueba_compactacion(void* un_socket){
 
-	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
+	int tamanio_parametros_set;
 
-	log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
+	valor_set.clave = "Clave00";
+	valor_set.tamanio_clave = 7;
+	valor_set.valor = "Valor00";
+	valor_set.tamanio_valor = 7;
 
-	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
+	tamanio_parametros_set = 7 + 7 + 2*4;
 
-	//Serializacion de la orden
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	memcpy(buffer_orden, &orden, tamanio_orden);
+	valor_set.clave = "Clave01";
+	valor_set.valor = "Valor01";
 
-	loggear("Enviando orden a la instancia...");
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, 0) < 0) {
-		loggear("Error en el envio de la orden");
-		return;
-	}
+	valor_set.clave = "Clave02";
+	valor_set.valor = "Valor02888888888888888888888888";
+	valor_set.tamanio_valor = 7 + 8*3;
 
-	loggear("Orden enviada!");
+	tamanio_parametros_set += 24;
 
-	free(buffer_orden);
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	valor_set.clave = "Clave03";
+	valor_set.valor = "Valor03";
+	valor_set.tamanio_valor = 7;
+
+	tamanio_parametros_set = 7 + 7 + 2*4;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	valor_set.clave = "Clave04";
+	valor_set.valor = "Valor028888888888888888";
+	valor_set.tamanio_valor = 7 + 8*2;
+
+	tamanio_parametros_set += 16;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	valor_set.clave = "Clave05";
+	valor_set.valor = "Valor05";
+	valor_set.tamanio_valor = 7;
+
+	tamanio_parametros_set = 7 + 7 + 2*4;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	valor_set.clave = "Clave06";
+	valor_set.valor = "Valor068888888888888888";
+	valor_set.tamanio_valor = 7 + 8*2;
+
+	tamanio_parametros_set += 16;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	valor_set.clave = "Clave07";
+	valor_set.valor = "Valor078888888888888888";
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	enviar_orden_instancia(0, un_socket, 14);
+
+	valor_set.clave = "Clave08";
+	valor_set.valor = "Valor088888888888888888888888888888888888888888";
+	valor_set.tamanio_valor = 7 + 8*5;
+
+	tamanio_parametros_set += 24;
+
+	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+
+	enviar_valores_set(tamanio_parametros_set, un_socket);
+
+	enviar_orden_instancia(0, un_socket, 15);
+
+	enviar_orden_instancia(0, un_socket, 14);
+
+	enviar_orden_instancia(0, un_socket, 15);
 
 }
 
-void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	buffer_parametros = serializar_valores_set(tamanio_parametros_set,
-			&(valor_set));
 
-	loggear("Enviando parametros a la instancia");
-
-	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
-
-	loggear("Parametros enviados!");
-
-}
-
-t_instancia_node* crear_instancia_node(int sockfd) {
-	t_instancia_node* nodo = (t_instancia_node*) malloc(
-			sizeof(t_instancia_node));
-	nodo->socket = sockfd;
-
-	return nodo;
-}
-
-void destruir_instancia_node(t_instancia_node* nodo) {
-	free(nodo);
-}
-
-void agregar_instancia(t_instancia_list* lista, int sockfd) {
-
-	t_instancia_node* nodo = crear_instancia_node(sockfd);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_instancia_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-
-}
-
-t_instancia_node* instancia_head(t_instancia_list lista){
-	t_instancia_node* instancia = lista.head;
-
-	return instancia;
-}
-
-void eliminar_instancia(t_instancia_list* lista, int id) {
-	if (lista->head != NULL) {
-		t_instancia_node* head = instancia_head(*lista);
-		if (id == head->id) {
-			t_instancia_node* eliminado = lista->head;
-			lista->head = lista->head->sgte;
-			destruir_instancia_node(eliminado);
-		} else {
-			t_instancia_node* puntero = lista->head;
-
-			while (puntero->id != head->id) {
-				puntero = puntero->sgte;
-			}
-
-			t_instancia_node* eliminado = puntero->sgte;
-			puntero->sgte = eliminado->sgte;
-			destruir_instancia_node(eliminado);
-		}
-	}
-}
-
-int instanciasDisponibles() {
-	t_instancia_node* puntero = instancias.head;
-	int size = 0;
-
-	while (puntero != NULL) {
-		size++;
-	}
-
-	return size;
-}
