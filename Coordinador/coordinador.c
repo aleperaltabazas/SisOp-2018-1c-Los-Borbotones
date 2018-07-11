@@ -758,7 +758,7 @@ void* atender_instancia(void* un_socket) {
 
 	loggear("Instancia agregada correctamente");
 
-	//enviar_ordenes_de_prueba(un_socket);
+	enviar_ordenes_de_prueba(un_socket);
 
 	//enviar_ordenes_de_prueba_compactacion(un_socket);
 
@@ -766,7 +766,8 @@ void* atender_instancia(void* un_socket) {
 }
 
 void asignar_entradas(int sockfd) {
-
+	log_trace(logger, "Cant entradas: %d, Tamanio_entrada: %d", CANTIDAD_ENTRADAS, TAMANIO_ENTRADAS);
+	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) sockfd, TAMANIO_ENTRADAS);
 }
 
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
@@ -778,7 +779,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
 
-	log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
+	//log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
 
 	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
 

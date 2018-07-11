@@ -14,10 +14,12 @@ int main(int argc, char** argv) {
 	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			id_instancia, 0);
 
+	recibir_orden_inicial(socket_coordinador);
+
+	inicializar(cantidad_entradas, tamanio_entrada);
+
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
-
-	ALGORITMO_REEMPLAZO = BSU;
 
 	while (disponibilidad_de_conexion) {
 		orden_del_coordinador orden;
@@ -61,6 +63,19 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
+void recibir_orden_inicial(int socket_coordinador){
+
+	orden_del_coordinador orden_inicial;
+
+	orden_inicial = recibir_orden_coordinador(socket_coordinador);
+
+	tamanio_entrada = orden_inicial.codigo_operacion;
+
+	cantidad_entradas = orden_inicial.tamanio_a_enviar;
+
+	log_trace(logger, "Cantidad entradas: %i, Tamanio de entrada: %i", cantidad_entradas, tamanio_entrada);
+}
+
 void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	package_int clave_size = recibir_packed(socket_coordinador);
@@ -101,14 +116,6 @@ void iniciar(char** argv) {
 
 	cargar_configuracion(argv);
 	setup_montaje();
-
-	//Aca deberia hacer un recv de la cantidad de entradas y el tamanio por lo que el handshake deberia hacerse antes
-
-	cantidad_entradas = 17;
-	tamanio_entrada = 8;
-
-	inicializar(cantidad_entradas, tamanio_entrada);
-
 }
 
 FILE* open_file(char* file_name) {
@@ -935,11 +942,12 @@ void leer_valores_almacenados() {
 
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
-	 int i;
+	/*
+	int i;
 	 for (i = 0; i < cantidad_entradas; i++) {
 	 log_trace(logger, "%i", entradas_disponibles[i]);
 	 }
-
+*/
 
 }
 
