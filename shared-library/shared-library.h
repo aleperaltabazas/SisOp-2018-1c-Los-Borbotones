@@ -218,4 +218,44 @@ char* serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
 	 * 		valor_set: el recipiente del mensaje serializado.
 	 */
 
+void cerrar_clave(char* clave);
+	/*
+	 * Descripción: agrega el caracter \0 a una clave al final.
+	 * Argumentos:
+	 * 		char* clave: la clave a cerrar.
+	 */
+
+char* serializar_key_package(clave_package* package);
+	/*
+	 * Descripción: serializa de forma dinámica un clave_package usado para hacer GET o STORE.
+	 * Argumentos:
+	 * 		clave_package* package: puntero del paquete a serializar.
+	 */
+
+void fill_clave_package(clave_package* package, char** clave);
+	/*
+	 * Descripción: completa los campos del paquete a enviar con la clave y su tamaño, y el
+	 * 		tamaño total.
+	 * Argumentos:
+	 * 		clave_package* package: puntero del paquete a rellenar.
+	 * 		char** clave: doble puntero de la clave usada para rellenar.
+	 */
+
+void enviar_clave_package(int sockfd, char* clave);
+	/*
+	 * Descripción: envía una clave a través del sockfd, llamando a serializar_clave_package() y
+	 * 		fill_clave_package().
+	 * Argumentos:
+	 * 		int sockfd: file descriptor del socket al cual enviar.
+	 * 		char* clave: clave a enviar.
+	 */
+
+void recibir_clave_package(int sockfd, clave_package* package);
+	/*
+	 * Descripción: recibe un clave_package y lo guarda en el package pasado por argumento.
+	 * Argumentos:
+	 * 		int sockfd: file descriptor del socket del cual recibir.
+	 * 		clave_package* package: puntero del paquete en donde guardar la información recibida.
+	 */
+
 #endif /* SHARED_LIBRARY_H_ */

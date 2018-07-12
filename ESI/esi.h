@@ -219,5 +219,4 @@ void clear(t_parsed_list* lista);
 	 * 		t_parsed_list* lista: puntero a la lista.
 	 */
 
-
 #endif /* ESI_H_ */

@@ -159,13 +159,9 @@ uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
 	}
 
 	char* clave = parsed.argumentos.GET.clave;
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+	cerrar_clave(clave);
 
-	package_int size_package = { .packed = clave_size };
-
-	enviar_packed(size_package, socket_coordinador);
-	sleep(1);
-	enviar_cadena(clave, socket_coordinador);
+	enviar_clave_package(socket_coordinador, clave);
 
 	package_int response = recibir_packed(socket_coordinador);
 

@@ -660,7 +660,7 @@ float recibirCodigo() {
 }
 void interpretarYEjecutarCodigo(int comando) {
 	int codigoSubsiguiente;
-	char * clave;
+	char clave[40];
 	switch (comando) {
 	case 0:
 		pthread_cancel(pthread_self()); //Usar esto lo hace no portable, preguntarle a Lean

@@ -30,7 +30,7 @@ typedef struct entrada {
 	int tamanio_valor;
 } entrada;
 
-typedef struct entradas_node{
+typedef struct entradas_node {
 	entrada una_entrada;
 	struct entradas_node * siguiente;
 } entradas_node;
@@ -70,6 +70,20 @@ typedef struct key {
 	char* clave;
 	int clave_size;
 }__attribute__((packed)) key;
+
+typedef struct clave_package {
+	char* clave;
+	uint32_t clave_long;
+	uint32_t total_size;
+} clave_package;
+
+typedef struct clave_valor_package {
+	char* clave;
+	uint32_t clave_long;
+	char* valor;
+	uint32_t valor_long;
+	uint32_t total_size;
+} clave_valor_package;
 
 //	Algoritmos
 
