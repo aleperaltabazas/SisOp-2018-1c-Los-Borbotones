@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
-void recibir_orden_inicial(int socket_coordinador){
+void recibir_orden_inicial(int socket_coordinador) {
 
 	orden_del_coordinador orden_inicial;
 
@@ -73,7 +73,8 @@ void recibir_orden_inicial(int socket_coordinador){
 
 	cantidad_entradas = orden_inicial.tamanio_a_enviar;
 
-	log_trace(logger, "Cantidad entradas: %i, Tamanio de entrada: %i", cantidad_entradas, tamanio_entrada);
+	log_trace(logger, "Cantidad entradas: %i, Tamanio de entrada: %i",
+			cantidad_entradas, tamanio_entrada);
 }
 
 void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
@@ -84,12 +85,14 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
 
-	int posicion_de_entrada = posicion_de_entrada_con_clave(clave, clave_size.packed);
+	int posicion_de_entrada = posicion_de_entrada_con_clave(clave,
+			clave_size.packed);
 
 	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
 			posicion_de_entrada);
 
-	entrada_seleccionada ->una_entrada.tiempo_sin_ser_referenciado = reloj_interno;
+	entrada_seleccionada->una_entrada.tiempo_sin_ser_referenciado =
+			reloj_interno;
 
 	reloj_interno++;
 
@@ -283,8 +286,8 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	//Veo si ya existe la clave (en cuyo caso trabajo directamente sobre el struct entrada que contenga esa clave)
 
-	int posicion_entrada_clave = posicion_de_entrada_con_clave(
-			parametros.clave, parametros.tamanio_clave);
+	int posicion_entrada_clave = posicion_de_entrada_con_clave(parametros.clave,
+			parametros.tamanio_clave);
 
 	log_trace(logger, "tamanio_valor %d, tamanio_clave %d",
 			parametros.tamanio_valor, parametros.tamanio_clave);
@@ -322,7 +325,8 @@ int posicion_de_entrada_con_clave(char* clave, int tamanio_clave) {
 	while (nodo_auxiliar != NULL) {
 		entrada posible_entrada = nodo_auxiliar->una_entrada;
 
-		int comparacion_de_claves = comparar_claves(clave, tamanio_clave, posible_entrada.clave);
+		int comparacion_de_claves = comparar_claves(clave, tamanio_clave,
+				posible_entrada.clave);
 		//comparar_claves(clave, tamanio_clave, posible_entrada.clave);
 
 		if (comparacion_de_claves == 0) {
@@ -335,7 +339,7 @@ int posicion_de_entrada_con_clave(char* clave, int tamanio_clave) {
 	return -1;
 }
 
-int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar){
+int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar) {
 	char * auxiliar_clave = malloc(tamanio_clave + 1);
 	memcpy(auxiliar_clave, clave, tamanio_clave);
 	auxiliar_clave[tamanio_clave] = '\0';
@@ -352,9 +356,11 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
 
-	puntero_entrada_a_actualizar->una_entrada.tamanio_valor = nuevo_tamanio_valor;
+	puntero_entrada_a_actualizar->una_entrada.tamanio_valor =
+			nuevo_tamanio_valor;
 
-	puntero_entrada_a_actualizar -> una_entrada.tiempo_sin_ser_referenciado = reloj_interno;
+	puntero_entrada_a_actualizar->una_entrada.tiempo_sin_ser_referenciado =
+			reloj_interno;
 
 	reloj_interno++;
 
@@ -390,7 +396,8 @@ void generar_entrada(parametros_set parametros) {
 		almacenar_valor(entrada_seleccionada, entradas_que_ocupa,
 				parametros.valor);
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
-		crear_entrada(parametros, entrada_seleccionada, tamanio_valor, parametros.tamanio_clave);
+		crear_entrada(parametros, entrada_seleccionada, tamanio_valor,
+				parametros.tamanio_clave);
 		return;
 	}
 
@@ -446,29 +453,30 @@ entrada obtener_entrada_segun_CIRC() {
 	return puntero->una_entrada;
 }
 
-int el_nuevo_supera_segun_CIRC(entradas_node * puntero_actual, entradas_node * puntero_nuevo){
+int el_nuevo_supera_segun_CIRC(entradas_node * puntero_actual,
+		entradas_node * puntero_nuevo) {
 
 	int posicion_entrada_actual = puntero_actual->una_entrada.pos_valor;
 	int posicion_entrada_nueva = puntero_nuevo->una_entrada.pos_valor;
 	int referencia_puntero = puntero_entrada;
 
-	while(1){
+	while (1) {
 
-		if(posicion_entrada_actual == referencia_puntero){
+		if (posicion_entrada_actual == referencia_puntero) {
 			return 0;
 		}
 
-		if(posicion_entrada_nueva == referencia_puntero){
+		if (posicion_entrada_nueva == referencia_puntero) {
 			return 1;
 		}
 
 		referencia_puntero++;
-		referencia_puntero = referencia_puntero%cantidad_entradas;
+		referencia_puntero = referencia_puntero % cantidad_entradas;
 
 	}
 }
 
-void avanzar_puntero_CIRC(){
+void avanzar_puntero_CIRC() {
 
 	puntero_entrada++;
 
@@ -486,7 +494,8 @@ entrada obtener_entrada_segun_LRU() {
 	while (puntero_auxiliar != NULL) {
 
 		//Busco el que tenga el mayor tiempo sin ser referenciado, o sea el que tenga el menor tiempo de ultimo acceso
-		if(puntero->una_entrada.tiempo_sin_ser_referenciado > puntero_auxiliar->una_entrada.tiempo_sin_ser_referenciado){
+		if (puntero->una_entrada.tiempo_sin_ser_referenciado
+				> puntero_auxiliar->una_entrada.tiempo_sin_ser_referenciado) {
 			puntero = puntero_auxiliar;
 		}
 
@@ -494,35 +503,38 @@ entrada obtener_entrada_segun_LRU() {
 
 	}
 
-	log_trace(logger, "TIEMPO DE LA ENTRADA SELECCIONADA: %i", puntero->una_entrada.tiempo_sin_ser_referenciado);
+	log_trace(logger, "TIEMPO DE LA ENTRADA SELECCIONADA: %i",
+			puntero->una_entrada.tiempo_sin_ser_referenciado);
 
-	return puntero -> una_entrada;
+	return puntero->una_entrada;
 }
 
 entrada obtener_entrada_segun_BSU() {
 	entradas_node* puntero = entradas_asignadas.head;
-	entradas_node *puntero_auxiliar = entradas_asignadas.head -> siguiente;
+	entradas_node *puntero_auxiliar = entradas_asignadas.head->siguiente;
 
 	int tamanio_referencia = puntero->una_entrada.tamanio_valor;
 	int tamanio_a_comparar;
-	int entradas_que_ocupa_actual = obtener_entradas_que_ocupa(tamanio_referencia);
+	int entradas_que_ocupa_actual = obtener_entradas_que_ocupa(
+			tamanio_referencia);
 	int entradas_que_ocupa_nuevo;
 
 	while (puntero_auxiliar != NULL) {
 
 		tamanio_a_comparar = puntero_auxiliar->una_entrada.tamanio_valor;
-		entradas_que_ocupa_nuevo = obtener_entradas_que_ocupa(tamanio_a_comparar);
+		entradas_que_ocupa_nuevo = obtener_entradas_que_ocupa(
+				tamanio_a_comparar);
 
 		//Si empatan tengo que ver segun CIRC
-		if(entradas_que_ocupa_nuevo == entradas_que_ocupa_actual){
-			if(el_nuevo_supera_segun_CIRC(puntero, puntero_auxiliar)){
+		if (entradas_que_ocupa_nuevo == entradas_que_ocupa_actual) {
+			if (el_nuevo_supera_segun_CIRC(puntero, puntero_auxiliar)) {
 				puntero = puntero_auxiliar;
 				entradas_que_ocupa_actual = entradas_que_ocupa_nuevo;
 			}
 		}
 
 		//Si ocupa mas entradas lo selecciono de una
-		if(entradas_que_ocupa_nuevo > entradas_que_ocupa_actual){
+		if (entradas_que_ocupa_nuevo > entradas_que_ocupa_actual) {
 			puntero = puntero_auxiliar;
 			entradas_que_ocupa_actual = entradas_que_ocupa_nuevo;
 
@@ -535,7 +547,7 @@ entrada obtener_entrada_segun_BSU() {
 	puntero_entrada = puntero->una_entrada.pos_valor;
 	avanzar_puntero_CIRC();
 
-	return puntero -> una_entrada;
+	return puntero->una_entrada;
 }
 
 void borrar_entrada(entrada entrada_a_eliminar) {
@@ -556,16 +568,19 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 			entradas_node* puntero = entradas_asignadas.head;
 			entradas_node * aux;
 
-			while (puntero->una_entrada.pos_valor != entrada_a_eliminar.pos_valor) {
+			while (puntero->una_entrada.pos_valor
+					!= entrada_a_eliminar.pos_valor) {
 				aux = puntero;
 				puntero = puntero->siguiente;
 			}
 
-			log_trace(logger, "Estoy por borrar la entrada: %d", puntero->una_entrada.pos_valor);
+			log_trace(logger, "Estoy por borrar la entrada: %d",
+					puntero->una_entrada.pos_valor);
 
 			if (puntero->siguiente != NULL) {
 				aux->siguiente = puntero->siguiente;
-				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor, entrada_a_eliminar.tamanio_valor);
+				liberar_entradas_disponibles(entrada_a_eliminar.pos_valor,
+						entrada_a_eliminar.tamanio_valor);
 				destruir_nodo_entrada(puntero);
 			}
 
@@ -602,7 +617,8 @@ int obtener_entradas_que_ocupa(int tamanio_valor) {
 	return 1 + (tamanio_valor - 1) / tamanio_entrada;
 }
 
-void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor, int tamanio_clave) {
+void crear_entrada(parametros_set parametros, int entrada_seleccionada,
+		int tamanio_valor, int tamanio_clave) {
 	entrada nueva_entrada;
 	nueva_entrada.clave = malloc(tamanio_clave + 1);
 	memcpy(nueva_entrada.clave, parametros.clave, tamanio_clave);
@@ -644,7 +660,10 @@ int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente) {
 	if (!status)
 		return -1;
 
-	parametros->valor = malloc(parametros->tamanio_valor);
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(
+			parametros->tamanio_valor);
+
+	parametros->valor = malloc(entradas_que_ocupa * tamanio_entrada);
 
 	status = recv(socketCliente, parametros->valor, parametros->tamanio_valor,
 			0);
@@ -734,16 +753,20 @@ void compactacion() {
 
 			log_trace(logger, "Entrada encontrada: %i", i);
 
-			entradas_node * puntero_entrada_a_desplazar = buscar_entrada_en_posicion(i);
+			entradas_node * puntero_entrada_a_desplazar =
+					buscar_entrada_en_posicion(i);
 
 			desplazar(puntero_entrada_a_desplazar, primera_entrada_disponible);
 
-			primera_entrada_disponible += obtener_entradas_que_ocupa(puntero_entrada_a_desplazar->una_entrada.tamanio_valor);
+			primera_entrada_disponible += obtener_entradas_que_ocupa(
+					puntero_entrada_a_desplazar->una_entrada.tamanio_valor);
 
 			// -1 porque despues le hago el i++
-			i += obtener_entradas_que_ocupa(puntero_entrada_a_desplazar->una_entrada.tamanio_valor) - 1;
+			i += obtener_entradas_que_ocupa(
+					puntero_entrada_a_desplazar->una_entrada.tamanio_valor) - 1;
 
-			log_trace(logger, "POS ENTRADA NUEVA: %i", puntero_entrada_a_desplazar->una_entrada.pos_valor);
+			log_trace(logger, "POS ENTRADA NUEVA: %i",
+					puntero_entrada_a_desplazar->una_entrada.pos_valor);
 
 		}
 
@@ -874,7 +897,8 @@ void desplazar(entradas_node * puntero_entrada, int nueva_posicion) {
 	puntero_entrada->una_entrada.pos_valor = nueva_posicion;
 
 	//Actualizo la memoria
-	int entradas_que_ocupa = obtener_entradas_que_ocupa(puntero_entrada->una_entrada.tamanio_valor);
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(
+			puntero_entrada->una_entrada.tamanio_valor);
 
 	log_trace(logger,
 			"Posicion Actual: %i, Nueva posicion: %i, Entradas que ocupa: %i",
@@ -906,7 +930,8 @@ char * leer_clave_valor(entradas_node * puntero) {
 	int posicion = puntero->una_entrada.pos_valor;
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
-	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer + 1;
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1
+			+ tamanio_del_valor_a_leer + 1;
 
 	auxiliar = malloc(tamanio_total + 1);
 
@@ -934,7 +959,8 @@ void leer_valores_almacenados() {
 
 		int entrada_a_leer = nodo_auxiliar->una_entrada.pos_valor;
 
-		log_trace(logger, "En la entrada %i se encuentra: \n%s, ", entrada_a_leer, leer_clave_valor(nodo_auxiliar));
+		log_trace(logger, "En la entrada %i se encuentra: \n%s, ",
+				entrada_a_leer, leer_clave_valor(nodo_auxiliar));
 		free(auxiliar);
 
 		nodo_auxiliar = nodo_auxiliar->siguiente;
@@ -943,11 +969,11 @@ void leer_valores_almacenados() {
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
 	/*
-	int i;
+	 int i;
 	 for (i = 0; i < cantidad_entradas; i++) {
 	 log_trace(logger, "%i", entradas_disponibles[i]);
 	 }
-*/
+	 */
 
 }
 
