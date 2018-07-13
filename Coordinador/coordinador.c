@@ -738,8 +738,6 @@ void eliminar_clave(t_clave_list* lista, char* clave) {
 }
 
 void destruir_nodo(t_clave_node* nodo) {
-	free(nodo->clave);
-	free(nodo->valor);
 	free(nodo);
 }
 

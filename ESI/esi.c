@@ -337,7 +337,11 @@ void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
 }
 
 void destruir_nodo(t_parsed_node* nodo) {
-	free(nodo);
+	destruir_operacion(nodo->esi_op);
+	if(nodo != NULL){
+		free(nodo);
+	}
+
 }
 
 void eliminar_parseo(t_parsed_list* lista) {
