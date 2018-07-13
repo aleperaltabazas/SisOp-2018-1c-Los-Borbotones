@@ -159,9 +159,12 @@ uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
 	}
 
 	char* clave = parsed.argumentos.GET.clave;
-	cerrar_clave(clave);
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
 
-	enviar_clave_package(socket_coordinador, clave);
+	package_int size_package = { .packed = clave_size };
+
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(clave, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);
 
@@ -188,11 +191,8 @@ uint32_t set(t_esi_operacion parsed, int socket_coordinador) {
 	package_int valor_size_package = { .packed = valor_size };
 
 	enviar_packed(clave_size_package, socket_coordinador);
-	sleep(1);
 	enviar_cadena(clave, socket_coordinador);
-	sleep(1);
 	enviar_packed(valor_size_package, socket_coordinador);
-	sleep(1);
 	enviar_cadena(valor, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);
@@ -215,7 +215,6 @@ uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
 	package_int size_package = { .packed = clave_size };
 
 	enviar_packed(size_package, socket_coordinador);
-	sleep(1);
 	enviar_cadena(clave, socket_coordinador);
 
 	package_int response = recibir_packed(socket_coordinador);

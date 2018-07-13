@@ -7,66 +7,7 @@
 
 #include "shared-library.h"
 
-void enviar_clave_package(int sockfd, char* clave) {
-	clave_package package;
-	char* serialized_package;
-
-	fill_clave_package(&package, &clave);
-	serialized_package = serializar_key_package(&package);
-
-	int envio = send(sockfd, serialized_package, package.total_size, 0);
-
-	if (envio < 0) {
-		salir_con_error("Error serializando dinámicamente, bobo", sockfd);
-	}
-
-	free(serialized_package);
-	loggear("Paquete enviado ok");
-}
-
-void recibir_clave_package(int sockfd, clave_package* package) {
-	int status;
-	int buffer_size;
-	char* buffer = malloc(buffer_size = sizeof(uint32_t));
-
-	uint32_t clave_long;
-	status = recv(sockfd, buffer, sizeof(package->clave_long), 0);
-	if (!status)
-		salir_con_error("Falló el largo de la clave", sockfd);
-	memcpy(&(clave_long), buffer, buffer_size);
-
-	status = recv(sockfd, package->clave, clave_long, 0);
-	if (!status)
-		salir_con_error("Falló la clave", sockfd);
-
-	free(buffer);
-}
-
-void fill_clave_package(clave_package* package, char** clave) {
-	package->clave = *clave;
-	package->clave_long = strlen(*clave) + 1;
-
-	package->total_size = sizeof(package->clave_long) + package->clave_long;
-}
-
-char* serializar_key_package(clave_package* package) {
-	char* serialized_package = malloc(package->total_size);
-
-	int offset = 0;
-	int size_to_send;
-
-	size_to_send = sizeof(package->clave_long);
-	memcpy(serialized_package + offset, &(package->clave_long), size_to_send);
-	offset += size_to_send;
-
-	size_to_send = package->clave_long;
-	memcpy(serialized_package + offset, &(package->clave), size_to_send);
-
-	return serialized_package;
-
-}
-
-void cerrar_clave(char* clave){
+void cerrar_clave(char* clave) {
 	strcat(clave, "\0");
 }
 

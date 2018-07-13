@@ -208,13 +208,18 @@ void get(int socket_cliente, uint32_t id) {
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
-	clave_package package;
-	recibir_clave_package(socket_cliente, &package);
+	package_int size_packed = recibir_packed(socket_cliente);
+	uint32_t clave_size = size_packed.packed;
+
+	char* clave = recibir_cadena(socket_cliente, clave_size);
 
 	package_int response;
-	response.packed = dame_response(package.clave, id);
+
+	response.packed = dame_response(clave, id);
 
 	log_debug(logger, "%i", response.packed);
+
+	sleep(2);
 
 	enviar_packed(response, socket_cliente);
 }
@@ -258,6 +263,8 @@ void set(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "%i", response.packed);
 
+	sleep(2);
+
 	enviar_packed(response, socket_cliente);
 }
 
@@ -288,6 +295,8 @@ void store(int socket_cliente, uint32_t id) {
 		}
 
 	}
+
+	sleep(2);
 
 	log_debug(logger, "%i", response.packed);
 
