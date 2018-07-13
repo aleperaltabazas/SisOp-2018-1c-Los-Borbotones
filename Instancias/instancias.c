@@ -110,7 +110,8 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	write_file(clave, valor);
 
-	free(valor);
+	destroy_string(clave);
+	destroy_string(valor);
 }
 
 void iniciar(char** argv) {
@@ -311,6 +312,9 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		loggear("La entrada no existe, generando nueva entrada...");
 		generar_entrada(parametros);
 	}
+
+	free(parametros.clave);
+	free(parametros.valor);
 }
 
 int posicion_de_entrada_con_clave(char* clave, int tamanio_clave) {
