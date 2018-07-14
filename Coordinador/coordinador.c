@@ -34,6 +34,11 @@ void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 	cargar_configuracion(argv);
 
+	log_operaciones = log_create("Operaciones.log", "Log de operaciones", false,
+			LOG_LEVEL_INFO);
+
+	log_info(log_operaciones, "Logger iniciado correctamente.");
+
 	instancia_id = 0;
 }
 
@@ -196,7 +201,7 @@ int chequear_solicitud(int socket_cliente) {
 
 	else {
 		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
-		terminar_conexion(socket_cliente);
+		terminar_conexion(socket_cliente, false);
 		return 0;
 	}
 
@@ -230,12 +235,22 @@ int dame_response(char* clave, uint32_t id) {
 	if (!existe(clave)) {
 		bloquear(clave, id);
 		loggear("Get exitoso.");
+
+		operacion op = { .op_type = op_GET, .clave = clave, .id = id };
+
+		log_op(op);
+
 		return 20;
 	}
 
 	else if (existe(clave) && !esta_bloqueada(clave)) {
 		bloquear(clave, id);
 		loggear("Get exitoso.");
+
+		operacion op = { .op_type = op_GET, .clave = clave, .id = id };
+
+		log_op(op);
+
 		return 20;
 	}
 
@@ -300,6 +315,10 @@ void store(int socket_cliente, uint32_t id) {
 
 		}
 
+		operacion op = { .op_type = op_STORE, .clave = clave, .id = id };
+
+		log_op(op);
+
 	}
 
 	sleep(2);
@@ -326,6 +345,11 @@ int settear(char* valor, char* clave, uint32_t id) {
 			}
 
 			puntero->valor = valor;
+
+			operacion op = { .op_type = op_SET, .clave = clave, .valor = valor,
+					.id = id };
+
+			log_op(op);
 
 			log_info(logger, "SET %s %s", clave, valor);
 			do_set(valor, clave);
@@ -359,6 +383,7 @@ void do_set(char* valor, char* clave) {
 	enviar_valores_set(tamanio_parametros_set, (void*) sockfd);
 
 	enviar_orden_instancia(0, (void*) sockfd, 15);
+
 }
 
 int dame_instancia(char* clave) {
@@ -776,6 +801,30 @@ void* atender_instancia(void* un_socket) {
 	//enviar_ordenes_de_prueba_compactacion(un_socket);
 
 	return NULL;
+}
+
+void abortar_ESI(int sockfd) {
+	terminar_conexion(sockfd, false);
+	close(sockfd);
+}
+
+void log_op(operacion op) {
+
+	switch (op.op_type) {
+	case op_GET:
+		log_info(log_operaciones, "ESI %i GET %s", op.id, op.clave);
+		break;
+	case op_SET:
+		log_info(log_operaciones, "ESI %i SET %s %s", op.id, op.clave,
+				op.valor);
+		break;
+	case op_STORE:
+		log_info(log_operaciones, "ESI %i STORE %s", op.id, op.clave);
+		break;
+	default:
+		log_warning(logger, "Operación inválida.");
+		break;
+	}
 }
 
 void asignar_entradas(int sockfd) {

@@ -114,7 +114,7 @@ char* recibir_cadena(int server_socket, uint32_t size) {
 	return ret_string;
 }
 
-void terminar_conexion(int sockfd) {
+void terminar_conexion(int sockfd, bool retry) {
 
 	aviso_con_ID aviso = { .aviso = -1 };
 
@@ -126,11 +126,15 @@ void terminar_conexion(int sockfd) {
 	int envio = send(sockfd, package, packageSize, 0);
 
 	if (envio < 0) {
-		log_warning(logger, "Fallo la terminación. Intentando de vuelta.");
-		terminar_conexion(sockfd);
+		if (retry) {
+			log_warning(logger, "Fallo la terminación. Intentando de vuelta.");
+			terminar_conexion(sockfd, true);
+		} else {
+			log_warning(logger, "Falló la terminación.");
+		}
 	}
 
-	loggear("Terminación exitosa.");
+	log_trace(logger, "Terminación exitosa.");
 }
 
 void serializar_packed(package_int packed, char** message) {
@@ -189,33 +193,6 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 
 	return buffer_parametros;
 }
-
-/*
- char* serializarOperandos(t_Package *package){
-
- char *serializedPackage = malloc(package->total_size);
-
- int offset = 0;
- int size_to_send;
-
- size_to_send =  sizeof(package->username_long);
- memcpy(serializedPackage + offset, &(package->username_long), size_to_send);
- offset += size_to_send;
-
- size_to_send =  package->username_long;
- memcpy(serializedPackage + offset, package->username, size_to_send);
- offset += size_to_send;
-
- size_to_send =  sizeof(package->message_long);
- memcpy(serializedPackage + offset, &(package->message_long), size_to_send);
- offset += size_to_send;
-
- size_to_send =  package->message_long;
- memcpy(serializedPackage + offset, package->message, size_to_send);
-
- return serializedPackage;
- }
- */
 
 void avisar_cierre(int server_socket) {
 	int status = 1;

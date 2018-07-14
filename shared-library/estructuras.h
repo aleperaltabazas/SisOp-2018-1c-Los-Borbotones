@@ -38,10 +38,20 @@ typedef struct entradas_node {
 typedef struct t_entrada_list {
 	entradas_node* head;
 } t_entrada_list;
+
 typedef struct blocked {
 	char* clave;
 	uint32_t id;
 } blocked;
+
+typedef struct operacion {
+	enum {
+		op_GET, op_SET, op_STORE
+	} op_type;
+	char* clave;
+	char* valor;
+	uint32_t id;
+} operacion;
 
 //	Estructuras con serialización
 

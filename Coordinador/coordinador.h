@@ -37,6 +37,8 @@ t_blocked_list blocked_ESIs;
 parametros_set valor_set;
 char * buffer_parametros;
 
+t_log* log_operaciones;
+
 //Hilos
 
 pthread_t hilo_ESI;
@@ -367,6 +369,21 @@ void asignar_parametros_a_enviar_de_prueba();
 	/*
  	 * Descripción: obtiene los parametros para mandarlos a la instancia.
  	 */
+
+void log_op(operacion op);
+	/*
+	 * Descripción: loguea una operación realizada por un ESI en el log de operaciones, asentando
+	 * 		el id de quien realizó la operación, y la clave y, si hubiera, su valor.
+	 * Argumentos:
+	 * 		operacion op: operacion a guardar.
+	 */
+
+void abortar_ESI(int sockfd);
+	/*
+	 * Descripción: envía un mensaje de fin a un ESI y cierra sockfd.
+	 * Argumentos:
+	 * 		sockfd: el socket por el cual enviar el aviso y luego cerrar.
+	 */
 
 void do_set(char* valor, char* clave);
 

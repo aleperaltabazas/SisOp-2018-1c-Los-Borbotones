@@ -158,11 +158,13 @@ void loggear(char* mensaje);
 	 * 		char* mensaje: el mensaje a loggear.
 	 */
 
-void terminar_conexion(int sockfd);
+void terminar_conexion(int sockfd, bool retry);
 	/*
-	 * Descripción: envía un mensaje de terminación a un proceso a trav�s de un socket.
+	 * Descripción: envía un mensaje de terminación a un proceso a través de un socket. El flag
+	 * 		retry indica si, en caso que falle el envìo, se intenta de nuevo o no.
 	 * Argumentos:
 	 * 		int sockfd: el socket por el cual se envía el mensaje.
+	 * 		bool retry: flag de reintento de cierre de conexión.
 	 */
 
 void enviar_aviso(int sockfd, aviso_con_ID aviso);
