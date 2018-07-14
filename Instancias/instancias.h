@@ -161,7 +161,7 @@ void avanzar_puntero_CIRC();
 void recibir_orden_inicial(int socket_coordinador);
 
 //Nodo para recorrer lista
-entradas_node * nodo_auxiliar;
+entradas_node * nodo_auxiliar = NULL;
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_entrada_list entradas_asignadas;

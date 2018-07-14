@@ -626,7 +626,10 @@ void bloquear_clave(int socket_cliente) {
 	enviar_aviso(socket_cliente, aviso_ok);
 
 	size_package = recibir_packed(socket_cliente);
+	log_debug(logger, "%i", size_package.packed);
 	char* clave = recibir_cadena(socket_cliente, size_package.packed);
+
+	log_debug(logger, "%s", clave);
 
 	bloquear(clave, 0);
 

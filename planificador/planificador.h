@@ -18,6 +18,7 @@ char* IP_COORDINADOR;
 char* IP_PLANIFICADOR;
 int ESTIMACION_INICIAL;
 float ALFA;
+char** CLAVES_BLOQUEADAS;
 algoritmo_planificacion ALGORITMO_PLANIFICACION;
 
 ESI esi_vacio = {
@@ -413,6 +414,13 @@ void mostrar(t_esi_node* puntero);
 	 * Descripción: muestra el id de los ESIs de una lista.
 	 * Argumentos:
 	 * 		t_esi_node* puntero: puntero de la lista.
+	 */
+
+void bloqueo_inicial(void);
+	/*
+	 * Descripción:  bloquea las claves del archivo de configuración.
+	 * Argumentos:
+	 * 		void
 	 */
 
 #endif /* PLANIFICADOR_H_ */

@@ -10,7 +10,7 @@
 void cerrar_cadena(char* cadena) {
 	int i = 0;
 
-	while (parsable(cadena[i])) {
+	while (esParseable(cadena[i])) {
 		i++;
 	}
 

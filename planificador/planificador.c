@@ -94,7 +94,38 @@ void cargar_configuracion(char** argv) {
 	ALFA = (float) config_get_int_value(config, "ALFA");
 	log_info(logger, "Alfa: %f", ALFA);
 
+	CLAVES_BLOQUEADAS = config_get_array_value(config, "CLAVES_BLOQUEADAS");
+
 	loggear("Configuración cargada.");
+}
+
+void bloqueo_inicial(void) {
+	int i = 0;
+
+	while (CLAVES_BLOQUEADAS[i] != NULL) {
+		aviso_con_ID aviso_bloqueo = { .aviso = 25 };
+
+		enviar_aviso(socket_coordinador, aviso_bloqueo);
+		aviso_con_ID ok = recibir_aviso(socket_coordinador);
+
+		if (ok.aviso != 25) {
+			salir_con_error("Falló el ok", socket_coordinador);
+		}
+
+		uint32_t size = (uint32_t) strlen(CLAVES_BLOQUEADAS[i]) + 1;
+		package_int size_package = { .packed = size };
+
+		log_debug(logger, "%s", CLAVES_BLOQUEADAS[i]);
+
+		enviar_packed(size_package, socket_coordinador);
+		sleep(1);
+		enviar_cadena(CLAVES_BLOQUEADAS[i], socket_coordinador);
+
+		package_int response = recibir_packed(socket_coordinador);
+
+		i++;
+	}
+
 }
 
 algoritmo_planificacion dame_algoritmo(char* algoritmo_src) {
@@ -128,6 +159,8 @@ void* atender_coordinador(void* nada) {
 			id_planificador, 0);
 
 	int local_socket = socket_coordinador;
+
+	bloqueo_inicial();
 
 	int status = 1;
 
@@ -817,7 +850,6 @@ void avisar_bloqueo(int server_socket, char* clave) {
 	pthread_mutex_lock(&sem_socket_coordi);
 
 	enviar_packed(size_package, server_socket);
-	sleep(2);
 	enviar_cadena(clave, server_socket);
 
 	pthread_mutex_lock(&sem_socket_coordi);
