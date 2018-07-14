@@ -242,6 +242,9 @@ void iniciar(char** argv) {
 		agregar_parseo(&parsed_ops, parsed);
 	}
 
+	if (line)
+		free(line);
+
 	fclose(archivo_de_parseo);
 
 	loggear("Parseo exitoso.");
@@ -296,7 +299,6 @@ t_esi_operacion parsear(char* line) {
 			exit(EXIT_FAILURE);
 		}
 
-		destruir_operacion(parsed);
 	} else {
 		log_error(logger, "No se puedo interpretar correctamente el archivo.");
 		exit(EXIT_FAILURE);
@@ -338,7 +340,7 @@ void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
 
 void destruir_nodo(t_parsed_node* nodo) {
 	destruir_operacion(nodo->esi_op);
-	if(nodo != NULL){
+	if (nodo != NULL) {
 		free(nodo);
 	}
 

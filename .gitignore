@@ -50,6 +50,9 @@ instancia
 planificador
 ESI
 
+# Configs
+Instancias/Debug/alesaurio.config
+
 # Debug files
 *.dSYM/
 *.su

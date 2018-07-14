@@ -27,6 +27,7 @@
 
 #define PACKAGE_SIZE 1024
 #define BACKLOG 20
+#define MAX_LEN 40
 
 t_log * logger;
 char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";
@@ -216,6 +217,20 @@ char* serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
 	 * Argumentos:
 	 * 		tamanio_a_enviar: para hacer el malloc.
 	 * 		valor_set: el recipiente del mensaje serializado.
+	 */
+
+void cerrar_cadena(char* cadena);
+	/*
+	 * Descripción: agrega \0 al final de una cadena.
+	 * Argumentos:
+	 * 		char* cadena: el string.
+	 */
+
+bool esParseable(char caracter);
+	/*
+	 * Descripción: devuelve si un caracter es alfa numérico o dos puntos.
+	 * Argumentos:
+	 * 		char* caracter: el caracter.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

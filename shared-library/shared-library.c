@@ -7,8 +7,18 @@
 
 #include "shared-library.h"
 
-void cerrar_clave(char* clave) {
-	strcat(clave, "\0");
+void cerrar_cadena(char* cadena) {
+	int i = 0;
+
+	while (parsable(cadena[i])) {
+		i++;
+	}
+
+	cadena[i] = '\0';
+}
+
+bool esParseable(char caracter) {
+	return isalnum(caracter) || caracter == ':';
 }
 
 void enviar_aviso(int sockfd, aviso_con_ID aviso) {
@@ -82,6 +92,7 @@ package_int recibir_packed(int server_socket) {
 }
 
 void enviar_cadena(char* cadena, int server_socket) {
+	cerrar_cadena(cadena);
 	int cadena_size = strlen(cadena) + 1;
 
 	int envio = send(server_socket, cadena, cadena_size, 0);

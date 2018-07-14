@@ -110,8 +110,6 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	write_file(clave, valor);
 
-	destroy_string(clave);
-	destroy_string(valor);
 }
 
 void iniciar(char** argv) {
@@ -130,11 +128,11 @@ FILE* open_file(char* file_name) {
 	FILE* fd = fopen(path, "w");
 
 	if (fd == NULL) {
-		log_error(logger, "Falló la creación del archivo %s.", file_name);
+		log_error(logger, "Falló la apertura del archivo %s.", file_name);
 		exit(-1);
 	}
 
-	log_info(logger, "Archivo creado exitosamente");
+	log_info(logger, "Archivo abierto exitosamente");
 
 	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
 
