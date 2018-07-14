@@ -225,30 +225,33 @@ char* first(t_clave_list lista);
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
 
-void get(int sockfd, uint32_t id);
+int get(int sockfd, uint32_t id);
 	/*
 	 * Descripción: bloquea una clave y se la asigna al id. Si no existe, se crea y se bloquea. Si
-	 * 		ya existe y está bloqueada, se bloquea al proceso cliente.
+	 * 		ya existe y está bloqueada, se bloquea al proceso cliente. En caso que la operación
+	 * 		sea inválida, devuelve -5 para abortar al ESI.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
 	 * 		uint32_t id: identificador del proceso cliente.
 	 */
 
-void set(int sockfd, uint32_t id);
+int set(int sockfd, uint32_t id);
 	/*
 	 * Descripción: settea un valor en una clave. Si la clave no existe, se bloquea al proceso cliente.
 	 * 		Si existe, pero las identificaciones del bloqueante y del proceso cliente no matchean, se
-	 * 		bloquea al proceso cliente.
+	 * 		bloquea al proceso cliente. En caso que la operación
+	 * 		sea inválida, devuelve -5 para abortar al ESI.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
 	 * 		uint32_t id: identificador del proceso cliente.
 	 */
 
-void store(int sockfd, uint32_t id);
+int store(int sockfd, uint32_t id);
 	/*
 	 * Descripción: guarda el valor de una clave en una instancia. Si la clave no existe, se bloquea al
 	 * 		proceso cliente. Si existe, pero las identificaciones del bloqueante y del proceso cliente
-	 * 		no matchean, se	bloquea al proceso cliente.
+	 * 		no matchean, se	bloquea al proceso cliente. En caso que la operación
+	 * 		sea inválida, devuelve -5 para abortar al ESI.
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso cliente.
 	 * 		uint32_t id: identificador del proceso cliente.
@@ -380,7 +383,8 @@ void log_op(operacion op);
 
 void abortar_ESI(int sockfd);
 	/*
-	 * Descripción: envía un mensaje de fin a un ESI y cierra sockfd.
+	 * Descripción: envía un mensaje de fin a un ESI y cierra sockfd. Se llama a
+	 * 		terminar_conexion() con el flag retry en false.
 	 * Argumentos:
 	 * 		sockfd: el socket por el cual enviar el aviso y luego cerrar.
 	 */

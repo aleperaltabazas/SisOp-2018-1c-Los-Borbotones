@@ -169,7 +169,8 @@ void terminar_conexion(int sockfd, bool retry);
 
 void enviar_aviso(int sockfd, aviso_con_ID aviso);
 	/*
-	 * Descripción: envía un mensaje a un servidor del tipo aviso_con_ID.
+	 * Descripción: envía un mensaje a un servidor del tipo aviso_con_ID. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos:
 	 * 		int sockfd: socket del servidor.
 	 * 		aviso_con_ID aviso: aviso a enviar.
@@ -177,14 +178,16 @@ void enviar_aviso(int sockfd, aviso_con_ID aviso);
 
 aviso_con_ID recibir_aviso(int sockfd);
 	/*
-	 * Descripción: recibe un aviso del tipo aviso_con_ID de otro proceso.
+	 * Descripción: recibe un aviso del tipo aviso_con_ID de otro proceso. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso.
 	 */
 
 void enviar_packed(package_int packed, int sockfd);
 	/*
-	 * Descripción: envia un paquete package_int a otro proceso.
+	 * Descripción: envia un paquete package_int a otro proceso. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos:
 	 * 		package_int packed: el paquete a enviar.
 	 * 		int sockfd: socket del proceso al cual enviar el paquete.
@@ -192,14 +195,16 @@ void enviar_packed(package_int packed, int sockfd);
 
 package_int recibir_packed(int sockfd);
 	/*
-	 * Descripción: recibe un paquete package_int de otro proceso.
+	 * Descripción: recibe un paquete package_int de otro proceso. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso del cual recibir el paquete.
 	 */
 
 void enviar_cadena(char* cadena, int sockfd);
 	/*
-	 * Descripción: envía una cadena a otro proceso.
+	 * Descripción: envía una cadena a otro proceso. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos.
 	 * 		char* cadena: la cadena a enviar.
 	 * 		int sockfd: el socket del proceso al cual enviar la cadena.
@@ -207,7 +212,8 @@ void enviar_cadena(char* cadena, int sockfd);
 
 char* recibir_cadena(int sockfd, uint32_t size);
 	/*
-	 * Descripción: recibe una cadena de otro proceso.
+	 * Descripción: recibe una cadena de otro proceso. En caso que falle, se
+	 * 		llama a salir_con_error().
 	 * Argumentos:
 	 * 		int sockfd: socket del proceso del cual recibir la cadena.
 	 * 		int size: tamaño de la cadena a recibir.

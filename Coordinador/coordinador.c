@@ -175,6 +175,8 @@ int chequear_solicitud(int socket_cliente) {
 
 	log_debug(logger, "%i", aviso_cliente.aviso);
 
+	int status;
+
 	if (aviso_cliente.aviso == 0) {
 		log_info(logger, "Fin de ESI.");
 		return 0;
@@ -186,17 +188,28 @@ int chequear_solicitud(int socket_cliente) {
 
 	else if (aviso_cliente.aviso == 11) {
 		log_debug(logger, "%i", aviso_cliente.id);
-		get(socket_cliente, aviso_cliente.id);
+		status = get(socket_cliente, aviso_cliente.id);
+
+		if (status == 5) {
+			return 0;
+		}
 	}
 
 	else if (aviso_cliente.aviso == 12) {
 		log_debug(logger, "%i", aviso_cliente.id);
-		set(socket_cliente, aviso_cliente.id);
+		status = set(socket_cliente, aviso_cliente.id);
+		if (status == 5) {
+			return 0;
+		}
 	}
 
 	else if (aviso_cliente.aviso == 13) {
 		log_debug(logger, "%i", aviso_cliente.id);
-		store(socket_cliente, aviso_cliente.id);
+		status = store(socket_cliente, aviso_cliente.id);
+
+		if (status == 5) {
+			return 0;
+		}
 	}
 
 	else {
@@ -208,7 +221,7 @@ int chequear_solicitud(int socket_cliente) {
 	return 1;
 }
 
-void get(int socket_cliente, uint32_t id) {
+int get(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	sleep(RETARDO);
@@ -229,6 +242,8 @@ void get(int socket_cliente, uint32_t id) {
 	sleep(2);
 
 	enviar_packed(response, socket_cliente);
+
+	return 20;
 }
 
 int dame_response(char* clave, uint32_t id) {
@@ -261,7 +276,7 @@ int dame_response(char* clave, uint32_t id) {
 	}
 }
 
-void set(int socket_cliente, uint32_t id) {
+int set(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	sleep(RETARDO);
@@ -280,14 +295,20 @@ void set(int socket_cliente, uint32_t id) {
 
 	response.packed = settear(valor, clave, id);
 
+	if (response.packed == -3) {
+		return -5;
+	}
+
 	log_debug(logger, "%i", response.packed);
 
 	sleep(2);
 
 	enviar_packed(response, socket_cliente);
+
+	return 20;
 }
 
-void store(int socket_cliente, uint32_t id) {
+int store(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
 	sleep(RETARDO);
@@ -303,6 +324,10 @@ void store(int socket_cliente, uint32_t id) {
 	response.packed = get_packed(clave, id);
 
 	enviar_packed(response, socket_cliente);
+
+	if (response.packed == -3) {
+		return -5;
+	}
 
 	if (response.packed != 5) {
 		hacer_store(clave);
@@ -325,23 +350,29 @@ void store(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "%i", response.packed);
 
+	return 20;
 }
 
 int settear(char* valor, char* clave, uint32_t id) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	if (!existe(clave)) {
-		return 5;
+		return -3;
+	}
+
+	if (!esta_bloqueada(clave)) {
+		log_warning(logger, "Abortando ESI %i.", id);
+		return -3;
 	}
 
 	while (puntero != NULL) {
+
 		if (strcmp(puntero->clave, clave) == 0) {
 			if (puntero->block_id != id) {
 				log_debug(logger, "%i %i", puntero->block_id, id);
 
-				log_warning(logger, "Bloqueando ESI %i.", id);
-				bloquear_ESI(clave, id);
-				return 5;
+				log_warning(logger, "Abortando ESI %i.", id);
+				return -3;
 			}
 
 			puntero->valor = valor;
@@ -359,7 +390,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 		puntero = puntero->sgte;
 	}
 
-	return 5;
+	return -3;
 }
 
 void do_set(char* valor, char* clave) {
@@ -425,9 +456,8 @@ int keyExplicit(char* clave) {
 
 int get_packed(char* clave, uint32_t id) {
 	if (!existe(clave)) {
-		log_warning(logger, "Bloqueando ESI %i.", id);
-		bloquear_ESI(clave, id);
-		return 5;
+		log_warning(logger, "Abortando ESI %i.", id);
+		return -3;
 	}
 
 	else {
@@ -436,21 +466,18 @@ int get_packed(char* clave, uint32_t id) {
 		log_trace(logger, "Solicitante %i", id);
 
 		if (blocker == -1) {
-			log_warning(logger, "Bloqueando ESI %i.", id);
-			bloquear_ESI(clave, id);
-			return 5;
+			log_warning(logger, "Abortando ESI %i.", id);
+			return -3;
 		}
 
 		if (blocker != id) {
-			log_warning(logger, "Bloqueando ESI %i.", id);
-			bloquear_ESI(clave, id);
-			return 5;
+			log_warning(logger, "Abortando ESI %i.", id);
+			return -3;
 		}
 
 		else if (!esta_bloqueada(clave)) {
-			log_warning(logger, "Bloqueando ESI %i.", id);
-			bloquear_ESI(clave, id);
-			return 5;
+			log_warning(logger, "Abortando ESI %i.", id);
+			return -3;
 		}
 
 		else {
