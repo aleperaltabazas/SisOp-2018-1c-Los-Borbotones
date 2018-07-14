@@ -206,6 +206,8 @@ int chequear_solicitud(int socket_cliente) {
 void get(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
+	sleep(RETARDO);
+
 	enviar_aviso(socket_cliente, aviso_ok);
 
 	package_int size_packed = recibir_packed(socket_cliente);
@@ -247,6 +249,8 @@ int dame_response(char* clave, uint32_t id) {
 void set(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
 
+	sleep(RETARDO);
+
 	enviar_aviso(socket_cliente, aviso_ok);
 
 	package_int clave_size_packed = recibir_packed(socket_cliente);
@@ -270,6 +274,8 @@ void set(int socket_cliente, uint32_t id) {
 
 void store(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_ok = { .aviso = 10 };
+
+	sleep(RETARDO);
 
 	enviar_aviso(socket_cliente, aviso_ok);
 
@@ -400,8 +406,9 @@ int get_packed(char* clave, uint32_t id) {
 	}
 
 	else {
-		int blocker = get_clave_id(clave);
-		log_trace(logger, "%i", blocker);
+		uint32_t blocker = get_clave_id(clave);
+		log_trace(logger, "Blocker %i", blocker);
+		log_trace(logger, "Solicitante %i", id);
 
 		if (blocker == -1) {
 			log_warning(logger, "Bloqueando ESI %i.", id);
@@ -764,7 +771,7 @@ void* atender_instancia(void* un_socket) {
 
 	loggear("Instancia agregada correctamente");
 
-	enviar_ordenes_de_prueba(un_socket);
+//	enviar_ordenes_de_prueba(un_socket);
 
 	//enviar_ordenes_de_prueba_compactacion(un_socket);
 

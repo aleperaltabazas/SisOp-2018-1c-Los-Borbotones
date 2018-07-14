@@ -123,6 +123,10 @@ void bloqueo_inicial(void) {
 
 		package_int response = recibir_packed(socket_coordinador);
 
+		if (response.packed != 26) {
+			salir_con_error("Falló el bloqueo", socket_coordinador);
+		}
+
 		i++;
 	}
 
@@ -813,6 +817,8 @@ void desbloquear_ESI(uint32_t id) {
 	if (ALGORITMO_PLANIFICACION.desalojo) {
 		desalojar();
 	}
+
+	planificar();
 }
 
 ESI get_ESI(uint32_t id, t_esi_list lista) {
