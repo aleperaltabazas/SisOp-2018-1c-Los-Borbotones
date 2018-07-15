@@ -52,6 +52,16 @@ package_int id_instancia = {
 		.packed = 3
 };
 
+package_int packed_recv_error = {
+		.packed = -20
+};
+
+aviso_con_ID aviso_recv_error = {
+		.aviso = -20
+};
+
+char* string_recv_error = "RECV ERROR";
+
 //Funciones servidor
 
 int levantar_servidor(char* puerto, int tries);
@@ -239,6 +249,109 @@ bool esParseable(char caracter);
 	 * Descripción: devuelve si un caracter es alfa numérico o dos puntos.
 	 * Argumentos:
 	 * 		char* caracter: el caracter.
+	 */
+
+int send_package_int(package_int package, int sockfd);
+	/*
+	 * Descripción: envía un package_int a través de un socket y devuelve el resultado del send().
+	 * Argumentos:
+	 * 		package_int package: el paquete a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+int send_aviso_con_ID(aviso_con_ID aviso, int sockfd);
+	/*
+	 * Descripción: envía un aviso_con_ID a través de un socket y devuelve el resultado del send().
+	 * Argumentos:
+	 * 		aviso_con_ID aviso: el aviso a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+int send_string(char* cadena, int sockfd);
+	/*
+	 * Descripción: envía una cadena a través de un socket y devuelve el resultado del send().
+	 * Argumentos:
+	 * 		char* cadena: la cadena a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+int recv_package_int(package_int* package, int sockfd);
+	/*
+	 * Descripción: recibe un package_int a través del sockfd y lo escribe en package. El retorno
+	 * 		es el resultado del recv().
+	 * Argumentos:
+	 * 		package_int* package: puntero al package sobre el cual escribir.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+int recv_aviso_con_ID(aviso_con_ID* aviso, int sockfd);
+	/*
+	 * Descripción: recibe un aviso_con_ID a través del sockfd y lo escribe en aviso. El retorno
+	 * 		es el resultado del recv().
+	 * Argumentos:
+	 * 		aviso_con_ID* aviso: puntero al aviso sobre el cual escribir.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+int recv_string(char* cadena, uint32_t size, int sockfd);
+	/*
+	 * Descripción: recibe un char* a través del sockfd y lo escribe en la cadena. El retorno
+	 * 		es el resultado del recv().
+	 * Argumentos:
+	 * 		char* cadena: la cadena sobre la cual escribir el recv().
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+void send_packed_no_exit(package_int package, int sockfd);
+	/*
+	 * Descripción: envía un package_int. En caso que falle, loguea a nivel warning, pero no
+	 * 		corta la ejecución del proceso.
+	 * Argumentos:
+	 * 		package_int package: el package_int a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+void send_aviso_no_exit(aviso_con_ID aviso, int sockfd);
+	/*
+	 * Descripción: envía un aviso_con_ID. En caso que falle, loguea a nivel warning, pero no
+	 * 		corta la ejecución del proceso.
+	 * Argumentos:
+	 * 		aviso_con_ID aviso: el aviso_con_ID a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+void send_string_no_exit(char* string, int sockfd);
+	/*
+	 * Descripción: envía un string. En caso que falle, loguea a nivel warning, pero no
+	 * 		corta la ejecución del proceso
+	 * Argumentos:
+	 * 		char* string: la cadena a enviar.
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
+package_int recv_packed_no_exit(int sockfd);
+	/*
+	 * Descripción: recibe un package_int. En caso que falle, loguea a nivel warning y retorna
+	 * 		packed_recv_error.
+	 * Argumentos:
+	 * 		int sockfd: file descriptor por el cual recibir el package_int.
+	 */
+
+aviso_con_ID recv_aviso_no_exit(int sockfd);
+	/*
+	 * Descripción: recibe un aviso_con_ID. En caso que falle, loguea a nivel warning y retorna
+	 * 		aviso_recv_error.
+	 * Argumentos:
+	 * 		int sockfd: file descriptor por el cual recibir el aviso_con_ID.
+	 */
+
+char* recv_string_no_exit(int sockfd, uint32_t size);
+	/*
+	 * Descripción: recibe un char*. En caso que falle, loguea a nivel warning y retorna
+	 * 		string_recv_error.
+	 * Argumentos:
+	 * 		int sockfd: file descriptor por el cual recibir el char*.
+	 * 		uint32_t size: tamaño de la cadena a recibir.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

@@ -7,6 +7,154 @@
 
 #include "shared-library.h"
 
+char* recv_string_no_exit(int sockfd, uint32_t size) {
+	char* ret_string = malloc(size);
+
+	int res = recv_string(ret_string, size, sockfd);
+
+	if (res <= 0) {
+		log_warning(logger, "Falló la recepción de la cadena");
+		return string_recv_error;
+	}
+
+	loggear("Cadena recibida.");
+
+	return ret_string;
+}
+
+aviso_con_ID recv_aviso_no_exit(int sockfd) {
+	aviso_con_ID ret_aviso;
+
+	int res = recv_aviso_con_ID(&ret_aviso, sockfd);
+
+	if (res < 0) {
+		log_warning(logger, "Falló la recepción del Aviso con ID.");
+		return aviso_recv_error;
+	}
+
+	loggear("Aviso con ID recibido.");
+
+	return ret_aviso;
+}
+
+package_int recv_packed_no_exit(int sockfd) {
+	package_int ret_package;
+
+	int res = recv_package_int(&ret_package, sockfd);
+
+	if (res < 0) {
+		log_warning(logger, "Falló la recepción del Package Int.");
+		return packed_recv_error;
+	}
+
+	loggear("Package Int recibido.");
+
+	return ret_package;
+}
+
+void send_string_no_exit(char* string, int sockfd) {
+	int res = send_string(string, sockfd);
+
+	if (res < 0) {
+		log_warning(logger, "Falló el envío de la cadena.");
+		return;
+	}
+
+	loggear("Cadena enviada.");
+}
+
+void send_aviso_no_exit(aviso_con_ID aviso, int sockfd) {
+	int res = send_aviso_con_ID(aviso, sockfd);
+
+	if (res < 0) {
+		log_warning(logger, "Falló el envío del Aviso con ID.");
+		return;
+	}
+
+	loggear("Aviso con ID enviado.");
+}
+
+void send_packed_no_exit(package_int package, int sockfd) {
+	int res = send_package_int(package, sockfd);
+
+	if (res < 0) {
+		log_warning(logger, "Falló el envío del Package Int.");
+		return;
+	}
+
+	loggear("Package Int enviado.");
+
+}
+
+int recv_string(char* string, uint32_t size, int sockfd) {
+	int res = recv(sockfd, string, size, 0);
+
+	return res;
+}
+
+int recv_aviso_con_ID(aviso_con_ID* aviso, int sockfd) {
+	int packageSize = sizeof(aviso_con_ID);
+	char* message = malloc(packageSize);
+
+	int res = recv(sockfd, message, packageSize, 0);
+
+	deserializar_aviso(aviso, &(message));
+
+	free(message);
+
+	return res;
+}
+
+int recv_package_int(package_int* package, int sockfd) {
+	int packageSize = sizeof(package_int);
+	char* message = malloc(packageSize);
+
+	int res = recv(sockfd, message, packageSize, 0);
+
+	deserializar_packed(package, &(message));
+
+	free(message);
+
+	return res;
+}
+
+int send_package_int(package_int package, int sockfd) {
+	int packageSize = sizeof(package_int);
+	char* message = malloc(packageSize);
+
+	serializar_packed(package, &message);
+
+	int envio = send(sockfd, message, packageSize, 0);
+
+	free(message);
+
+	return envio;
+}
+
+int send_aviso_con_ID(aviso_con_ID aviso, int sockfd) {
+	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
+	char* message = malloc(packageSize);
+
+	serializar_aviso(aviso, &message);
+
+	loggear("Serialice bien.");
+
+	int envio = send(sockfd, message, packageSize, 0);
+
+	free(message);
+
+	return envio;
+}
+
+int send_string(char* string, int sockfd) {
+	cerrar_cadena(string);
+	int cadena_size = strlen(string) + 1;
+
+	int envio = send(sockfd, string, cadena_size, 0);
+
+	return envio;
+}
+
 void cerrar_cadena(char* cadena) {
 	int i = 0;
 
@@ -22,94 +170,73 @@ bool esParseable(char caracter) {
 }
 
 void enviar_aviso(int sockfd, aviso_con_ID aviso) {
-	int packageSize = sizeof(aviso.aviso) + sizeof(aviso.id);
-	char* message = malloc(packageSize);
+	int res = send_aviso_con_ID(aviso, sockfd);
 
-	serializar_aviso(aviso, &message);
-
-	loggear("Serialice bien.");
-
-	int envio = send(sockfd, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el envío.", sockfd);
+	if (res < 0) {
+		salir_con_error("Falló el envío del Aviso con ID.", sockfd);
 	}
 
-	free(message);
-
-	loggear("Mensaje enviado.");
+	loggear("Aviso con ID enviado.");
 }
 
 aviso_con_ID recibir_aviso(int sockfd) {
 	aviso_con_ID ret_aviso;
-	int packageSize = sizeof(aviso_con_ID);
-	char* package = malloc(packageSize);
 
-	int res = recv(sockfd, package, packageSize, 0);
+	int res = recv_aviso_con_ID(&ret_aviso, sockfd);
 
-	if (res <= 0) {
-		salir_con_error("Falló la recepción del aviso.", sockfd);
+	if (res < 0) {
+		salir_con_error("Falló la recepción del Aviso con ID", sockfd);
 	}
 
-	deserializar_aviso(&(ret_aviso), &(package));
-
-	free(package);
+	loggear("Aviso con ID recibido.");
 
 	return ret_aviso;
 }
 
-void enviar_packed(package_int packed, int server_socket) {
-	int packageSize = sizeof(package_int);
-	char* message = malloc(packageSize);
+void enviar_packed(package_int packed, int sockfd) {
+	int res = send_package_int(packed, sockfd);
 
-	serializar_packed(packed, &message);
-
-	int envio = send(server_socket, message, packageSize, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el envío del paquete.", server_socket);
+	if (res < 0) {
+		salir_con_error("Falló el envío del Package Int.", sockfd);
 	}
 
-	free(message);
+	loggear("Package Int enviado.");
 }
 
-package_int recibir_packed(int server_socket) {
+package_int recibir_packed(int sockfd) {
 	package_int ret_package;
-	int packageSize = sizeof(package_int);
-	char* package = malloc(packageSize);
 
-	int res = recv(server_socket, package, packageSize, 0);
+	int res = recv_package_int(&ret_package, sockfd);
 
-	if (res <= 0) {
-		salir_con_error("Falló la recepción del paquete", server_socket);
+	if (res < 0) {
+		salir_con_error("Falló la recepción del Package Int.", sockfd);
 	}
 
-	deserializar_packed(&(ret_package), &(package));
-
-	free(package);
+	loggear("Package Int recibido.");
 
 	return ret_package;
 }
 
-void enviar_cadena(char* cadena, int server_socket) {
-	cerrar_cadena(cadena);
-	int cadena_size = strlen(cadena) + 1;
+void enviar_cadena(char* cadena, int sockfd) {
+	int res = send_string(cadena, sockfd);
 
-	int envio = send(server_socket, cadena, cadena_size, 0);
-
-	if (envio < 0) {
-		salir_con_error("Falló el envío de la cadena.", server_socket);
+	if (res < 0) {
+		salir_con_error("Falló el envío de la cadena", sockfd);
 	}
+
+	loggear("Cadena enviada.");
 }
 
-char* recibir_cadena(int server_socket, uint32_t size) {
+char* recibir_cadena(int sockfd, uint32_t size) {
 	char* ret_string = malloc(size);
 
-	int res = recv(server_socket, ret_string, size, 0);
+	int res = recv_string(ret_string, size, sockfd);
 
 	if (res <= 0) {
-		salir_con_error("Falló la recepción de la cadena", server_socket);
+		salir_con_error("Falló la recepción de la cadena", sockfd);
 	}
+
+	loggear("Cadena recibida");
 
 	return ret_string;
 }

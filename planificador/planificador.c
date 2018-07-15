@@ -305,6 +305,7 @@ void* atender_ESI(void* buffer) {
 	planificar();
 
 	log_trace(logger, "Hilo de ESI número %i terminado.", this_id);
+	close(socket_ESI);
 
 	return NULL;
 }
@@ -412,9 +413,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	}
 
 	else {
-
-		log_warning(logger, "El ESI se volvió loco. Terminando.");
-		kill_ESI(esi);
+		log_warning(logger, "El ESI %i se cayó o fue abortado.", id);
 
 		return 0;
 	}

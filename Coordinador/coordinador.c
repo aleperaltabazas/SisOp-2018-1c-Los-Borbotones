@@ -190,31 +190,28 @@ int chequear_solicitud(int socket_cliente) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = get(socket_cliente, aviso_cliente.id);
 
-		if (status == 5) {
-			return 0;
-		}
 	}
 
 	else if (aviso_cliente.aviso == 12) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = set(socket_cliente, aviso_cliente.id);
-		if (status == 5) {
-			return 0;
-		}
+
 	}
 
 	else if (aviso_cliente.aviso == 13) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = store(socket_cliente, aviso_cliente.id);
 
-		if (status == 5) {
-			return 0;
-		}
 	}
 
 	else {
 		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
-		terminar_conexion(socket_cliente, false);
+		abortar_ESI(socket_cliente);
+		return 0;
+	}
+
+	if (status == -5) {
+		abortar_ESI(socket_cliente);
 		return 0;
 	}
 
@@ -500,7 +497,6 @@ void hacer_store(char* clave) {
 	package_int package_size = { .packed = clave_size };
 
 	enviar_packed(package_size, sockfd);
-	sleep(1);
 	enviar_cadena(clave, sockfd);
 }
 
