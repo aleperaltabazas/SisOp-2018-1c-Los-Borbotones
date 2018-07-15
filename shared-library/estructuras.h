@@ -30,14 +30,15 @@ typedef struct entrada {
 	int tamanio_valor;
 } entrada;
 
-typedef struct entradas_node {
-	entrada una_entrada;
-	struct entradas_node * siguiente;
-} entradas_node;
-
-typedef struct t_entrada_list {
-	entradas_node* head;
-} t_entrada_list;
+typedef struct Instancia {
+	int sockfd;
+	int veces_llamado;
+	int espacio_usado;
+	int id;
+	bool disponible;
+	char* nombre;
+	char** claves;
+} Instancia;
 
 typedef struct blocked {
 	char* clave;
@@ -154,5 +155,23 @@ typedef struct t_blocked_node {
 typedef struct t_blocked_list {
 	t_blocked_node* head;
 } t_blocked_list;
+
+typedef struct entradas_node {
+	entrada una_entrada;
+	struct entradas_node * siguiente;
+} entradas_node;
+
+typedef struct t_entrada_list {
+	entradas_node* head;
+} t_entrada_list;
+
+typedef struct t_instancia_node {
+	Instancia instancia;
+	struct t_instancia_node* sgte;
+} t_instancia_node;
+
+typedef struct t_instancia_list {
+	t_instancia_node* head;
+} t_instancia_list;
 
 #endif /* ESTRUCTURAS_H_ */

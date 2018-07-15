@@ -434,7 +434,7 @@ int dame_instancia(char* clave) {
 	}
 
 	t_instancia_node* ret_node = instancia_head(instancias);
-	ret_sockfd = ret_node->socket;
+	ret_sockfd = ret_node->instancia.sockfd;
 
 	return ret_sockfd;
 }
@@ -487,7 +487,7 @@ int get_packed(char* clave, uint32_t id) {
 
 void hacer_store(char* clave) {
 	t_instancia_node* node = instancia_head(instancias);
-	int sockfd = node->socket;
+	int sockfd = node->instancia.sockfd;
 
 	enviar_orden_instancia(0, (void*) sockfd, 12);
 	sleep(1);
@@ -811,11 +811,22 @@ void* atender_instancia(void* un_socket) {
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
-	agregar_instancia(&instancias, sockfd);
+	asignar_entradas(sockfd);
+
+	char* name = get_name(sockfd);
+
+	if (mismoString(string_recv_error, name)) {
+		log_warning(logger, "Falló la conexión de la instancia");
+		return NULL;
+	}
+
+	log_trace(logger, "Nombre: %s", name);
+
+	Instancia instancia = levantar_instancia(name, sockfd);
+
+	agregar_instancia(&instancias, instancia);
 
 	instancia_id++;
-
-	asignar_entradas(sockfd);
 
 	loggear("Instancia agregada correctamente");
 
@@ -824,6 +835,54 @@ void* atender_instancia(void* un_socket) {
 	//enviar_ordenes_de_prueba_compactacion(un_socket);
 
 	return NULL;
+}
+
+Instancia levantar_instancia(char* name, int sockfd) {
+	if (murio(name, sockfd)) {
+		return revivir(name, sockfd);
+	}
+
+	Instancia ret_instancia = { .nombre = name, .sockfd = sockfd, .disponible =
+	true, .veces_llamado = 0, .espacio_usado = 0, .id = instancia_id };
+
+	return ret_instancia;
+}
+
+bool murio(char* name, int sockfd) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->instancia.nombre, name)) {
+			if (puntero->instancia.disponible) {
+				terminar_conexion(sockfd, false);
+				close(sockfd);
+			}
+
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
+Instancia revivir(char* name, int sockfd) {
+	Instancia ret_instancia = { .sockfd = sockfd, .nombre = name };
+
+	return ret_instancia;
+
+}
+
+char* get_name(int sockfd) {
+	enviar_orden_instancia(0, sockfd, 40);
+	//mati te odio, hace las cosas bien
+
+	package_int name_size = recv_packed_no_exit(sockfd);
+	char* name = recv_string_no_exit(sockfd, name_size.packed);
+
+	return name;
+
 }
 
 void abortar_ESI(int sockfd) {
@@ -876,7 +935,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 	loggear("Enviando orden a la instancia...");
 
 	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, 0) < 0) {
-		loggear("Error en el envio de la orden");
+		log_warning(logger, "Error en el envio de la orden");
 		return;
 	}
 
@@ -899,10 +958,10 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 }
 
-t_instancia_node* crear_instancia_node(int sockfd) {
+t_instancia_node* crear_instancia_node(Instancia instancia) {
 	t_instancia_node* nodo = (t_instancia_node*) malloc(
 			sizeof(t_instancia_node));
-	nodo->socket = sockfd;
+	nodo->instancia.sockfd = instancia.sockfd;
 
 	return nodo;
 }
@@ -911,9 +970,9 @@ void destruir_instancia_node(t_instancia_node* nodo) {
 	free(nodo);
 }
 
-void agregar_instancia(t_instancia_list* lista, int sockfd) {
+void agregar_instancia(t_instancia_list* lista, Instancia instancia) {
 
-	t_instancia_node* nodo = crear_instancia_node(sockfd);
+	t_instancia_node* nodo = crear_instancia_node(instancia);
 
 	if (lista->head == NULL) {
 		lista->head = nodo;
@@ -937,14 +996,14 @@ t_instancia_node* instancia_head(t_instancia_list lista) {
 void eliminar_instancia(t_instancia_list* lista, int id) {
 	if (lista->head != NULL) {
 		t_instancia_node* head = instancia_head(*lista);
-		if (id == head->id) {
+		if (id == head->instancia.id) {
 			t_instancia_node* eliminado = lista->head;
 			lista->head = lista->head->sgte;
 			destruir_instancia_node(eliminado);
 		} else {
 			t_instancia_node* puntero = lista->head;
 
-			while (puntero->id != head->id) {
+			while (puntero->instancia.id != head->instancia.id) {
 				puntero = puntero->sgte;
 			}
 
@@ -961,6 +1020,7 @@ int instanciasDisponibles() {
 
 	while (puntero != NULL) {
 		size++;
+		puntero = puntero->sgte;
 	}
 
 	return size;

@@ -44,6 +44,10 @@ int main(int argc, char** argv) {
 			loggear("Mostrando lo almacenado...");
 			leer_valores_almacenados();
 			break;
+		case 40:
+			loggear("Enviando nombre");
+			send_name(socket_coordinador);
+			break;
 		default:
 			loggear("ERROR");
 			break;
@@ -61,6 +65,14 @@ int main(int argc, char** argv) {
 	free(entradas_disponibles);
 
 	return EXIT_SUCCESS;
+}
+
+void send_name(int socket_coordinador) {
+	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
+	package_int size_package = { .packed = size };
+
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(NOMBRE, socket_coordinador);
 }
 
 void recibir_orden_inicial(int socket_coordinador) {

@@ -389,6 +389,41 @@ void abortar_ESI(int sockfd);
 	 * 		sockfd: el socket por el cual enviar el aviso y luego cerrar.
 	 */
 
+char* get_name(int sockfd);
+	/*
+	 * Descripción: retorna el nombre enviado por otro proceso a través del sockfd.
+	 * Argumentos:
+	 * 		sockfd: el socket por el cual realizar la comunicación.
+	 */
+
+Instancia levantar_instancia(char* name, int sockfd);
+	/*
+	 * Descripción: en base a si una instancia con el nombre se encontraba previamente
+	 * 		en el sistema pero se cayó, o bien crea una nueva instancia, o recupera la que
+	 * 		se encontraba en el sistema.
+	 * Argumentos:
+	 * 		char* name: el nombre de la instancia.
+	 * 		int sockfd: el socket actual de dicha instancia.
+	 */
+
+bool murio(char* name, int sockfd);
+	/*
+	 * Descripción: revisa si una instancia se encontraba en el sistema, pero se desconectó.
+	 * 		Si una instancia con ese nombre ya se encuentra en el sistema, aborta la conexión.
+	 * Argumentos:
+	 * 		char* name: nombre de la instancia a verificar.
+	 * 		int sockfd: socket de la instancia.
+	 */
+
+Instancia revivir(char* name, int sockfd);
+	/*
+	 * Descripción: toma los parámetros que ya se encontraban en el sistema y los agrega a la
+	 * 		nueva instancia, y elimina la entrada vieja.
+	 * Argumentos:
+	 * 		char* name: nombre de la instancia.
+	 * 		int sockfd: socket de la instancia.
+	 */
+
 void do_set(char* valor, char* clave);
 
 int dame_instancia(char* clave);
@@ -399,19 +434,6 @@ void enviar_ordenes_de_prueba(void* un_socket);
 void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
 
-
-typedef struct t_instancia_node{
-	int socket;
-	int vecesLlamado;
-	int espacio_usado;
-	int disponible;
-	int id;
-	struct t_instancia_node* sgte;
-} t_instancia_node;
-
-typedef struct t_instancia_list {
-	t_instancia_node* head;
-} t_instancia_list;
 
 t_instancia_list instancias;
 
@@ -426,13 +448,11 @@ int leastSpaceUsed(void);
 int desempatar (t_instancia_node* a, int b);
 int keyExplicit (char * clave);
 
-t_instancia_node* crear_instancia_node(int sockfd);
+t_instancia_node* crear_instancia_node(Instancia instancia);
 void destruir_instancia_node(t_instancia_node* nodo);
-void agregar_instancia(t_instancia_list* lista, int sockfd);
+void agregar_instancia(t_instancia_list* lista, Instancia instancia);
 t_instancia_node* instancia_head(t_instancia_list lista);
 void eliminar_instancia(t_instancia_list* lista, int id);
 int instanciasDisponibles(void);
-
-
 
 #endif /* COORDINADOR_H_ */

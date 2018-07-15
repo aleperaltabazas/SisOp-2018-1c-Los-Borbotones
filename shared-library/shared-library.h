@@ -356,4 +356,11 @@ char* recv_string_no_exit(int sockfd, uint32_t size);
 	 * 		uint32_t size: tamaño de la cadena a recibir.
 	 */
 
+bool mismoString(char* unString, char* OtroString);
+	/*
+	 * Descripción: llama a strcmp() y devuelve si los dos strings son iguales.
+	 * Argumentos:
+	 * 		char* unString: string a comparar.
+	 * 		char* otroString: string a comparar.
+	 */
 #endif /* SHARED_LIBRARY_H_ */

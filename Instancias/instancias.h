@@ -117,6 +117,15 @@ void write_file(char* file_name, char* text);
 	 * 		char* valor: valor a escribir en el archivo.
 	 */
 
+void send_name(int sockfd);
+	/*
+	 * Descripción: envía el contenido de la variable NOMBRE al proceso conectado por el sockfd.
+	 * 		Llama a enviar_packed() y enviar_cadena(), y cierra el proceso si falla el intercambio
+	 * 		de mensajes.
+	 * Argumentos:
+	 * 		int sockfd: file descriptor del socket por el cual comunicar.
+	 */
+
 void store(uint32_t longitud_parametros, int socket_coordinador);
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);

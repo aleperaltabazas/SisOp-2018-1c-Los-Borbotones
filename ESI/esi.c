@@ -63,6 +63,8 @@ uint32_t recibir_ID(int server_socket) {
 
 	fill_ID(aviso.id);
 
+	log_info(logger, "ID: %i", aviso.id);
+
 	return aviso.id;
 }
 

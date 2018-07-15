@@ -69,6 +69,7 @@ pthread_mutex_t sem_ejecucion;
 pthread_mutex_t sem_ejecutando;
 pthread_mutex_t sem_new_ESIs;
 pthread_mutex_t sem_socket_coordi;
+pthread_mutex_t sem_server_socket;
 
 //Hilos
 

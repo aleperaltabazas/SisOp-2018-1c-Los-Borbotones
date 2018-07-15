@@ -7,6 +7,10 @@
 
 #include "shared-library.h"
 
+bool mismoString(char* unString, char* otroString) {
+	return strcmp(unString, otroString) == 0;
+}
+
 char* recv_string_no_exit(int sockfd, uint32_t size) {
 	char* ret_string = malloc(size);
 

@@ -218,6 +218,7 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_new_ESIs, NULL);
 	pthread_mutex_init(&sem_ESI_ID, NULL);
 	pthread_mutex_init(&sem_socket_coordi, NULL);
+	pthread_mutex_init(&sem_server_socket, NULL);
 
 	pthread_mutex_lock(&sem_socket_coordi);
 }
