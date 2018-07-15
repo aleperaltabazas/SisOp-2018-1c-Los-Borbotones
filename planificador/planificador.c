@@ -311,7 +311,7 @@ void* atender_ESI(void* buffer) {
 }
 
 int recibir_mensaje(int socket_cliente, int id, ESI esi) {
-	aviso_con_ID aviso = recibir_aviso(socket_cliente);
+	aviso_con_ID aviso = recv_aviso_no_exit(socket_cliente);
 
 	log_trace(logger, "Mensaje recibidio del ESI numero: %i", id);
 
@@ -678,9 +678,7 @@ void ejecutar(ESI esi_a_ejecutar) {
 	loggear("Enviando orden de ejecucion.");
 	aviso_con_ID orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
 
-	enviar_aviso(socket_ESI, orden_ejecucion);
-
-	loggear("Orden enviada.");
+	send_aviso_no_exit(orden_ejecucion, socket_ESI);
 
 }
 
@@ -752,6 +750,9 @@ void interpretarYEjecutarCodigo(int comando) {
 		break;
 	case 14:
 		desalojar();
+		break;
+	case 420:
+		weed();
 		break;
 	default:
 		printf(
@@ -1057,4 +1058,35 @@ ESI copiarEsi(t_esi_node * lista, ESI esiACopiar) {
 		lista = lista->sgte;
 	}
 	return esiACopiar;
+}
+
+void weed() {
+	/*
+	 printf(WEED "                     .                          ", 48);
+	 printf(WEED "                     M                          ", 48);
+	 printf(WEED "                    dM                          ", 48);
+	 printf(WEED "                    MMr                         ", 48);
+	 printf(WEED "                   4MMML                  .     ", 48);
+	 printf(WEED "                   MMMMM.                xf     ", 48);
+	 printf(WEED "   .              \"MMMMM               .MM-     ", 48);
+	 printf(WEED "    Mh..          +MMMMMM            .MMMM      ", 48);
+	 printf(WEED "    .MMM.         .MMMMML.          MMMMMh      ", 48);
+	 printf(WEED "     )MMMh.        MMMMMM         MMMMMMM       ", 48);
+	 printf(WEED "      3MMMMx.     'MMMMMMf      xnMMMMMM\"       ", 48);
+	 printf(WEED "      '*MMMMM      MMMMMM.     nMMMMMMP\"        ", 48);
+	 printf(WEED "        *MMMMMx    \"MMMMM\    .MMMMMMM=         ", 48);
+	 printf(WEED "         *MMMMMh   \"MMMMM\"   JMMMMMMP           ", 48);
+	 printf(WEED "           MMMMMM   3MMMM.  dMMMMMM            .", 48);
+	 printf(WEED "            MMMMMM  \"MMMM  .MMMMM(        .nnMP\"", 48);
+	 printf(WEED "=..          *MMMMx  MMM\"  dMMMM\"    .nnMMMMM*  ", 48);
+	 printf(WEED "  \"MMn...     'MMMMr 'MM   MMM\"   .nMMMMMMM*\"   ", 48);
+	 printf(WEED "   \"4MMMMnn..   *MMM  MM  MMP\"  .dMMMMMMM\"\"     ", 48);
+	 printf(WEED "     ^MMMMMMMMx.  *ML \"M .M*  .MMMMMM**\"        ", 48);
+	 printf(WEED "        *PMMMMMMhn. *x > M  .MMMM**\"\"           ", 48);
+	 printf(WEED "           " "**MMMMhx/.h/ .=*\"                  ", 48);
+	 printf(WEED "                    .3P\"%....                   ", 48);
+	 printf(WEED "                  nP" "*MMnx                ", 48);
+	 */
+
+	printf(WEED "S M O K E   W E E D   E V E R Y D A Y \n");
 }

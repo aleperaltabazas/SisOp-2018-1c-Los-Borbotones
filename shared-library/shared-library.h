@@ -28,6 +28,8 @@
 #define PACKAGE_SIZE 1024
 #define BACKLOG 20
 #define MAX_LEN 40
+#define WEED "\x1b[32m"
+
 
 t_log * logger;
 char* mensajePlanificador =	"My name is Planificador.c and I'm the fastest planifier alive...";

@@ -130,6 +130,11 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 
 	}
 
+	if (res == -1) {
+		log_error(logger, "ABORT");
+		exit_gracefully(5);
+	}
+
 	if (res == 20) {
 		eliminar_parseo(&parsed_ops);
 
@@ -141,7 +146,6 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 	}
 
 	else {
-		clear(&parsed_ops);
 		log_error(logger, "Falló el retorno de la operación.");
 		exit(-1);
 	}

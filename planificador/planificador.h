@@ -94,6 +94,7 @@ void display_console(void);
 void dame_datos(void);
 void bloquear_clave(void);
 void desbloquear_clave(void);
+void weed(void);
 ESI copiarEsi (t_esi_node * lista, ESI esiACopiar);
 
 //Funciones de servidor
