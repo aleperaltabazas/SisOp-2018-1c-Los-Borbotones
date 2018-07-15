@@ -973,7 +973,6 @@ t_clave_list get_claves(char* name) {
 }
 
 void update(char* name, int sockfd) {
-	Instancia instancia;
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero->sgte != NULL) {
@@ -985,7 +984,7 @@ void update(char* name, int sockfd) {
 		puntero = puntero->sgte;
 	}
 
-	log_trace(logger, "%s actualizada correctamente.");
+	log_trace(logger, "%s actualizada correctamente.", name);
 }
 
 Instancia clonar(Instancia unaInstancia) {
