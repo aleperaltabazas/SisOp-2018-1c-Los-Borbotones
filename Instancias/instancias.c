@@ -25,6 +25,11 @@ int main(int argc, char** argv) {
 		orden_del_coordinador orden;
 		orden = recibir_orden_coordinador(socket_coordinador);
 		switch (orden.codigo_operacion) {
+		case -1:
+			loggear("Orden de Fin");
+			close(socket_coordinador);
+			disponibilidad_de_conexion = 0;
+			break;
 		case 11:
 			loggear("SET");
 			set(orden.tamanio_a_enviar, socket_coordinador);
@@ -48,8 +53,17 @@ int main(int argc, char** argv) {
 			loggear("Enviando nombre");
 			send_name(socket_coordinador);
 			break;
+		case 50:
+			loggear("Se ve que me caí. Reviviendo...");
+			revivir(socket_coordinador);
+			break;
+		case 101:
+			loggear("Ping.");
+			ping(socket_coordinador);
+			break;
 		default:
 			loggear("ERROR");
+			exit(-1);
 			break;
 		}
 	}
@@ -65,6 +79,16 @@ int main(int argc, char** argv) {
 	free(entradas_disponibles);
 
 	return EXIT_SUCCESS;
+}
+
+void ping(int sockfd) {
+	package_int ping = { .packed = 101 };
+
+	enviar_packed(ping, sockfd);
+}
+
+void revivir(int sockfd) {
+
 }
 
 void send_name(int socket_coordinador) {

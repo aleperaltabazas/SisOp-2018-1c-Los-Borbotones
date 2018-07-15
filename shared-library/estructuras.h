@@ -30,16 +30,6 @@ typedef struct entrada {
 	int tamanio_valor;
 } entrada;
 
-typedef struct Instancia {
-	int sockfd;
-	int veces_llamado;
-	int espacio_usado;
-	int id;
-	bool disponible;
-	char* nombre;
-	char** claves;
-} Instancia;
-
 typedef struct blocked {
 	char* clave;
 	uint32_t id;
@@ -164,6 +154,16 @@ typedef struct entradas_node {
 typedef struct t_entrada_list {
 	entradas_node* head;
 } t_entrada_list;
+
+typedef struct Instancia {
+	int sockfd;
+	int veces_llamado;
+	int espacio_usado;
+	int id;
+	bool disponible;
+	char* nombre;
+	t_clave_list claves;
+} Instancia;
 
 typedef struct t_instancia_node {
 	Instancia instancia;

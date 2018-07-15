@@ -128,7 +128,7 @@ int send_package_int(package_int package, int sockfd) {
 
 	serializar_packed(package, &message);
 
-	int envio = send(sockfd, message, packageSize, 0);
+	int envio = send(sockfd, message, packageSize, MSG_NOSIGNAL);
 
 	free(message);
 

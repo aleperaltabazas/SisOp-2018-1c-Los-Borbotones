@@ -126,6 +126,14 @@ void send_name(int sockfd);
 	 * 		int sockfd: file descriptor del socket por el cual comunicar.
 	 */
 
+void revivir(int sockfd);
+	/*
+	 * Descripción: intercambia los mensajes necesarios con el coordinador para recuperar las claves
+	 * 		que tenía en caso que esta instancia se haya caido.
+	 * Argumentos:
+	 * 		int sockfd: socket por el cual realizar la comunicación.
+	 */
+
 void store(uint32_t longitud_parametros, int socket_coordinador);
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);

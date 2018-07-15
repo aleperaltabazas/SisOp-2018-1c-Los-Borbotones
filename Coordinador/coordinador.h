@@ -32,6 +32,8 @@ package_int bloqueo_ok = {
 t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 
+t_instancia_list instancias;
+
 t_blocked_list blocked_ESIs;
 
 parametros_set valor_set;
@@ -396,7 +398,7 @@ char* get_name(int sockfd);
 	 * 		sockfd: el socket por el cual realizar la comunicación.
 	 */
 
-Instancia levantar_instancia(char* name, int sockfd);
+void levantar_instancia(char* name, int sockfd);
 	/*
 	 * Descripción: en base a si una instancia con el nombre se encontraba previamente
 	 * 		en el sistema pero se cayó, o bien crea una nueva instancia, o recupera la que
@@ -415,13 +417,67 @@ bool murio(char* name, int sockfd);
 	 * 		int sockfd: socket de la instancia.
 	 */
 
-Instancia revivir(char* name, int sockfd);
+void revivir(char* name, int sockfd);
 	/*
 	 * Descripción: toma los parámetros que ya se encontraban en el sistema y los agrega a la
 	 * 		nueva instancia, y elimina la entrada vieja.
 	 * Argumentos:
 	 * 		char* name: nombre de la instancia.
 	 * 		int sockfd: socket de la instancia.
+	 */
+
+void send_orden_no_exit(int op_code, int sockfd);
+	/*
+	 * Descripción: llama a enviar_orden_instancia() con el primer argumento en 0.
+	 * Argumentos:
+	 * 		int op_code: código de operación a ejecutar por la instancia.
+	 * 		int sockfd: socket por el cual comunicar
+	 */
+
+void update(char* name, int sockfd);
+	/*
+	 * Descripción: actualiza el socket de una instancia en la lista y la marca como disponible.
+	 * Argumentos:
+	 * 		char* name: nombre de la instancia a actualizar.
+	 * 		int sockfd: socket a actualizar.
+	 */
+
+Instancia clonar(Instancia unaInstancia);
+	/*
+	 * Descripción: devuelve una instancia con el mismo contenido de unaInstancia.
+	 * Argumentos:
+	 * 		Instancia unaInstancia: instancia a clonar.
+	 */
+
+t_clave_list get_claves(char* name);
+	/*
+	 * Descripción: devuelve la lista de las claves de la instancia con el nombre name. En caso que no
+	 * 		encuentre dicha instancia, devuelve NULL.
+	 * Argumentos:
+	 * 		char* name: nombre de la instancia a buscar sus claves.
+	 */
+
+void enviar_claves(t_clave_list claves, int sockfd);
+	/*
+	 * Descripción: envía las claves de la lista a una instancia a través del sockfd.
+	 * Argumentos:
+	 * 		t_clave_list claves: lista de claves a enviar.
+	 * 		int sockfd: socket por el cual comunicar.
+	 */
+
+bool ping(Instancia instancia);
+	/*
+	 * Descripción: pingea a una instancia. En caso que falle el pingeo, marca el flag de disponibilidad
+	 * 		de la instancia como false.
+	 * Argumentos:
+	 * 		Instancia instancia: la instancia a pingear.
+	 */
+
+bool recv_ping(int sockfd);
+	/*
+	 * Descripción: recibe la confirmación del ping realizado a otro proceso.
+	 * Argumentos:
+	 * 		int sockfd: socket para comunicar.
 	 */
 
 void do_set(char* valor, char* clave);
@@ -433,9 +489,6 @@ void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
 void enviar_ordenes_de_prueba(void* un_socket);
 void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
-
-
-t_instancia_list instancias;
 
 int instancia_id;
 
@@ -452,7 +505,7 @@ t_instancia_node* crear_instancia_node(Instancia instancia);
 void destruir_instancia_node(t_instancia_node* nodo);
 void agregar_instancia(t_instancia_list* lista, Instancia instancia);
 t_instancia_node* instancia_head(t_instancia_list lista);
-void eliminar_instancia(t_instancia_list* lista, int id);
+void eliminar_instancia(t_instancia_list* lista, Instancia instancia);
 int instanciasDisponibles(void);
 
 #endif /* COORDINADOR_H_ */

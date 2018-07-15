@@ -113,14 +113,14 @@ int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
 
 	package_int id_cliente = { .packed = -1 };
 
-	id_cliente = recibir_packed(socketCliente);
+	id_cliente = recv_packed_no_exit(socketCliente);
 
 	log_info(logger, "Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(id_cliente, socketCliente);
 
 	loggear("Enviando id al cliente.");
 
-	enviar_packed(id, socketCliente);
+	send_packed_no_exit(id, socketCliente);
 
 	log_info(logger, "Handshake realizado correctamente.");
 
@@ -822,60 +822,178 @@ void* atender_instancia(void* un_socket) {
 
 	log_trace(logger, "Nombre: %s", name);
 
-	Instancia instancia = levantar_instancia(name, sockfd);
+	levantar_instancia(name, sockfd);
 
-	agregar_instancia(&instancias, instancia);
-
-	instancia_id++;
-
-	loggear("Instancia agregada correctamente");
-
-//	enviar_ordenes_de_prueba(un_socket);
-
-	//enviar_ordenes_de_prueba_compactacion(un_socket);
+	log_warning(logger, "Hilo de instancia %s terminado.", name);
 
 	return NULL;
 }
 
-Instancia levantar_instancia(char* name, int sockfd) {
+void levantar_instancia(char* name, int sockfd) {
 	if (murio(name, sockfd)) {
-		return revivir(name, sockfd);
+		revivir(name, sockfd);
+		return;
 	}
 
-	Instancia ret_instancia = { .nombre = name, .sockfd = sockfd, .disponible =
+	Instancia instancia = { .nombre = name, .sockfd = sockfd, .disponible =
 	true, .veces_llamado = 0, .espacio_usado = 0, .id = instancia_id };
 
-	return ret_instancia;
+	loggear("Instancia agregada correctamente");
+	agregar_instancia(&instancias, instancia);
 }
 
 bool murio(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero != NULL) {
-		if (mismoString(puntero->instancia.nombre, name)) {
+		if (mismoString(name, puntero->instancia.nombre)) {
 			if (puntero->instancia.disponible) {
-				terminar_conexion(sockfd, false);
-				close(sockfd);
+				if (!ping(puntero->instancia)) {
+					log_warning(logger,
+							"Esta instancia se encontraba en el sistema pero se cayó. Reincorporando");
+					return true;
+				}
+
+				else {
+					log_warning(logger,
+							"Esta instancia todavía se encuentra en el sistema. Abortando conexión.");
+					terminar_conexion(sockfd, false);
+					close(sockfd);
+					return false;
+				}
 			}
 
-			return true;
+			puntero = puntero->sgte;
+		}
+
+	}
+
+	loggear("Esta instancia no se encontraba en el sistema");
+	return false;
+}
+
+bool ping(Instancia instancia) {
+	orden_del_coordinador orden;
+	orden.codigo_operacion = 101;
+	orden.tamanio_a_enviar = 0;
+
+	uint32_t packageSize = sizeof(orden_del_coordinador);
+
+	orden_del_coordinador* buffer = malloc(packageSize);
+
+	memcpy(buffer, &orden, packageSize);
+
+	loggear("Pingeando instancia...");
+
+	int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
+
+	log_debug(logger, "%i", envio);
+
+	if (envio < 0) {
+		log_warning(logger, "Ping fallido. Instancia no disponible.");
+		instancia.disponible = false;
+		free(buffer);
+
+		return false;
+	}
+
+	if (!recv_ping(instancia.sockfd)) {
+		log_warning(logger,
+				"Falló el recibo del ping. Instancia no disponible");
+		instancia.disponible = false;
+		free(buffer);
+
+		return false;
+	}
+
+	loggear("Ping ok, la instancia sigue en pie.");
+
+	free(buffer);
+
+	return true;
+}
+
+bool recv_ping(int sockfd) {
+	package_int ping = recv_packed_no_exit(sockfd);
+
+	log_debug(logger, "%i", ping.packed);
+
+	if (ping.packed != 101) {
+		return false;
+	}
+
+	return true;
+
+}
+
+void revivir(char* name, int sockfd) {
+	update(name, sockfd);
+	t_clave_list claves = get_claves(name);
+
+	if (claves.head == NULL) {
+		log_warning(logger, "ERROR BUSCANDO LAS CLAVES");
+	}
+
+	enviar_claves(claves, sockfd);
+}
+
+void enviar_claves(t_clave_list claves, int sockfd) {
+	t_clave_node* puntero = claves.head;
+
+	while (puntero != NULL) {
+		int size = strlen(puntero->clave) + 1;
+		package_int size_package = { .packed = size };
+
+		send_packed_no_exit(size_package, sockfd);
+		send_string_no_exit(puntero->clave, sockfd);
+
+		package_int ok = recv_packed_no_exit(sockfd);
+
+		if (ok.packed != 51) {
+			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES");
+			close(sockfd);
+			return;
+		}
+	}
+}
+
+t_clave_list get_claves(char* name) {
+	t_instancia_node* puntero;
+	while (puntero->sgte != NULL) {
+		if (mismoString(puntero->instancia.nombre, name)) {
+			return puntero->instancia.claves;
 		}
 
 		puntero = puntero->sgte;
 	}
 
-	return false;
+	t_clave_list error_list = { .head = NULL };
+
+	return error_list;
 }
 
-Instancia revivir(char* name, int sockfd) {
-	Instancia ret_instancia = { .sockfd = sockfd, .nombre = name };
+void update(char* name, int sockfd) {
+	Instancia instancia;
+	t_instancia_node* puntero = instancias.head;
 
-	return ret_instancia;
+	while (puntero->sgte != NULL) {
+		if (mismoString(puntero->instancia.nombre, name)) {
+			puntero->instancia.disponible = true;
+			puntero->instancia.sockfd = sockfd;
+		}
 
+		puntero = puntero->sgte;
+	}
+
+	log_trace(logger, "%s actualizada correctamente.");
+}
+
+Instancia clonar(Instancia unaInstancia) {
+	return unaInstancia;
 }
 
 char* get_name(int sockfd) {
-	enviar_orden_instancia(0, sockfd, 40);
+	send_orden_no_exit(40, sockfd);
 	//mati te odio, hace las cosas bien
 
 	package_int name_size = recv_packed_no_exit(sockfd);
@@ -934,7 +1052,8 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, 0) < 0) {
+	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL)
+			< 0) {
 		log_warning(logger, "Error en el envio de la orden");
 		return;
 	}
@@ -943,6 +1062,10 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	free(buffer_orden);
 
+}
+
+void send_orden_no_exit(int op_code, int sockfd) {
+	enviar_orden_instancia(0, (void*) sockfd, op_code);
 }
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
@@ -962,6 +1085,12 @@ t_instancia_node* crear_instancia_node(Instancia instancia) {
 	t_instancia_node* nodo = (t_instancia_node*) malloc(
 			sizeof(t_instancia_node));
 	nodo->instancia.sockfd = instancia.sockfd;
+	nodo->instancia.nombre = instancia.nombre;
+	nodo->instancia.disponible = instancia.disponible;
+	nodo->instancia.espacio_usado = instancia.disponible;
+	nodo->instancia.veces_llamado = instancia.veces_llamado;
+	nodo->instancia.claves = instancia.claves;
+	nodo->sgte = NULL;
 
 	return nodo;
 }
@@ -993,17 +1122,21 @@ t_instancia_node* instancia_head(t_instancia_list lista) {
 	return instancia;
 }
 
-void eliminar_instancia(t_instancia_list* lista, int id) {
+void eliminar_instancia(t_instancia_list* lista, Instancia instancia) {
 	if (lista->head != NULL) {
 		t_instancia_node* head = instancia_head(*lista);
-		if (id == head->instancia.id) {
+
+		if (mismoString(instancia.nombre, head->instancia.nombre)) {
 			t_instancia_node* eliminado = lista->head;
 			lista->head = lista->head->sgte;
 			destruir_instancia_node(eliminado);
-		} else {
+		}
+
+		else {
 			t_instancia_node* puntero = lista->head;
 
-			while (puntero->instancia.id != head->instancia.id) {
+			while (!mismoString(puntero->instancia.nombre,
+					head->instancia.nombre)) {
 				puntero = puntero->sgte;
 			}
 
