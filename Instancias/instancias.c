@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 			ping(socket_coordinador);
 			break;
 		default:
-			loggear("ERROR");
+			log_error(logger, "ERROR: %s", strerror(errno));
 			exit(-1);
 			break;
 		}

@@ -460,9 +460,7 @@ Instancia getInstanciaSet(char* clave) {
 		break;
 	}
 
-	t_instancia_node* ret_node = instancia_head(instancias);
-
-	return ret_node->instancia;
+	return ret_inst;
 }
 
 void avanzar_puntero(void) {
@@ -581,6 +579,7 @@ int hacer_store(char* clave) {
 	if (!ping(instancia)) {
 		log_warning(logger,
 				"La instancia que posee la clave se encuentra desconectada.");
+		desconectar(instancia);
 		return -1;
 	}
 
@@ -602,6 +601,19 @@ int hacer_store(char* clave) {
 	}
 
 	return 1;
+}
+
+void desconectar(Instancia instancia) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
+			puntero->instancia.disponible = false;
+		}
+		puntero = puntero->sgte;
+	}
+
+	actualizarPuntero();
 }
 
 void bloquear_ESI(char* clave, uint32_t id) {
@@ -835,10 +847,10 @@ void levantar_instancia(char* name, int sockfd) {
 
 	loggear("Instancia agregada correctamente");
 	agregar_instancia(&instancias, instancia);
-	reacomodarPuntero();
+	actualizarPuntero();
 }
 
-void reacomodarPuntero(void) {
+void actualizarPuntero(void) {
 	if (pointer == NULL) {
 		pointer = instancias.head;
 		return;

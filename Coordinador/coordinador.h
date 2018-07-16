@@ -429,7 +429,7 @@ void avanzar_puntero(void);
 	 * 		void
 	 */
 
-void reacomodarPuntero(void);
+void actualizarPuntero(void);
 	/*
 	 * Descripción: reacomoda el puntero al lugar en el que estaba cuando se agrega una instancia nueva.
 	 * Argumentos:
