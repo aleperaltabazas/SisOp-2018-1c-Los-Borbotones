@@ -384,7 +384,11 @@ int settear(char* valor, char* clave, uint32_t id) {
 			log_op(op);
 
 			log_info(logger, "SET %s %s", clave, valor);
-			do_set(valor, clave);
+			int status = do_set(valor, clave);
+
+			if (status == -1) {
+				return -3;
+			}
 
 			return 20;
 		}
@@ -394,7 +398,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 	return -3;
 }
 
-void do_set(char* valor, char* clave) {
+int do_set(char* valor, char* clave) {
 	uint32_t valor_size = (uint32_t) strlen(valor);
 	uint32_t clave_size = (uint32_t) strlen(clave);
 
@@ -404,6 +408,11 @@ void do_set(char* valor, char* clave) {
 	valor_set.valor = valor;
 
 	Instancia instancia = getInstanciaSet(clave);
+
+	if (mismoString(instancia.nombre, inst_error.nombre)) {
+		return -1;
+	}
+	actualizarInstancia(instancia, clave);
 
 	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
 			+ valor_set.tamanio_valor;
@@ -417,21 +426,34 @@ void do_set(char* valor, char* clave) {
 
 	enviar_orden_instancia(0, (void*) instancia.sockfd, 15);
 
+	return 1;
+}
+
+void actualizarInstancia(Instancia instancia, char* clave) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
+			agregar_clave(&(puntero->instancia.claves), clave, 42);
+		}
+
+		puntero = puntero->sgte;
+	}
 }
 
 Instancia getInstanciaSet(char* clave) {
-	int ret_sockfd;
+	Instancia ret_inst;
 
 	switch (ALGORITMO_DISTRIBUCION) {
 	case EL:
-		ret_sockfd = equitativeLoad();
+		ret_inst = equitativeLoad();
 		break;
 
 	case LSU:
-		ret_sockfd = leastSpaceUsed();
+		ret_inst = leastSpaceUsed();
 		break;
 	case KE:
-		ret_sockfd = keyExplicit(clave);
+		ret_inst = keyExplicit(clave);
 		break;
 	default:
 		log_warning(logger, "Fallo en el algoritmo");
@@ -443,16 +465,45 @@ Instancia getInstanciaSet(char* clave) {
 	return ret_node->instancia;
 }
 
-int equitativeLoad(void) {
-	return 0;
+void avanzar_puntero(void) {
+	if (pointer->sgte == NULL) {
+		pointer = instancias.head;
+	}
+
+	else {
+		pointer = pointer->sgte;
+	}
 }
 
-int leastSpaceUsed(void) {
-	return 0;
+Instancia equitativeLoad(void) {
+	if (pointer == NULL) {
+		log_warning(logger,
+				"No hay ninguna instancia disponible para poder despachar el pedido.");
+	}
+
+	Instancia ret_inst = pointer->instancia;
+	if (!ping(ret_inst)) {
+		pointer->instancia.disponible = false;
+		avanzar_puntero();
+		return equitativeLoad();
+	}
+
+	if (instanciasDisponibles() == 0) {
+		log_warning(logger,
+				"No hay ninguna instancia disponible para poder despachar el pedido.");
+		return inst_error;
+	}
+
+	avanzar_puntero();
+	return ret_inst;
 }
 
-int keyExplicit(char* clave) {
-	return 0;
+Instancia leastSpaceUsed(void) {
+	return inst_error;
+}
+
+Instancia keyExplicit(char* clave) {
+	return inst_error;
 }
 
 int get_packed(char* clave, uint32_t id) {
@@ -784,6 +835,26 @@ void levantar_instancia(char* name, int sockfd) {
 
 	loggear("Instancia agregada correctamente");
 	agregar_instancia(&instancias, instancia);
+	reacomodarPuntero();
+}
+
+void reacomodarPuntero(void) {
+	if (pointer == NULL) {
+		pointer = instancias.head;
+		return;
+	}
+
+	Instancia inst = pointer->instancia;
+	pointer = instancias.head;
+
+	while (pointer != NULL) {
+		if (mismoString(pointer->instancia.nombre, inst.nombre)) {
+			return;
+		}
+
+		pointer = pointer->sgte;
+	}
+
 }
 
 bool murio(char* name, int sockfd) {
@@ -834,7 +905,8 @@ bool ping(Instancia instancia) {
 	log_debug(logger, "%i", envio);
 
 	if (envio < 0) {
-		log_warning(logger, "Ping fallido. Instancia no disponible.");
+		log_warning(logger, "Ping fallido. Instancia no disponible: %s",
+				strerror(errno));
 		instancia.disponible = false;
 		free(buffer);
 
@@ -843,7 +915,8 @@ bool ping(Instancia instancia) {
 
 	if (!recv_ping(instancia.sockfd)) {
 		log_warning(logger,
-				"Falló el recibo del ping. Instancia no disponible");
+				"Falló el recibo del ping. Instancia no disponible: %s",
+				strerror(errno));
 		instancia.disponible = false;
 		free(buffer);
 
@@ -875,7 +948,7 @@ void revivir(char* name, int sockfd) {
 	t_clave_list claves = get_claves(name);
 
 	if (claves.head == NULL) {
-		log_warning(logger, "ERROR BUSCANDO LAS CLAVES");
+		log_warning(logger, "%s no tenía ninguna clave asignada.", name);
 	}
 
 	enviar_claves(claves, sockfd);
@@ -888,13 +961,16 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 		int size = strlen(puntero->clave) + 1;
 		package_int size_package = { .packed = size };
 
+		log_debug(logger, "Clave: %s", puntero->clave);
+
 		send_packed_no_exit(size_package, sockfd);
 		send_string_no_exit(puntero->clave, sockfd);
 
 		package_int ok = recv_packed_no_exit(sockfd);
 
 		if (ok.packed != 51) {
-			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES");
+			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
+					strerror(errno));
 			close(sockfd);
 			return;
 		}
@@ -993,7 +1069,8 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL)
 			< 0) {
-		log_warning(logger, "Error en el envio de la orden");
+		log_warning(logger, "Error en el envio de la orden: %s",
+				strerror(errno));
 		return;
 	}
 
@@ -1025,7 +1102,10 @@ int instanciasDisponibles() {
 	int size = 0;
 
 	while (puntero != NULL) {
-		size++;
+		if (puntero->instancia.disponible) {
+			size++;
+		}
+
 		puntero = puntero->sgte;
 	}
 

@@ -421,7 +421,30 @@ bool tieneLaClave(Instancia instancia, char* clave);
 	 * 		char* clave: la clave a buscar.
 	 */
 
-void do_set(char* valor, char* clave);
+void avanzar_puntero(void);
+	/*
+	 * Descripción: avanza la variable global pointer al siguiente nodo. Si el siguiente fuera NULL,
+	 * 		vuelve a la cabeza de la lista.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void reacomodarPuntero(void);
+	/*
+	 * Descripción: reacomoda el puntero al lugar en el que estaba cuando se agrega una instancia nueva.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void actualizarInstancia(Instancia instancia, char* clave);
+	/*
+	 * Descripción: agrega la clave a la lista de claves de la instancia.
+	 * Argumentos:
+	 * 		Instancia instancia: la instancia a actualizar.
+	 * 		char* clave: la clave a agregar a la lista.
+	 */
+
+int do_set(char* valor, char* clave);
 
 Instancia getInstanciaSet(char* clave);
 
@@ -432,10 +455,10 @@ void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
 
 int instancia_id;
-int equitativeLoad(void); //Devuelve el socket que corresponde
-int leastSpaceUsed(void);
+Instancia equitativeLoad(void); //Devuelve el socket que corresponde
+Instancia leastSpaceUsed(void);
 int desempatar (t_instancia_node* a, int b);
-int keyExplicit (char * clave);
+Instancia keyExplicit (char * clave);
 
 int instanciasDisponibles(void);
 

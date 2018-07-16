@@ -13,7 +13,8 @@ char* recv_string_no_exit(int sockfd, uint32_t size) {
 	int res = recv_string(ret_string, size, sockfd);
 
 	if (res <= 0) {
-		log_warning(logger, "Falló la recepción de la cadena");
+		log_warning(logger, "Falló la recepción de la cadena: %s",
+				strerror(errno));
 		return string_recv_error;
 	}
 
@@ -28,7 +29,8 @@ aviso_con_ID recv_aviso_no_exit(int sockfd) {
 	int res = recv_aviso_con_ID(&ret_aviso, sockfd);
 
 	if (res < 0) {
-		log_warning(logger, "Falló la recepción del Aviso con ID.");
+		log_warning(logger, "Falló la recepción del Aviso con ID: %s",
+				strerror(errno));
 		return aviso_recv_error;
 	}
 
@@ -43,7 +45,8 @@ package_int recv_packed_no_exit(int sockfd) {
 	int res = recv_package_int(&ret_package, sockfd);
 
 	if (res < 0) {
-		log_warning(logger, "Falló la recepción del Package Int.");
+		log_warning(logger, "Falló la recepción del Package Int: %s",
+				strerror(errno));
 		return packed_recv_error;
 	}
 
@@ -56,7 +59,7 @@ void send_string_no_exit(char* string, int sockfd) {
 	int res = send_string(string, sockfd);
 
 	if (res < 0) {
-		log_warning(logger, "Falló el envío de la cadena.");
+		log_warning(logger, "Falló el envío de la cadena: %s", strerror(errno));
 		return;
 	}
 
@@ -67,7 +70,8 @@ void send_aviso_no_exit(aviso_con_ID aviso, int sockfd) {
 	int res = send_aviso_con_ID(aviso, sockfd);
 
 	if (res < 0) {
-		log_warning(logger, "Falló el envío del Aviso con ID.");
+		log_warning(logger, "Falló el envío del Aviso con ID: %s",
+				strerror(errno));
 		return;
 	}
 
@@ -78,7 +82,8 @@ void send_packed_no_exit(package_int package, int sockfd) {
 	int res = send_package_int(package, sockfd);
 
 	if (res < 0) {
-		log_warning(logger, "Falló el envío del Package Int.");
+		log_warning(logger, "Falló el envío del Package Int: %s",
+				strerror(errno));
 		return;
 	}
 
@@ -159,6 +164,7 @@ void enviar_aviso(int sockfd, aviso_con_ID aviso) {
 	int res = send_aviso_con_ID(aviso, sockfd);
 
 	if (res < 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló el envío del Aviso con ID.", sockfd);
 	}
 
@@ -171,6 +177,7 @@ aviso_con_ID recibir_aviso(int sockfd) {
 	int res = recv_aviso_con_ID(&ret_aviso, sockfd);
 
 	if (res < 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló la recepción del Aviso con ID", sockfd);
 	}
 
@@ -183,6 +190,7 @@ void enviar_packed(package_int packed, int sockfd) {
 	int res = send_package_int(packed, sockfd);
 
 	if (res < 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló el envío del Package Int.", sockfd);
 	}
 
@@ -195,6 +203,7 @@ package_int recibir_packed(int sockfd) {
 	int res = recv_package_int(&ret_package, sockfd);
 
 	if (res < 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló la recepción del Package Int.", sockfd);
 	}
 
@@ -207,6 +216,7 @@ void enviar_cadena(char* cadena, int sockfd) {
 	int res = send_string(cadena, sockfd);
 
 	if (res < 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló el envío de la cadena", sockfd);
 	}
 
@@ -219,6 +229,7 @@ char* recibir_cadena(int sockfd, uint32_t size) {
 	int res = recv_string(ret_string, size, sockfd);
 
 	if (res <= 0) {
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló la recepción de la cadena", sockfd);
 	}
 
@@ -240,10 +251,12 @@ void terminar_conexion(int sockfd, bool retry) {
 
 	if (envio < 0) {
 		if (retry) {
-			log_warning(logger, "Fallo la terminación. Intentando de vuelta.");
+			log_warning(logger,
+					"Fallo la terminación. Intentando de vuelta: %s",
+					strerror(errno));
 			terminar_conexion(sockfd, true);
 		} else {
-			log_warning(logger, "Falló la terminación.");
+			log_warning(logger, "Falló la terminación: %s", strerror(errno));
 		}
 	}
 
@@ -324,12 +337,11 @@ void avisar_cierre(int server_socket) {
 		status = 0;
 
 		if (envio < 0) {
-			loggear("Fallo el envio. Intentando de nuevo en 5.");
+			log_warning(logger, "Fallo el envio. Intentando de nuevo en 5: %s",
+					strerror(errno));
 			status = 1;
 
 			sleep(5);
-
-			//HORRIBLE pero no se me ocurre mucho mas de como hacerlo
 		}
 	}
 
@@ -356,13 +368,15 @@ int levantar_servidor(char* puerto, int tries) {
 
 	if (bindeo < 0) {
 		if (tries == 5) {
+			log_error(logger, "%s", strerror(errno));
 			salir_con_error(
-					"El bindeo falló 5 veces. Intente de vuelta más tarde. Cerrando proceso...",
+					"El bindeo falló demasiadas veces. Intente de vuelta más tarde. Cerrando proceso...",
 					0);
 		}
 
-		log_warning(logger, "Falló el bindeo. Intentando de nuevo...");
-		sleep(1);
+		log_warning(logger, "Falló el bindeo. Intentando de nuevo: %s",
+				strerror(errno));
+		sleep(3);
 
 		levantar_servidor(puerto, tries + 1);
 	}
@@ -389,14 +403,16 @@ int conectar_a(char *ip, char *puerto, package_int id, int tries) {
 
 	if (conexion < 0) {
 		if (tries == 5) {
+			log_error(logger, "%s", strerror(errno));
 			salir_con_error(
 					"Falló la conexión con el servidor. Por favor intente de nuevo más tarde. Cerrando proceso...",
 					server_socket);
 		}
 
 		log_warning(logger,
-				"Falló la conexión con el servidor. Intentando de nuevo...");
-		sleep(1);
+				"Falló la conexión con el servidor. Intentando de nuevo: %s",
+				strerror(errno));
+		sleep(3);
 
 		conectar_a(ip, puerto, id, tries + 1);
 	}

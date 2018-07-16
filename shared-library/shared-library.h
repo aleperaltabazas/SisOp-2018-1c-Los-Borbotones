@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include <pthread.h>
+#include <errno.h>
 #include <fcntl.h>
 #include "structs/estructuras.h"
 #include "lists/lists.h"

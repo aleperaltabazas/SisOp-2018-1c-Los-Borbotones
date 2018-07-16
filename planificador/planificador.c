@@ -201,6 +201,7 @@ int recibir_respuesta(int server_socket) {
 
 	else {
 		avisar_cierre(socket_coordinador);
+		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Mensaje erróneo recibido del coordinador.",
 				server_socket);
 	}
