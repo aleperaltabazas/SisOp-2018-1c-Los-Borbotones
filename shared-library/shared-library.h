@@ -8,20 +8,16 @@
 #ifndef SHARED_LIBRARY_H_
 #define SHARED_LIBRARY_H_
 
-#include <stdio.h>
-#include <stdint.h>
 #include <openssl/md5.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <readline/readline.h>
 #include <pthread.h>
-#include <parsi/parser.h>
 #include "estructuras.h"
 #include <fcntl.h>
+#include "lists.h"
 
 //Variables super globales
 
@@ -363,4 +359,5 @@ bool mismoString(char* unString, char* OtroString);
 	 * 		char* unString: string a comparar.
 	 * 		char* otroString: string a comparar.
 	 */
+
 #endif /* SHARED_LIBRARY_H_ */

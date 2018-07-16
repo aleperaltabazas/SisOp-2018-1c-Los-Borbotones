@@ -530,11 +530,27 @@ void planificar(void) {
 	}
 }
 
+void ejecutar(ESI esi_a_ejecutar) {
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = true;
+	pthread_mutex_unlock(&sem_ejecutando);
+
+	int socket_ESI = esi_a_ejecutar.socket;
+	executing_ESI = esi_a_ejecutar;
+
+	loggear("Enviando orden de ejecucion.");
+	aviso_con_ID orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
+
+	send_aviso_no_exit(orden_ejecucion, socket_ESI);
+
+}
+
 ESI dame_proximo_ESI() {
 	ESI next_esi;
 	switch (ALGORITMO_PLANIFICACION.tipo) {
 	case FIFO:
-		next_esi = first(new_ESIs);
+		next_esi = headESIs(new_ESIs);
 		break;
 	case SJF:
 		next_esi = shortest(new_ESIs);
@@ -551,67 +567,10 @@ ESI dame_proximo_ESI() {
 	return next_esi;
 }
 
-t_esi_node* crear_nodo(ESI esi) {
-	t_esi_node* nodo = (t_esi_node*) malloc(sizeof(t_esi_node));
-	nodo->esi = esi;
-	nodo->sgte = NULL;
-
-	return nodo;
-}
-
-void agregar_ESI(t_esi_list* lista, ESI esi) {
-	t_esi_node* nodo = crear_nodo(esi);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_esi_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-
-	return;
-}
-
-void destruir_nodo(t_esi_node* nodo) {
-	free(nodo);
-}
-
-ESI first(t_esi_list lista) {
-	ESI esi = lista.head->esi;
-
-	return esi;
-
-}
-
-void eliminar_ESI(t_esi_list* lista, ESI esi) {
-	if (lista->head != NULL) {
-		ESI head = first(*lista);
-		if (esi.id == head.id) {
-			t_esi_node* eliminado = lista->head;
-			lista->head = lista->head->sgte;
-			destruir_nodo(eliminado);
-		} else {
-			t_esi_node* puntero = lista->head;
-
-			while (puntero->esi.id != esi.id) {
-				puntero = puntero->sgte;
-			}
-
-			t_esi_node* eliminado = puntero->sgte;
-			puntero->sgte = eliminado->sgte;
-			destruir_nodo(eliminado);
-		}
-	}
-}
-
 ESI shortest(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 
-	ESI esi = first(lista);
+	ESI esi = headESIs(lista);
 
 	while (puntero != NULL) {
 		if (es_mas_corto(esi, puntero->esi)) {
@@ -627,7 +586,7 @@ ESI shortest(t_esi_list lista) {
 ESI highest_RR(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 
-	ESI esi = first(lista);
+	ESI esi = headESIs(lista);
 
 	while (puntero != NULL) {
 		if (tiene_mas_RR(esi, puntero->esi)) {
@@ -665,22 +624,6 @@ float tiempo_real(ESI esi) {
 
 float estimado(ESI esi) {
 	return ((float) esi.rafaga_estimada) * (1 - (ALFA / 100));
-}
-
-void ejecutar(ESI esi_a_ejecutar) {
-
-	pthread_mutex_lock(&sem_ejecutando);
-	ejecutando = true;
-	pthread_mutex_unlock(&sem_ejecutando);
-
-	int socket_ESI = esi_a_ejecutar.socket;
-	executing_ESI = esi_a_ejecutar;
-
-	loggear("Enviando orden de ejecucion.");
-	aviso_con_ID orden_ejecucion = { .aviso = 2, .id = esi_a_ejecutar.id };
-
-	send_aviso_no_exit(orden_ejecucion, socket_ESI);
-
 }
 
 /*	=====================

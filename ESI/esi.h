@@ -145,42 +145,6 @@ void ejecutar(int socket_coordinador, int socket_planificador);
 	 * 		int socket_planificador: socket del planificador.
 	 */
 
-void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed);
-	/*
-	 * Descripción: agrega una línea parseada a una lista del tipo t_parsed_list.
-	 * Argumentos:
-	 * 		t_parsed_list* lista: lista a la cual agregar el parseo.
-	 * 		t_esi_operacion parsed: línea a agregar a la lista.
-	 */
-
-void destruir_nodo(t_parsed_node* nodo);
-	/*
-	 * Descripción: libera la memoria ocupada por un nodo.
-	 * Argumentos:
-	 * 		t_parsed_node* nodo: puntero del nodo a liberar.
-	 */
-
-void eliminar_parseo(t_parsed_list* lista);
-	/*
-	 * Descripción: elimina el primer nodo de la lista.
-	 * Argumentos:
-	 * 		t_parsed_list* lista: lista de la cual eliminar el nodo.
-	 */
-
-t_esi_operacion first(t_parsed_list lista);
-	/*
-	 * Descripción: devuelve el primer elemento de una lista.
-	 * Argumentos:
-	 * 		t_parsed_list lista: lista de la cual obtener el elemento.
-	 */
-
-bool esta_vacia(t_parsed_list* lista);
-	/*
-	 * Descripción: devuelve si la lista se encuentra vacía.
-	 * Argumentos:
-	 * 		t_parsed_list* lista: lista a verificar.
-	 */
-
 void cargar_configuracion(char** argv);
 	/*
 	 * Descripción: carga el archivo de configuración en variables globales.

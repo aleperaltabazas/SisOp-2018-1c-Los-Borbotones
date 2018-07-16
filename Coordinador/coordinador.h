@@ -33,6 +33,7 @@ t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 
 t_instancia_list instancias;
+t_instancia_node* pointer;
 
 t_blocked_list blocked_ESIs;
 
@@ -40,6 +41,10 @@ parametros_set valor_set;
 char * buffer_parametros;
 
 t_log* log_operaciones;
+
+Instancia inst_error = {
+		.nombre = "ERROR DE INSTANCIA"
+};
 
 //Hilos
 
@@ -190,43 +195,6 @@ bool esta_bloqueada(char* clave);
 	 * 		char* clave: la clave a chequear.
 	 */
 
-void eliminar_clave(t_clave_list* lista, char* clave);
-	/*
-	 * Descripción: elimina una clave de la lista.
-	 * Argumentos:
-	 * 		t_clave_list* lista: lista de la cual eliminar la clave.
-	 * 		char* clave: la clave a eliminar.
-	 */
-
-void agregar_clave(t_clave_list* lista, char* clave, uint32_t id);
-	/*
-	 * Descripción: agrega una clave a la lista.
-	 * Argumentos:
-	 * 		t_clave_list* lista: lista a la cual agregar la clave.
-	 * 		char* clave: la clave a agregar.
-	 */
-
-t_clave_node* crear_nodo(char* clave, uint32_t id);
-	/*
-	 * Descripción: crea un nodo con la clave.
-	 * Argumentos:
-	 * 		char* clave: la clave a poner en el nodo.
-	 */
-
-void destruir_nodo(t_clave_node* nodo);
-	/*
-	 * Descripción: libera la memoria del nodo.
-	 * Argumentos:
-	 * 		t_clave_node* nodo: puntero a memoria a liberar.
-	 */
-
-char* first(t_clave_list lista);
-	/*
-	 * Descripción: retorna la primer clave de una lista.
-	 * Argumentos:
-	 * 		t_clave_list lista: lista de la cual tomar el elemento.
-	 */
-
 int get(int sockfd, uint32_t id);
 	/*
 	 * Descripción: bloquea una clave y se la asigna al id. Si no existe, se crea y se bloquea. Si
@@ -285,9 +253,10 @@ int settear(char* valor, char* clave, uint32_t id);
 	 * 		uint32_t id: id de quien pide el set.
 	 */
 
-void hacer_store(char* clave);
+int hacer_store(char* clave);
 	/*
-	 * Descripción: realiza el guardado de la clave en la instancia.
+	 * Descripción: realiza el guardado de la clave en la instancia. Si la instancia que posee la clave
+	 * 		no se encuentra conectada, o falla el envío de la clave, se devuelve -1.
 	 * Argumentos:
 	 * 		char* clave: la clave a guardar.
 	 */
@@ -318,21 +287,6 @@ void bloquear_ESI(char* clave, uint32_t id);
 	 * 		uint32_t id: el id del bloqueado.
 	 */
 
-void agregar_blocked(t_blocked_list* lista, blocked bloqueado);
-	/*
-	 * Descripción: agrega un blocked a una lista de blockeds.
-	 * Argumentos:
-	 * 		t_blocked_list* lista: la lista a la cual agregar el bloqueado.
-	 * 		blocked bloqueado: el bloqueado.
-	 */
-
-t_blocked_node* crear_blocked_node(blocked bloqueado);
-	/*
-	 * Descripción: crea y retorna un nodo de blocked.
-	 * Argumentos:
-	 * 		blocked bloqueado: estructura que contiene los datos a volcar en el nodo.
-	 */
-
 void liberar_ESI(t_blocked_list* lista, uint32_t id);
 	/*
 	 * Descripción: quita un elemento de la lista a partir de su id. Si el id es -5, no hace nada.
@@ -341,29 +295,7 @@ void liberar_ESI(t_blocked_list* lista, uint32_t id);
 	 * 		uint32_t id: elemento a quitar de la lista.
 	 */
 
-void destruir_blocked_node(t_blocked_node* nodo);
-	/*
-	 * Descripción: libera la porción de memoria de un nodo.
-	 * Argumentos:
-	 * 		t_blocked_node* nodo: la memoria a liberar.
-	 */
-
-uint32_t head_id(t_blocked_list lista);
-	/*
-	 * Descripción: devuelve el id del primer elemento de una lista de bloqueados.
-	 * Argumentos:
-	 * 		t_blocked_list lista: la lista en cuestión.
-	 */
-
-void eliminar_blocked(t_blocked_list* lista, uint32_t id);
-	/*
-	 * Descripción: elimina un nodo de la lista a partir de un id.
-	 * Argumentos:
-	 * 		t_blocked_list* lista: la lista a modificar.
-	 * 		uint32_t id: el id del nodo a eliminar.
-	 */
-
-bool esta_vacia(t_blocked_list* lista);
+bool emptyBlocked(t_blocked_list* lista);
 	/*
 	 * Descripción: devuelve si una lista está vacía, o sea que su head apunte a NULL.
 	 * Argumentos:
@@ -442,13 +374,6 @@ void update(char* name, int sockfd);
 	 * 		int sockfd: socket a actualizar.
 	 */
 
-Instancia clonar(Instancia unaInstancia);
-	/*
-	 * Descripción: devuelve una instancia con el mismo contenido de unaInstancia.
-	 * Argumentos:
-	 * 		Instancia unaInstancia: instancia a clonar.
-	 */
-
 t_clave_list get_claves(char* name);
 	/*
 	 * Descripción: devuelve la lista de las claves de la instancia con el nombre name. En caso que no
@@ -480,9 +405,25 @@ bool recv_ping(int sockfd);
 	 * 		int sockfd: socket para comunicar.
 	 */
 
+Instancia getInstanciaStore(char* clave);
+	/*
+	 * Descripción: devuelve la instancia que tiene la clave. Si no se encuentra ninguna instancia que
+	 * 		tenga la clave, devuelve inst_error
+	 * Argumentos:
+	 * 		char* clave: la clave a hacer STORE.
+	 */
+
+bool tieneLaClave(Instancia instancia, char* clave);
+	/*
+	 * Descripción: indica si una instancia tiene dicha clave en su lista de claves.
+	 * Argumentos:
+	 * 		Instancia instancia: la instancia a verificar.
+	 * 		char* clave: la clave a buscar.
+	 */
+
 void do_set(char* valor, char* clave);
 
-int dame_instancia(char* clave);
+Instancia getInstanciaSet(char* clave);
 
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket, int codigo_de_operacion);
 void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
@@ -491,21 +432,11 @@ void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
 
 int instancia_id;
-
-void agregameInstancia(int unSocket);
-void add (t_instancia_list unaLista, int unSocket);
-void * find ();
-int instanciasDisponibles(void);
 int equitativeLoad(void); //Devuelve el socket que corresponde
 int leastSpaceUsed(void);
 int desempatar (t_instancia_node* a, int b);
 int keyExplicit (char * clave);
 
-t_instancia_node* crear_instancia_node(Instancia instancia);
-void destruir_instancia_node(t_instancia_node* nodo);
-void agregar_instancia(t_instancia_list* lista, Instancia instancia);
-t_instancia_node* instancia_head(t_instancia_list lista);
-void eliminar_instancia(t_instancia_list* lista, Instancia instancia);
 int instanciasDisponibles(void);
 
 #endif /* COORDINADOR_H_ */

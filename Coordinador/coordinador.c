@@ -327,9 +327,13 @@ int store(int socket_cliente, uint32_t id) {
 	}
 
 	if (response.packed != 5) {
-		hacer_store(clave);
+		int status = hacer_store(clave);
 
-		if (!esta_vacia(&blocked_ESIs)) {
+		if (status == -1) {
+			return -5;
+		}
+
+		if (!emptyBlocked(&blocked_ESIs)) {
 			aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
 					blocked_ESIs) };
 			liberar_ESI(&blocked_ESIs, unlock.id);
@@ -399,7 +403,7 @@ void do_set(char* valor, char* clave) {
 	valor_set.clave = clave;
 	valor_set.valor = valor;
 
-	int sockfd = dame_instancia(clave);
+	Instancia instancia = getInstanciaSet(clave);
 
 	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
 			+ valor_set.tamanio_valor;
@@ -407,14 +411,15 @@ void do_set(char* valor, char* clave) {
 	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
 			valor_size, tamanio_parametros_set);
 
-	enviar_orden_instancia(tamanio_parametros_set, (void*) sockfd, 11);
-	enviar_valores_set(tamanio_parametros_set, (void*) sockfd);
+	enviar_orden_instancia(tamanio_parametros_set, (void*) instancia.sockfd,
+			11);
+	enviar_valores_set(tamanio_parametros_set, (void*) instancia.sockfd);
 
-	enviar_orden_instancia(0, (void*) sockfd, 15);
+	enviar_orden_instancia(0, (void*) instancia.sockfd, 15);
 
 }
 
-int dame_instancia(char* clave) {
+Instancia getInstanciaSet(char* clave) {
 	int ret_sockfd;
 
 	switch (ALGORITMO_DISTRIBUCION) {
@@ -434,9 +439,8 @@ int dame_instancia(char* clave) {
 	}
 
 	t_instancia_node* ret_node = instancia_head(instancias);
-	ret_sockfd = ret_node->instancia.sockfd;
 
-	return ret_sockfd;
+	return ret_node->instancia;
 }
 
 int equitativeLoad(void) {
@@ -485,9 +489,49 @@ int get_packed(char* clave, uint32_t id) {
 	}
 }
 
-void hacer_store(char* clave) {
-	t_instancia_node* node = instancia_head(instancias);
-	int sockfd = node->instancia.sockfd;
+bool tieneLaClave(Instancia unaInstancia, char* clave) {
+	t_clave_list claves = unaInstancia.claves;
+	t_clave_node* puntero = claves.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, clave)) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
+Instancia getInstanciaStore(char* clave) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (tieneLaClave(puntero->instancia, clave)) {
+			return puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return inst_error;
+}
+
+int hacer_store(char* clave) {
+	Instancia instancia = getInstanciaStore(clave);
+	int sockfd = instancia.sockfd;
+
+	if (mismoString(instancia.nombre, inst_error.nombre)) {
+		log_warning(logger, "No se encontró una instancia que posea la clave.");
+		return -1;
+	}
+
+	if (!ping(instancia)) {
+		log_warning(logger,
+				"La instancia que posee la clave se encuentra desconectada.");
+		return -1;
+	}
 
 	enviar_orden_instancia(0, (void*) sockfd, 12);
 	sleep(1);
@@ -496,8 +540,17 @@ void hacer_store(char* clave) {
 
 	package_int package_size = { .packed = clave_size };
 
-	enviar_packed(package_size, sockfd);
-	enviar_cadena(clave, sockfd);
+	int status;
+
+	status = send_package_int(package_size, sockfd);
+	status = send_string(clave, sockfd);
+
+	if (status == 0) {
+		log_warning(logger, "Falló el store.");
+		return -1;
+	}
+
+	return 1;
 }
 
 void bloquear_ESI(char* clave, uint32_t id) {
@@ -506,7 +559,7 @@ void bloquear_ESI(char* clave, uint32_t id) {
 	agregar_blocked(&blocked_ESIs, bloqueado);
 }
 
-bool esta_vacia(t_blocked_list* lista) {
+bool emptyBlocked(t_blocked_list* lista) {
 	return lista->head == NULL;
 }
 
@@ -514,60 +567,6 @@ void liberar_ESI(t_blocked_list* lista, uint32_t id) {
 	if (id != -5) {
 		eliminar_blocked(lista, id);
 	}
-}
-
-void destruir_blocked_node(t_blocked_node* nodo) {
-	free(nodo);
-}
-
-void eliminar_blocked(t_blocked_list* lista, uint32_t id) {
-	if (lista->head != NULL) {
-		uint32_t head = head_id(*lista);
-		if (id == head) {
-			t_blocked_node* eliminado = lista->head;
-			lista->head = lista->head->sgte;
-			destruir_blocked_node(eliminado);
-		} else {
-			t_blocked_node* puntero = lista->head;
-
-			while (puntero->id != id) {
-				puntero = puntero->sgte;
-			}
-
-			t_blocked_node* eliminado = puntero->sgte;
-			puntero->sgte = eliminado->sgte;
-			destruir_blocked_node(eliminado);
-		}
-	}
-}
-
-void agregar_blocked(t_blocked_list* lista, blocked bloqueado) {
-	t_blocked_node* nodo = crear_blocked_node(bloqueado);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_blocked_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-}
-
-t_blocked_node* crear_blocked_node(blocked bloqueado) {
-	t_blocked_node* nodo = (t_blocked_node*) malloc(sizeof(t_blocked_node));
-	nodo->clave = bloqueado.clave;
-	nodo->id = bloqueado.id;
-
-	return nodo;
-}
-
-uint32_t head_id(t_blocked_list lista) {
-	t_blocked_node* head = lista.head;
-
-	return head->id;
 }
 
 uint32_t get_clave_id(char* clave) {
@@ -748,61 +747,6 @@ bool existe(char* clave) {
 
 void crear(char* clave) {
 	agregar_clave(&claves_disponibles, clave, -1);
-}
-
-void agregar_clave(t_clave_list* lista, char* clave, uint32_t id) {
-	t_clave_node* nodo = crear_nodo(clave, id);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_clave_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-}
-
-t_clave_node* crear_nodo(char* clave, uint32_t id) {
-	t_clave_node* nodo = (t_clave_node*) malloc(sizeof(t_clave_node));
-	nodo->clave = clave;
-	nodo->block_id = id;
-	nodo->sgte = NULL;
-
-	return nodo;
-}
-
-void eliminar_clave(t_clave_list* lista, char* clave) {
-	if (lista->head != NULL) {
-		char* head = first(*lista);
-		if (strcmp(clave, head) == 0) {
-			t_clave_node* eliminado = lista->head;
-			lista->head = lista->head->sgte;
-			destruir_nodo(eliminado);
-		} else {
-			t_clave_node* puntero = lista->head;
-
-			while (!strcmp(puntero->clave, clave) != 0) {
-				puntero = puntero->sgte;
-			}
-
-			t_clave_node* eliminado = puntero->sgte;
-			puntero->sgte = eliminado->sgte;
-			destruir_nodo(eliminado);
-		}
-	}
-}
-
-void destruir_nodo(t_clave_node* nodo) {
-	free(nodo);
-}
-
-char* first(t_clave_list lista) {
-	char* key = lista.head->clave;
-
-	return key;
 }
 
 void* atender_instancia(void* un_socket) {
@@ -987,10 +931,6 @@ void update(char* name, int sockfd) {
 	log_trace(logger, "%s actualizada correctamente.", name);
 }
 
-Instancia clonar(Instancia unaInstancia) {
-	return unaInstancia;
-}
-
 char* get_name(int sockfd) {
 	send_orden_no_exit(40, sockfd);
 	//mati te odio, hace las cosas bien
@@ -1078,72 +1018,6 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Parametros enviados!");
 
-}
-
-t_instancia_node* crear_instancia_node(Instancia instancia) {
-	t_instancia_node* nodo = (t_instancia_node*) malloc(
-			sizeof(t_instancia_node));
-	nodo->instancia.sockfd = instancia.sockfd;
-	nodo->instancia.nombre = instancia.nombre;
-	nodo->instancia.disponible = instancia.disponible;
-	nodo->instancia.espacio_usado = instancia.disponible;
-	nodo->instancia.veces_llamado = instancia.veces_llamado;
-	nodo->instancia.claves = instancia.claves;
-	nodo->sgte = NULL;
-
-	return nodo;
-}
-
-void destruir_instancia_node(t_instancia_node* nodo) {
-	free(nodo);
-}
-
-void agregar_instancia(t_instancia_list* lista, Instancia instancia) {
-
-	t_instancia_node* nodo = crear_instancia_node(instancia);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_instancia_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-
-}
-
-t_instancia_node* instancia_head(t_instancia_list lista) {
-	t_instancia_node* instancia = lista.head;
-
-	return instancia;
-}
-
-void eliminar_instancia(t_instancia_list* lista, Instancia instancia) {
-	if (lista->head != NULL) {
-		t_instancia_node* head = instancia_head(*lista);
-
-		if (mismoString(instancia.nombre, head->instancia.nombre)) {
-			t_instancia_node* eliminado = lista->head;
-			lista->head = lista->head->sgte;
-			destruir_instancia_node(eliminado);
-		}
-
-		else {
-			t_instancia_node* puntero = lista->head;
-
-			while (!mismoString(puntero->instancia.nombre,
-					head->instancia.nombre)) {
-				puntero = puntero->sgte;
-			}
-
-			t_instancia_node* eliminado = puntero->sgte;
-			puntero->sgte = eliminado->sgte;
-			destruir_instancia_node(eliminado);
-		}
-	}
 }
 
 int instanciasDisponibles() {

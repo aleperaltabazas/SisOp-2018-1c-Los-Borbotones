@@ -11,6 +11,9 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 #include <commons/config.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <parsi/parser.h>
 
 //	Misc
 

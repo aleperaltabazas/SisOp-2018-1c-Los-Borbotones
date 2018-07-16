@@ -218,43 +218,6 @@ void kill_ESI(ESI esi);
 	 * 		ESI esi: esi a terminar.
 	 */
 
-ESI first(t_esi_list lista);
-	/*
-	 * Descripción: devuelve el primer elemento de la lista.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista a obtener el elemento.
-	 */
-
-ESI shortest(t_esi_list lista);
-	/*
-	 * Descripción: devuelve el elemento cuyo tiempo de ejecución es menor.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista a obtener el elemento.
-	 */
-
-ESI highest_RR(t_esi_list lista);
-	/*
-	 * Descripción: devuelve el elemento cuyo RR es mayor.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista a obtener el elemento.
-	 */
-
-void agregar_ESI(t_esi_list* lista, ESI esi);
-	/*
-	 * Descripción: agrega un ESI a la lista.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista a agregar el elemento.
-	 * 		ESI esi: esi a agregar a la lista.
-	 */
-
-void eliminar_ESI(t_esi_list* lista, ESI esi);
-	/*
-	 * Descripción: elimina un ESI de una lista.
-	 * Argumentos:
-	 * 		t_esi_list* lista: lista de la cual se eliminará el elemento.
-	 * 		ESI esi: elemento a eliminar de la lista.
-	 */
-
 bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);
 	/*
 	 * Descripción: devuelve si el segundo ESI tiene mayor RR que el primero.
@@ -333,6 +296,20 @@ void iniciar_hilos(void);
 	 * Descripción: inicia los hilos del coordinador y de la consola.
 	 * Argumentos:
 	 * 		void
+	 */
+
+ESI shortest(t_esi_list lista);
+	/*
+	 * Descripción: devuelve el elemento cuyo tiempo de ejecución es menor.
+	 * Argumentos:
+	 * 		t_esi_list* lista: lista a obtener el elemento.
+	 */
+
+ESI highest_RR(t_esi_list lista);
+	/*
+	 * Descripción: devuelve el elemento cuyo RR es mayor.
+	 * Argumentos:
+	 * 		t_esi_list* lista: lista a obtener el elemento.
 	 */
 
 algoritmo_planificacion dame_algoritmo(char* algoritmo_src);

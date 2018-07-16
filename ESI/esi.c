@@ -107,7 +107,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 }
 
 void ejecutar(int socket_coordinador, int socket_planificador) {
-	t_esi_operacion parsed = first(parsed_ops);
+	t_esi_operacion parsed = headParsed(parsed_ops);
 
 	int res;
 
@@ -319,56 +319,7 @@ void clear(t_parsed_list* lista) {
 	}
 }
 
-t_parsed_node* crear_nodo(t_esi_operacion parsed) {
-	t_parsed_node* nodo = (t_parsed_node*) malloc(sizeof(t_parsed_node));
-	nodo->esi_op = parsed;
-	nodo->sgte = NULL;
 
-	return nodo;
-}
-
-void agregar_parseo(t_parsed_list* lista, t_esi_operacion parsed) {
-	t_parsed_node* nodo = crear_nodo(parsed);
-
-	if (lista->head == NULL) {
-		lista->head = nodo;
-	} else {
-		t_parsed_node* puntero = lista->head;
-		while (puntero->sgte != NULL) {
-			puntero = puntero->sgte;
-		}
-
-		puntero->sgte = nodo;
-	}
-
-	return;
-}
-
-void destruir_nodo(t_parsed_node* nodo) {
-	destruir_operacion(nodo->esi_op);
-	if (nodo != NULL) {
-		free(nodo);
-	}
-
-}
-
-void eliminar_parseo(t_parsed_list* lista) {
-	if (!esta_vacia(lista)) {
-		t_parsed_node* eliminado = lista->head;
-		lista->head = lista->head->sgte;
-		destruir_nodo(eliminado);
-	}
-}
-
-bool esta_vacia(t_parsed_list* lista) {
-	return lista->head == NULL;
-}
-
-t_esi_operacion first(t_parsed_list lista) {
-	t_esi_operacion parsed = lista.head->esi_op;
-
-	return parsed;
-}
 
 void error_de_archivo(char* mensaje_de_error, int retorno) {
 	log_error(logger, mensaje_de_error);
