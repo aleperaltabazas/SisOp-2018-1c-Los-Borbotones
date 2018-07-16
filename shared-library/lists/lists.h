@@ -10,7 +10,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "estructuras.h"
+#include "../structs/estructuras.h"
+#include "../strings/strings.h"
 
 /*
  * ==============================

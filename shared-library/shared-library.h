@@ -15,9 +15,10 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include <pthread.h>
-#include "estructuras.h"
 #include <fcntl.h>
-#include "lists.h"
+#include "structs/estructuras.h"
+#include "lists/lists.h"
+#include "strings/strings.h"
 
 //Variables super globales
 
@@ -235,20 +236,6 @@ char* serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set);
 	 * 		valor_set: el recipiente del mensaje serializado.
 	 */
 
-void cerrar_cadena(char* cadena);
-	/*
-	 * Descripción: agrega \0 al final de una cadena.
-	 * Argumentos:
-	 * 		char* cadena: el string.
-	 */
-
-bool esParseable(char caracter);
-	/*
-	 * Descripción: devuelve si un caracter es alfa numérico o dos puntos.
-	 * Argumentos:
-	 * 		char* caracter: el caracter.
-	 */
-
 int send_package_int(package_int package, int sockfd);
 	/*
 	 * Descripción: envía un package_int a través de un socket y devuelve el resultado del send().
@@ -350,14 +337,6 @@ char* recv_string_no_exit(int sockfd, uint32_t size);
 	 * Argumentos:
 	 * 		int sockfd: file descriptor por el cual recibir el char*.
 	 * 		uint32_t size: tamaño de la cadena a recibir.
-	 */
-
-bool mismoString(char* unString, char* OtroString);
-	/*
-	 * Descripción: llama a strcmp() y devuelve si los dos strings son iguales.
-	 * Argumentos:
-	 * 		char* unString: string a comparar.
-	 * 		char* otroString: string a comparar.
 	 */
 
 #endif /* SHARED_LIBRARY_H_ */

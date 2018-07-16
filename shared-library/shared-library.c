@@ -7,10 +7,6 @@
 
 #include "shared-library.h"
 
-bool mismoString(char* unString, char* otroString) {
-	return strcmp(unString, otroString) == 0;
-}
-
 char* recv_string_no_exit(int sockfd, uint32_t size) {
 	char* ret_string = malloc(size);
 
@@ -157,20 +153,6 @@ int send_string(char* string, int sockfd) {
 	int envio = send(sockfd, string, cadena_size, 0);
 
 	return envio;
-}
-
-void cerrar_cadena(char* cadena) {
-	int i = 0;
-
-	while (esParseable(cadena[i])) {
-		i++;
-	}
-
-	cadena[i] = '\0';
-}
-
-bool esParseable(char caracter) {
-	return isalnum(caracter) || caracter == ':';
 }
 
 void enviar_aviso(int sockfd, aviso_con_ID aviso) {
