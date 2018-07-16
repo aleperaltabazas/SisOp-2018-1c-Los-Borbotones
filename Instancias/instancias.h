@@ -17,6 +17,9 @@ char* PUNTO_MONTAJE;
 char* NOMBRE;
 int DUMP;
 
+//Socket del coordinador
+int socket_coordinador;
+
 //Estos valores vienen definidos por el coordinador
 int cantidad_entradas;
 int tamanio_entrada;
@@ -176,6 +179,8 @@ int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar);
 void avanzar_puntero_CIRC();
 
 void recibir_orden_inicial(int socket_coordinador);
+void confirmar_exito_de_operacion();
+void ping(int sockfd);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar = NULL;

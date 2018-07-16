@@ -886,7 +886,7 @@ bool murio(char* name, int sockfd) {
 
 bool ping(Instancia instancia) {
 	orden_del_coordinador orden;
-	orden.codigo_operacion = 101;
+	orden.codigo_operacion = 100;
 	orden.tamanio_a_enviar = 0;
 
 	uint32_t packageSize = sizeof(orden_del_coordinador);
@@ -932,7 +932,7 @@ bool recv_ping(int sockfd) {
 
 	log_debug(logger, "%i", ping.packed);
 
-	if (ping.packed != 101) {
+	if (ping.packed != 100) {
 		return false;
 	}
 
@@ -1073,9 +1073,22 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Orden enviada!");
 
+	esperar_confirmacion_de_exito((int) un_socket);
+
 	free(buffer_orden);
 
 }
+
+void esperar_confirmacion_de_exito(int un_socket){
+
+	if(recv_ping(un_socket)){
+		loggear("Operacion finalizada con exito");
+	}
+	else{
+		log_error(logger, "La instancia no pudo finalizar la operacion");
+	}
+}
+
 
 void send_orden_no_exit(int op_code, int sockfd) {
 	enviar_orden_instancia(0, (void*) sockfd, op_code);

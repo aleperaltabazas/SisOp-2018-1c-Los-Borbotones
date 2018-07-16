@@ -466,6 +466,7 @@ Instancia equitativeLoad(void); //Devuelve el socket que corresponde
 Instancia leastSpaceUsed(void);
 int desempatar (t_instancia_node* a, int b);
 Instancia keyExplicit (char * clave);
+void esperar_confirmacion_de_exito(int un_socket);
 
 int instanciasDisponibles(void);
 

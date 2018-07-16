@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
 
 	iniciar(argv);
 
-	int socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
+	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			id_instancia, 0);
 
 	recibir_orden_inicial(socket_coordinador);
@@ -57,9 +57,9 @@ int main(int argc, char** argv) {
 			loggear("Se ve que me caí. Reviviendo...");
 			revivir(socket_coordinador);
 			break;
-		case 101:
+		case 100:
 			loggear("Ping.");
-			ping(socket_coordinador);
+			confirmar_exito_de_operacion();
 			break;
 		default:
 			log_error(logger, "ERROR: %s", strerror(errno));
@@ -79,12 +79,6 @@ int main(int argc, char** argv) {
 	free(entradas_disponibles);
 
 	return EXIT_SUCCESS;
-}
-
-void ping(int sockfd) {
-	package_int ping = { .packed = 101 };
-
-	enviar_packed(ping, sockfd);
 }
 
 void revivir(int sockfd) {
@@ -136,7 +130,9 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	int tamanio_valor = entrada_con_la_clave.tamanio_valor;
 
-	char * valor = malloc(tamanio_valor);
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
+
+	char * valor = malloc(entradas_que_ocupa * tamanio_entrada);
 
 	int offset = posicion_de_entrada * tamanio_entrada;
 
@@ -145,6 +141,10 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 	log_trace(logger, "%s", valor);
 
 	write_file(clave, valor);
+
+	free(valor);
+
+	confirmar_exito_de_operacion();
 
 }
 
@@ -300,6 +300,8 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	loggear("Orden recibida!");
 
+	confirmar_exito_de_operacion();
+
 	log_trace(logger, "cod. op: %d, tamanio: %d",
 			buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
 
@@ -346,6 +348,8 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		loggear("La entrada no existe, generando nueva entrada...");
 		generar_entrada(parametros);
 	}
+
+	confirmar_exito_de_operacion();
 
 	free(parametros.clave);
 	free(parametros.valor);
@@ -1014,6 +1018,14 @@ void leer_valores_almacenados() {
 	 */
 
 }
+
+void confirmar_exito_de_operacion(){
+
+	package_int ping = { .packed = 100 };
+
+	enviar_packed(ping, socket_coordinador);
+}
+
 
 /*
  //Lleno con el valor ejemplo
