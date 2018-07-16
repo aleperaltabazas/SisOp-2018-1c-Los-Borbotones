@@ -113,9 +113,9 @@ void agregar_instancia(t_instancia_list* lista, Instancia instancia) {
 
 void eliminar_instancia(t_instancia_list* lista, Instancia instancia) {
 	if (lista->head != NULL) {
-		t_instancia_node* head = instancia_head(*lista);
+		Instancia head = headInstancias(*lista);
 
-		if (mismoString(instancia.nombre, head->instancia.nombre)) {
+		if (mismoString(instancia.nombre, head.nombre)) {
 			t_instancia_node* eliminado = lista->head;
 			lista->head = lista->head->sgte;
 			destruir_nodo_instancia(eliminado);
@@ -124,8 +124,7 @@ void eliminar_instancia(t_instancia_list* lista, Instancia instancia) {
 		else {
 			t_instancia_node* puntero = lista->head;
 
-			while (!mismoString(puntero->instancia.nombre,
-					head->instancia.nombre)) {
+			while (!mismoString(puntero->instancia.nombre, head.nombre)) {
 				puntero = puntero->sgte;
 			}
 
@@ -136,8 +135,8 @@ void eliminar_instancia(t_instancia_list* lista, Instancia instancia) {
 	}
 }
 
-t_instancia_node* instancia_head(t_instancia_list lista) {
-	t_instancia_node* instancia = lista.head;
+Instancia headInstancias(t_instancia_list lista) {
+	Instancia instancia = lista.head->instancia;
 
 	return instancia;
 }

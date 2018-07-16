@@ -444,6 +444,13 @@ void actualizarInstancia(Instancia instancia, char* clave);
 	 * 		char* clave: la clave a agregar a la lista.
 	 */
 
+void desconectar(Instancia instancia);
+	/*
+	 * Descripción: marca el flag de disponibilidad de una instancia como false.
+	 * Argumentos:
+	 * 		Instancia instancia: la instancia a desconectar.
+	 */
+
 int do_set(char* valor, char* clave);
 
 Instancia getInstanciaSet(char* clave);

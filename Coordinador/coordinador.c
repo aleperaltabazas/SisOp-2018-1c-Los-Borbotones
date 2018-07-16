@@ -426,6 +426,8 @@ int do_set(char* valor, char* clave) {
 
 	enviar_orden_instancia(0, (void*) instancia.sockfd, 15);
 
+	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+
 	return 1;
 }
 
@@ -434,7 +436,9 @@ void actualizarInstancia(Instancia instancia, char* clave) {
 
 	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
-			agregar_clave(&(puntero->instancia.claves), clave, 42);
+			t_clave_list claves = puntero->instancia.claves;
+			agregar_clave(&claves, clave, 42);
+			puntero->instancia.claves = claves;
 		}
 
 		puntero = puntero->sgte;
@@ -464,32 +468,31 @@ Instancia getInstanciaSet(char* clave) {
 }
 
 void avanzar_puntero(void) {
-	if (pointer->sgte == NULL) {
-		pointer = instancias.head;
-	}
-
-	else {
-		pointer = pointer->sgte;
-	}
+	Instancia inst = headInstancias(instancias);
+	eliminar_instancia(&instancias, inst);
+	agregar_instancia(&instancias, inst);
 }
 
 Instancia equitativeLoad(void) {
-	if (pointer == NULL) {
+	if (instancias.head == NULL) {
 		log_warning(logger,
 				"No hay ninguna instancia disponible para poder despachar el pedido.");
-	}
-
-	Instancia ret_inst = pointer->instancia;
-	if (!ping(ret_inst)) {
-		pointer->instancia.disponible = false;
-		avanzar_puntero();
-		return equitativeLoad();
 	}
 
 	if (instanciasDisponibles() == 0) {
 		log_warning(logger,
 				"No hay ninguna instancia disponible para poder despachar el pedido.");
 		return inst_error;
+	}
+
+	Instancia ret_inst = headInstancias(instancias);
+	if (!ping(ret_inst)) {
+		log_debug(logger, "Instancia actual: %s", ret_inst.nombre);
+		desconectar(ret_inst);
+		avanzar_puntero();
+		Instancia next_inst = headInstancias(instancias);
+		log_debug(logger, "Proxima instancia: %s", next_inst.nombre);
+		equitativeLoad();
 	}
 
 	avanzar_puntero();
@@ -558,6 +561,8 @@ Instancia getInstanciaStore(char* clave) {
 
 	while (puntero != NULL) {
 		if (tieneLaClave(puntero->instancia, clave)) {
+			log_debug(logger, "%s tiene la clave %s", puntero->instancia.nombre,
+					clave);
 			return puntero->instancia;
 		}
 
@@ -609,11 +614,11 @@ void desconectar(Instancia instancia) {
 	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
 			puntero->instancia.disponible = false;
+			log_trace(logger, "%s desconectada.", instancia.nombre);
 		}
 		puntero = puntero->sgte;
 	}
 
-	actualizarPuntero();
 }
 
 void bloquear_ESI(char* clave, uint32_t id) {
@@ -847,26 +852,6 @@ void levantar_instancia(char* name, int sockfd) {
 
 	loggear("Instancia agregada correctamente");
 	agregar_instancia(&instancias, instancia);
-	actualizarPuntero();
-}
-
-void actualizarPuntero(void) {
-	if (pointer == NULL) {
-		pointer = instancias.head;
-		return;
-	}
-
-	Instancia inst = pointer->instancia;
-	pointer = instancias.head;
-
-	while (pointer != NULL) {
-		if (mismoString(pointer->instancia.nombre, inst.nombre)) {
-			return;
-		}
-
-		pointer = pointer->sgte;
-	}
-
 }
 
 bool murio(char* name, int sockfd) {

@@ -92,7 +92,7 @@ void eliminar_instancia(t_instancia_list* lista, Instancia instancia);
 	 * 		Instancia instancia: la instancia a eliminar.
 	 */
 
-t_instancia_node* instancia_head(t_instancia_list lista);
+Instancia headInstancias(t_instancia_list lista);
 	/*
 	 * Descripción: devuelve el primer elemento de la lista.
 	 * Argumentos:
