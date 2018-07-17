@@ -163,14 +163,63 @@ void* atender_ESI(void* un_socket) {
 
 	int status = 1;
 
-	while (status) {
-		status = chequear_solicitud(socket_cliente);
+	uint32_t id = decimeID(socket_cliente);
+
+	if (id == -1) {
+		abortar_ESI(socket_cliente);
+		return NULL;
 	}
+
+	send_OK(socket_cliente);
+
+	while (status) {
+
+		status = chequear_solicitud(socket_cliente, id);
+	}
+
+	log_trace(logger, "Hilo de ESI número %i terminado", id);
 
 	return NULL;
 }
 
-int chequear_solicitud(int socket_cliente) {
+void send_OK(int sockfd) {
+	package_int package_ok = { .packed = 42 };
+
+	send_packed_no_exit(package_ok, sockfd);
+}
+
+uint32_t decimeID(int sockfd) {
+	aviso_con_ID aviso_id = recv_aviso_no_exit(sockfd);
+
+	log_debug(logger, "Aviso: %i", aviso_id.aviso);
+	log_debug(logger, "ID: %i", aviso_id.id);
+
+	if (aviso_id.aviso != 2 || aviso_id.aviso == aviso_recv_error.aviso) {
+		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
+		return -1;
+	}
+
+	log_debug(logger, "ID recibido: %i", aviso_id.id);
+
+	return aviso_id.id;
+}
+
+void liberar_claves(uint32_t id) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		log_debug(logger, "Blocker: %i", puntero->block_id);
+		log_debug(logger, "ESI: %i", id);
+
+		if (puntero->block_id == id) {
+			desbloquear(puntero->clave);
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+int chequear_solicitud(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_cliente = recibir_aviso(socket_cliente);
 
 	log_debug(logger, "%i", aviso_cliente.aviso);
@@ -179,6 +228,7 @@ int chequear_solicitud(int socket_cliente) {
 
 	if (aviso_cliente.aviso == 0) {
 		log_info(logger, "Fin de ESI.");
+		liberar_claves(id);
 		return 0;
 	}
 
@@ -207,11 +257,15 @@ int chequear_solicitud(int socket_cliente) {
 	else {
 		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
 		abortar_ESI(socket_cliente);
+
+		liberar_claves(id);
+
 		return 0;
 	}
 
 	if (status == -5) {
 		abortar_ESI(socket_cliente);
+		liberar_claves(id);
 		return 0;
 	}
 
@@ -1079,16 +1133,14 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 }
 
-void esperar_confirmacion_de_exito(int un_socket){
+void esperar_confirmacion_de_exito(int un_socket) {
 
-	if(recv_ping(un_socket)){
+	if (recv_ping(un_socket)) {
 		loggear("Operacion finalizada con exito");
-	}
-	else{
+	} else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
 	}
 }
-
 
 void send_orden_no_exit(int op_code, int sockfd) {
 	enviar_orden_instancia(0, (void*) sockfd, op_code);

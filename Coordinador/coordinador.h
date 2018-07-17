@@ -107,12 +107,13 @@ void *atender_Planificador(void* un_socket);
 
 //Funciones
 
-int chequear_solicitud(int socket_cliente);
+int chequear_solicitud(int socket_cliente, uint32_t id);
 	/*
 	 * Descripción: revisa una solicitud de ejecución de un proceso ESI y le indica si puede
 	 * 		o no ejecutar.
 	 * Argumentos:
 	 * 		int socket_cliente: socket del proceso ESI.
+	 * 		uint32_t id: ID del ESI.
 	 */
 
 void iniciar(char** argv);
@@ -449,6 +450,28 @@ void desconectar(Instancia instancia);
 	 * Descripción: marca el flag de disponibilidad de una instancia como false.
 	 * Argumentos:
 	 * 		Instancia instancia: la instancia a desconectar.
+	 */
+
+uint32_t decimeID(int sockfd);
+	/*
+	 * Descripción: intercambia mensajes con otro proceso para recibir su número de identificación
+	 * 		en el sistema. En caso que falle la recepción, devuelve -1.
+	 * Argumentos:
+	 * 		int sockfd: socket por el cual comunicar.
+	 */
+
+void liberar_claves(uint32_t id);
+	/*
+	 * Descripción: libera las claves bloqueadas bajo el id asociado.
+	 * Argumentos:
+	 * 		uint32_t id: id de bloqueante que desbloquea.
+	 */
+
+void send_OK(int sockfd);
+	/*
+	 * Descripción: envía un mensaje de OK a un proceso.
+	 * Argumentos:
+	 * 		int sockfd: socket por el cual establecer la comunicación.
 	 */
 
 int do_set(char* valor, char* clave);

@@ -29,10 +29,25 @@ void cerrar(void) {
 void ejecutar_sentencias(void) {
 	this_id = recibir_ID(socket_planificador);
 
+	avisar_ID(socket_coordinador);
+
 	enviar_aviso(socket_planificador, aviso_ready);
 
 	while (parsed_ops.head != NULL) {
 		esperar_ejecucion(socket_coordinador, socket_planificador);
+	}
+}
+
+void avisar_ID(int sockfd) {
+	enviar_aviso(sockfd, aviso_ID);
+
+	loggear("ID enviado correctamente.");
+
+	package_int packed = recibir_packed(sockfd);
+
+	if (packed.packed != 42) {
+		log_error(logger, "%s", strerror(errno));
+		salir_con_error("Falló el aviso OK del coordinador.", sockfd);
 	}
 }
 
@@ -76,6 +91,7 @@ void fill_ID(uint32_t id) {
 	aviso_get.id = id;
 	aviso_set.id = id;
 	aviso_store.id = id;
+	aviso_ID.id = id;
 }
 
 void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
@@ -318,8 +334,6 @@ void clear(t_parsed_list* lista) {
 		eliminar_parseo(lista);
 	}
 }
-
-
 
 void error_de_archivo(char* mensaje_de_error, int retorno) {
 	log_error(logger, mensaje_de_error);

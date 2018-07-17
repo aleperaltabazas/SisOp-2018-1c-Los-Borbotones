@@ -54,6 +54,10 @@ aviso_con_ID aviso_store = {
 		.aviso = 13
 };
 
+aviso_con_ID aviso_ID = {
+		.aviso = 2
+};
+
 //Funciones
 
 void iniciar(char** argv);
@@ -181,6 +185,14 @@ void clear(t_parsed_list* lista);
 	 * Descripción: libera la memoria ocupada por la lista.
 	 * Argumentos:
 	 * 		t_parsed_list* lista: puntero a la lista.
+	 */
+
+void avisar_ID(int sockfd);
+	/*
+	 * Descripción: envía el ID del ESI a un proceso y espera un OK del servidor. Llama a enviar_aviso()
+	 * 		y recibir_packed(). Si el retorno del proceso es distinto de 42, llama a salir_con_error().
+	 * Argumentos:
+	 * 		int sockfd: socket por el cual enviar el mensaje.
 	 */
 
 #endif /* ESI_H_ */
