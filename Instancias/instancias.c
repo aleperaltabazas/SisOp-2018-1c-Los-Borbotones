@@ -91,18 +91,10 @@ void send_name(int socket_coordinador) {
 	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
 	package_int size_package = { .packed = size };
 
-
-	sleep(10);
 	confirmar_exito_de_operacion(140);
-
-	sleep(10);
-	loggear("Por tamanio nombre...");
 	enviar_packed(size_package, socket_coordinador);
-	loggear("Por nombre...");
-	sleep(10);
 	enviar_cadena(NOMBRE, socket_coordinador);
-	loggear("Por confirmar 140...");
-	sleep(10);
+
 }
 
 void recibir_orden_inicial(int socket_coordinador) {
@@ -359,8 +351,6 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		generar_entrada(parametros);
 	}
 
-	confirmar_exito_de_operacion(111);
-
 	free(parametros.clave);
 	free(parametros.valor);
 }
@@ -450,6 +440,16 @@ void generar_entrada(parametros_set parametros) {
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
 		crear_entrada(parametros, entrada_seleccionada, tamanio_valor,
 				parametros.tamanio_clave);
+
+		confirmar_exito_de_operacion(111);
+		return;
+	}
+
+	if (puedo_almacenar_si_compacto(entradas_que_ocupa)){
+		loggear("Puedo almacenar si compacto...");
+		compactacion();
+		generar_entrada(parametros);
+		confirmar_exito_de_operacion(101);
 		return;
 	}
 
@@ -461,6 +461,17 @@ void generar_entrada(parametros_set parametros) {
 
 	generar_entrada(parametros);
 }
+
+int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas){
+	int cantidad_entradas_libres = cantidad_entradas - obtener_cantidad_de_entradas_ocupadas();
+
+	if(cantidad_entradas_libres >= cantidad_entradas_solicitadas){
+		return 1;
+	}
+
+	return 0;
+}
+
 
 void eliminar_entrada_segun_algoritmo() {
 	switch (ALGORITMO_REEMPLAZO) {
@@ -1035,8 +1046,11 @@ void confirmar_exito_de_operacion(int codigo_exito_operacion){
 	if(codigo_exito_operacion == 100){
 		loggear("ENVIO DE PING");
 	}
+	else if(codigo_exito_operacion == 101){
+		loggear("SOLICITUD DE COMPACTACION ENVIADA");
+	}
 	else if(codigo_exito_operacion == 110){
-			loggear("ENTRADAS Y TAMANIO INICIADO CORRECTAMENTE");
+		loggear("ENTRADAS Y TAMANIO INICIADO CORRECTAMENTE");
 	}
 	else if(codigo_exito_operacion == 111){
 		loggear("CONFIRMO SET");

@@ -181,6 +181,7 @@ void avanzar_puntero_CIRC();
 void recibir_orden_inicial(int socket_coordinador);
 void confirmar_exito_de_operacion();
 void ping(int sockfd);
+puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar = NULL;

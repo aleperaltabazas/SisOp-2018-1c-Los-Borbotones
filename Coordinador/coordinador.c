@@ -1158,23 +1158,38 @@ void esperar_confirmacion_de_exito(int un_socket) {
 	if (confirmacion.packed == 100) {
 		loggear("Comprobacion de PING finalizada con exito");
 	}
+	else if(confirmacion.packed == 101){
+		loggear("Pedido de compactacion recibido, mandando a compactar...");
+		enviar_instancias_a_compactar();
+		esperar_confirmacion_de_exito(un_socket);
+	}
 	else if(confirmacion.packed == 110){
-				loggear("Operacion Inicial finalizada con exito");
+		loggear("Operacion Inicial finalizada con exito");
 	}
 	else if(confirmacion.packed == 111){
-			loggear("Operacion SET finalizada con exito");
+		loggear("Operacion SET finalizada con exito");
 	}
 	else if(confirmacion.packed == 112){
 		loggear("Operacion STORE finalizada con exito");
 	}
 	else if(confirmacion.packed == 115){
-			loggear("Operacion Lectura finalizada con exito");
+		loggear("Operacion Lectura finalizada con exito");
 	}
 	else if(confirmacion.packed == 140){
-			loggear("Nombre asignado con exito");
+		loggear("Nombre asignado con exito");
 	}
 	else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
+	}
+}
+
+void enviar_instancias_a_compactar(){
+	t_instancia_node * nodo_aux = instancias.head;
+
+	while(nodo_aux != NULL){
+		log_debug(logger, "Enviando instancia a compactar...");
+		enviar_orden_instancia(0, nodo_aux->instancia.sockfd, 14);
+		nodo_aux = nodo_aux->sgte;
 	}
 }
 

@@ -206,7 +206,7 @@ uint32_t set(t_esi_operacion parsed, int socket_coordinador) {
 	char* clave = parsed.argumentos.SET.clave;
 	char* valor = parsed.argumentos.SET.valor;
 	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-	uint32_t valor_size = (uint32_t) strlen(clave) + 1;
+	uint32_t valor_size = (uint32_t) strlen(valor) + 1;
 
 	package_int clave_size_package = { .packed = clave_size };
 
