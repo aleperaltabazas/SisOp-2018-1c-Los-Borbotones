@@ -478,7 +478,16 @@ int do_set(char* valor, char* clave) {
 			11);
 	enviar_valores_set(tamanio_parametros_set, (void*) instancia.sockfd);
 
+	log_debug(logger, "Esperando confirmacion...");
+
+	esperar_confirmacion_de_exito((int) instancia.sockfd);
+
 	enviar_orden_instancia(0, (void*) instancia.sockfd, 15);
+
+	log_debug(logger, "Esperando confirmacion...");
+
+	esperar_confirmacion_de_exito((int) instancia.sockfd);
+
 
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
@@ -653,6 +662,10 @@ int hacer_store(char* clave) {
 
 	status = send_package_int(package_size, sockfd);
 	status = send_string(clave, sockfd);
+
+	log_debug(logger, "Esperando confirmacion...");
+
+	esperar_confirmacion_de_exito((int) sockfd);
 
 	if (status == 0) {
 		log_warning(logger, "Falló el store.");
@@ -1060,10 +1073,12 @@ void update(char* name, int sockfd) {
 
 char* get_name(int sockfd) {
 	send_orden_no_exit(40, sockfd);
-	//mati te odio, hace las cosas bien
 
+	loggear("Estoy por recibir tamanio nombre");
 	package_int name_size = recv_packed_no_exit(sockfd);
+	log_warning(logger, "TAMANIO NOMBRE: %i", name_size);
 	char* name = recv_string_no_exit(sockfd, name_size.packed);
+	log_warning(logger, "NOMBRE: %s", name);
 
 	return name;
 
@@ -1097,6 +1112,11 @@ void asignar_entradas(int sockfd) {
 	log_trace(logger, "Cant entradas: %d, Tamanio_entrada: %d",
 			CANTIDAD_ENTRADAS, TAMANIO_ENTRADAS);
 	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) sockfd, TAMANIO_ENTRADAS);
+
+	log_debug(logger, "Esperando confirmacion...");
+
+	esperar_confirmacion_de_exito((int) sockfd);
+
 }
 
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
@@ -1127,23 +1147,44 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Orden enviada!");
 
-	esperar_confirmacion_de_exito((int) un_socket);
-
 	free(buffer_orden);
 
 }
 
 void esperar_confirmacion_de_exito(int un_socket) {
 
-	if (recv_ping(un_socket)) {
-		loggear("Operacion finalizada con exito");
-	} else {
+	package_int confirmacion = recv_packed_no_exit(un_socket);
+
+	if (confirmacion.packed == 100) {
+		loggear("Comprobacion de PING finalizada con exito");
+	}
+	else if(confirmacion.packed == 110){
+				loggear("Operacion Inicial finalizada con exito");
+	}
+	else if(confirmacion.packed == 111){
+			loggear("Operacion SET finalizada con exito");
+	}
+	else if(confirmacion.packed == 112){
+		loggear("Operacion STORE finalizada con exito");
+	}
+	else if(confirmacion.packed == 115){
+			loggear("Operacion Lectura finalizada con exito");
+	}
+	else if(confirmacion.packed == 140){
+			loggear("Nombre asignado con exito");
+	}
+	else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
 	}
 }
 
 void send_orden_no_exit(int op_code, int sockfd) {
 	enviar_orden_instancia(0, (void*) sockfd, op_code);
+
+	log_debug(logger, "Esperando confirmacion...");
+
+	esperar_confirmacion_de_exito((int) sockfd);
+
 }
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {

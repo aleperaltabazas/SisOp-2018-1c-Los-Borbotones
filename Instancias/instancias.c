@@ -16,6 +16,8 @@ int main(int argc, char** argv) {
 
 	recibir_orden_inicial(socket_coordinador);
 
+	confirmar_exito_de_operacion(110);
+
 	inicializar(cantidad_entradas, tamanio_entrada);
 
 	//Para desconectarla habria que cambiar este valor simplemente
@@ -59,7 +61,7 @@ int main(int argc, char** argv) {
 			break;
 		case 100:
 			loggear("Ping.");
-			confirmar_exito_de_operacion();
+			confirmar_exito_de_operacion(100);
 			break;
 		default:
 			log_error(logger, "ERROR: %s", strerror(errno));
@@ -89,8 +91,18 @@ void send_name(int socket_coordinador) {
 	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
 	package_int size_package = { .packed = size };
 
+
+	sleep(10);
+	confirmar_exito_de_operacion(140);
+
+	sleep(10);
+	loggear("Por tamanio nombre...");
 	enviar_packed(size_package, socket_coordinador);
+	loggear("Por nombre...");
+	sleep(10);
 	enviar_cadena(NOMBRE, socket_coordinador);
+	loggear("Por confirmar 140...");
+	sleep(10);
 }
 
 void recibir_orden_inicial(int socket_coordinador) {
@@ -144,7 +156,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	free(valor);
 
-	confirmar_exito_de_operacion();
+	confirmar_exito_de_operacion(112);
 
 }
 
@@ -300,8 +312,6 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	loggear("Orden recibida!");
 
-	confirmar_exito_de_operacion();
-
 	log_trace(logger, "cod. op: %d, tamanio: %d",
 			buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
 
@@ -349,7 +359,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 		generar_entrada(parametros);
 	}
 
-	confirmar_exito_de_operacion();
+	confirmar_exito_de_operacion(111);
 
 	free(parametros.clave);
 	free(parametros.valor);
@@ -1010,6 +1020,7 @@ void leer_valores_almacenados() {
 
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
+	confirmar_exito_de_operacion(115);
 	/*
 	 int i;
 	 for (i = 0; i < cantidad_entradas; i++) {
@@ -1019,9 +1030,28 @@ void leer_valores_almacenados() {
 
 }
 
-void confirmar_exito_de_operacion(){
+void confirmar_exito_de_operacion(int codigo_exito_operacion){
 
-	package_int ping = { .packed = 100 };
+	if(codigo_exito_operacion == 100){
+		loggear("ENVIO DE PING");
+	}
+	else if(codigo_exito_operacion == 110){
+			loggear("ENTRADAS Y TAMANIO INICIADO CORRECTAMENTE");
+	}
+	else if(codigo_exito_operacion == 111){
+		loggear("CONFIRMO SET");
+	}
+	else if(codigo_exito_operacion == 112){
+		loggear("CONFIRMO STORE");
+	}
+	else if(codigo_exito_operacion == 115){
+		loggear("CONFIRMO LECTURA");
+	}
+	else if(codigo_exito_operacion == 140){
+			loggear("CONFIRMO NOMBRE ENVIADO");
+	}
+
+	package_int ping = { .packed = codigo_exito_operacion };
 
 	enviar_packed(ping, socket_coordinador);
 }
