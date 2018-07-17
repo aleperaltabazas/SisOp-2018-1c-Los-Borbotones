@@ -416,6 +416,29 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 	else {
 		log_warning(logger, "El ESI %i se cayó o fue abortado.", id);
+		if (executing_ESI.id == (uint32_t) id) {
+
+			pthread_mutex_lock(&sem_new_ESIs);
+			pthread_mutex_lock(&sem_ESIs_size);
+			if (!esta(new_ESIs, esi)) {
+				agregar_ESI(&new_ESIs, esi);
+				ESIs_size++;
+			}
+
+			eliminar_ESI(&new_ESIs, esi);
+
+			ESIs_size--;
+			pthread_mutex_unlock(&sem_ESIs_size);
+			pthread_mutex_unlock(&sem_new_ESIs);
+
+			vaciar_ESI();
+
+			pthread_mutex_lock(&sem_ejecutando);
+			ejecutando = false;
+			pthread_mutex_unlock(&sem_ejecutando);
+
+			pthread_mutex_unlock(&sem_ejecucion);
+		}
 
 		return 0;
 	}
