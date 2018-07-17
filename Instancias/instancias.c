@@ -16,12 +16,16 @@ int main(int argc, char** argv) {
 
 	recibir_orden_inicial(socket_coordinador);
 
-	confirmar_exito_de_operacion(110);
+	confirmar_resultado_de_operacion(110);
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
+
+	cantidad_entradas = 8;
+	tamanio_entrada = 5;
+	ALGORITMO_REEMPLAZO = BSU;
 
 	while (disponibilidad_de_conexion) {
 		orden_del_coordinador orden;
@@ -61,7 +65,7 @@ int main(int argc, char** argv) {
 			break;
 		case 100:
 			loggear("Ping.");
-			confirmar_exito_de_operacion(100);
+			confirmar_resultado_de_operacion(100);
 			break;
 		default:
 			log_error(logger, "ERROR: %s", strerror(errno));
@@ -91,7 +95,7 @@ void send_name(int socket_coordinador) {
 	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
 	package_int size_package = { .packed = size };
 
-	confirmar_exito_de_operacion(140);
+	confirmar_resultado_de_operacion(140);
 	enviar_packed(size_package, socket_coordinador);
 	enviar_cadena(NOMBRE, socket_coordinador);
 
@@ -125,6 +129,12 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
 			posicion_de_entrada);
 
+	if(entrada_seleccionada == NULL){
+		log_warning(logger, "La clave para STORE no se encuentra disponible");
+		confirmar_resultado_de_operacion(666);
+		return;
+	}
+
 	entrada_seleccionada->una_entrada.tiempo_sin_ser_referenciado =
 			reloj_interno;
 
@@ -134,13 +144,13 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	int tamanio_valor = entrada_con_la_clave.tamanio_valor;
 
-	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
-
-	char * valor = malloc(entradas_que_ocupa * tamanio_entrada);
+	char * valor = malloc(tamanio_valor + 1);
 
 	int offset = posicion_de_entrada * tamanio_entrada;
 
 	memcpy(valor, almacenamiento_de_valores + offset, tamanio_valor);
+
+	valor[tamanio_valor] = '\0';
 
 	log_trace(logger, "%s", valor);
 
@@ -148,7 +158,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	free(valor);
 
-	confirmar_exito_de_operacion(112);
+	confirmar_resultado_de_operacion(112);
 
 }
 
@@ -441,7 +451,7 @@ void generar_entrada(parametros_set parametros) {
 		crear_entrada(parametros, entrada_seleccionada, tamanio_valor,
 				parametros.tamanio_clave);
 
-		confirmar_exito_de_operacion(111);
+		confirmar_resultado_de_operacion(111);
 		return;
 	}
 
@@ -449,7 +459,7 @@ void generar_entrada(parametros_set parametros) {
 		loggear("Puedo almacenar si compacto...");
 		compactacion();
 		generar_entrada(parametros);
-		confirmar_exito_de_operacion(101);
+		confirmar_resultado_de_operacion(101);
 		return;
 	}
 
@@ -1031,7 +1041,7 @@ void leer_valores_almacenados() {
 
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
-	confirmar_exito_de_operacion(115);
+	confirmar_resultado_de_operacion(115);
 	/*
 	 int i;
 	 for (i = 0; i < cantidad_entradas; i++) {
@@ -1041,7 +1051,7 @@ void leer_valores_almacenados() {
 
 }
 
-void confirmar_exito_de_operacion(int codigo_exito_operacion){
+void confirmar_resultado_de_operacion(int codigo_exito_operacion){
 
 	if(codigo_exito_operacion == 100){
 		loggear("ENVIO DE PING");
@@ -1062,7 +1072,10 @@ void confirmar_exito_de_operacion(int codigo_exito_operacion){
 		loggear("CONFIRMO LECTURA");
 	}
 	else if(codigo_exito_operacion == 140){
-			loggear("CONFIRMO NOMBRE ENVIADO");
+		loggear("CONFIRMO NOMBRE ENVIADO");
+	}
+	else if(codigo_exito_operacion == 666){
+		loggear("PIDIENDO ABORTO DEL ESI");
 	}
 
 	package_int ping = { .packed = codigo_exito_operacion };

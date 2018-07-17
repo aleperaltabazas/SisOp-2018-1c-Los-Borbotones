@@ -1178,8 +1178,14 @@ void esperar_confirmacion_de_exito(int un_socket) {
 	else if(confirmacion.packed == 140){
 		loggear("Nombre asignado con exito");
 	}
+	else if(confirmacion.packed == 666){
+		log_error(logger, "Tengo que abortar el ESI");
+		//magicamente matar el ESI
+	}
 	else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
+		//desconectar instancia
+		//magicamente matar al ESI
 	}
 }
 
@@ -1188,7 +1194,7 @@ void enviar_instancias_a_compactar(){
 
 	while(nodo_aux != NULL){
 		log_debug(logger, "Enviando instancia a compactar...");
-		enviar_orden_instancia(0, nodo_aux->instancia.sockfd, 14);
+		enviar_orden_instancia(0, (void*) nodo_aux->instancia.sockfd, 14);
 		nodo_aux = nodo_aux->sgte;
 	}
 }
@@ -1230,6 +1236,7 @@ int instanciasDisponibles() {
 	return size;
 }
 
+/*
 //PARA 3 Entradas de tamanio 8
 void enviar_ordenes_de_prueba(void* un_socket) {
 
@@ -1468,3 +1475,4 @@ void enviar_ordenes_de_prueba_compactacion(void* un_socket) {
 
 }
 
+*/

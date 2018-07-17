@@ -179,9 +179,9 @@ int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar);
 void avanzar_puntero_CIRC();
 
 void recibir_orden_inicial(int socket_coordinador);
-void confirmar_exito_de_operacion();
+void confirmar_resultado_de_operacion();
 void ping(int sockfd);
-puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
+int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar = NULL;

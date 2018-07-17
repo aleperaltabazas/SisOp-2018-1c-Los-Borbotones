@@ -1,3 +1,17 @@
 GET futbol:messi
-SET futbol:messi TraemeLaCopa
+SET futbol:messi valor
+GET futbol:kun
+SET futbol:kun muchomuchovalor
+GET futbol:pipa
+SET futbol:pipa valor
+GET futbol:willy
+SET futbol:willy muchomuchovalor
+GET futbol:sampa
+SET futbol:sampa muchomuchomuchovalor
+GET futbol:masche
+SET futbol:masche valor
 STORE futbol:messi
+STORE futbol:kun
+STORE futbol:pipa
+STORE futbol:willy
+STORE futbol:sampa
