@@ -88,7 +88,20 @@ int main(int argc, char** argv) {
 }
 
 void revivir(int sockfd) {
+	int hay_mas_claves = 61;
+	while(hay_mas_claves == 61){
+		hay_mas_claves = recibir_clave(sockfd);
+	}
+}
 
+int recibir_clave(int sockfd){
+	package_int tamanio_clave = recibir_packed(sockfd);
+	char *buffer_clave = recibir_cadena(sockfd, tamanio_clave.packed);
+	log_trace(logger, "Clave recibida!: %s", buffer_clave);
+	free(buffer_clave);
+	confirmar_resultado_de_operacion(51);
+	int hay_mas_claves = recibir_packed(sockfd).packed;
+	return hay_mas_claves;
 }
 
 void send_name(int socket_coordinador) {
@@ -1055,6 +1068,9 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion){
 
 	if(codigo_exito_operacion == 100){
 		loggear("ENVIO DE PING");
+	}
+	else if(codigo_exito_operacion == 51){
+		loggear("SOLICITUD DE COMPACTACION ENVIADA");
 	}
 	else if(codigo_exito_operacion == 101){
 		loggear("SOLICITUD DE COMPACTACION ENVIADA");

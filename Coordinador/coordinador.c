@@ -962,7 +962,7 @@ bool ping(Instancia instancia) {
 
 	memcpy(buffer, &orden, packageSize);
 
-	loggear("Pingeando instancia...");
+	log_trace(logger, "Pingeando instancia... SOCKET: %i", instancia.sockfd);
 
 	int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
 
@@ -1013,6 +1013,7 @@ void revivir(char* name, int sockfd) {
 
 	if (claves.head == NULL) {
 		log_warning(logger, "%s no tenía ninguna clave asignada.", name);
+		return;
 	}
 
 	enviar_claves(claves, sockfd);
@@ -1020,6 +1021,8 @@ void revivir(char* name, int sockfd) {
 
 void enviar_claves(t_clave_list claves, int sockfd) {
 	t_clave_node* puntero = claves.head;
+
+	enviar_orden_instancia(0, (void*) sockfd, 50);
 
 	while (puntero != NULL) {
 		int size = strlen(puntero->clave) + 1;
@@ -1032,6 +1035,17 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 
 		package_int ok = recv_packed_no_exit(sockfd);
 
+		puntero = puntero->sgte;
+
+		if(puntero == NULL){
+			size_package.packed = 60;
+			send_packed_no_exit(size_package, sockfd);
+		}
+		else{
+			size_package.packed = 61;
+			send_packed_no_exit(size_package, sockfd);
+		}
+
 		if (ok.packed != 51) {
 			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
 					strerror(errno));
@@ -1039,11 +1053,14 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			return;
 		}
 	}
+
+
 }
 
 t_clave_list get_claves(char* name) {
 	t_instancia_node* puntero;
-	while (puntero->sgte != NULL) {
+	puntero = instancias.head;
+	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, name)) {
 			return puntero->instancia.claves;
 		}
@@ -1059,9 +1076,14 @@ t_clave_list get_claves(char* name) {
 void update(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
-	while (puntero->sgte != NULL) {
+	log_error(logger, "VIEJO SOCKET: %i", puntero->instancia.sockfd);
+	log_error(logger, "NUEVO SOCKET: %i", sockfd);
+	while (puntero != NULL) {
+		log_error(logger, "ESTOY EN EL WHILE");
+
 		if (mismoString(puntero->instancia.nombre, name)) {
 			puntero->instancia.disponible = true;
+			log_debug(logger, "Actualizando socket de la instancia...");
 			puntero->instancia.sockfd = sockfd;
 		}
 
