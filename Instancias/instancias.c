@@ -23,10 +23,6 @@ int main(int argc, char** argv) {
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
 
-	cantidad_entradas = 8;
-	tamanio_entrada = 5;
-	ALGORITMO_REEMPLAZO = BSU;
-
 	while (disponibilidad_de_conexion) {
 		orden_del_coordinador orden;
 		orden = recibir_orden_coordinador(socket_coordinador);
@@ -90,19 +86,46 @@ int main(int argc, char** argv) {
 void revivir(int sockfd) {
 	int hay_mas_claves = 61;
 	while(hay_mas_claves == 61){
-		hay_mas_claves = recibir_clave(sockfd);
+		char * clave = recibir_clave(sockfd);
+		FILE * archivo_a_leer = open_file_lectura(clave);
+		char * valor = leer_valor_de_archivo(archivo_a_leer);
+		fclose(archivo_a_leer);
+		parametros_set unos_parametros = {
+				.valor = valor, .tamanio_valor = strlen(valor), .clave = clave, .tamanio_clave = strlen(clave)
+		};
+		generar_entrada(unos_parametros);
+		free(linea_parseada);
+		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
+	loggear("Resurreccion exitosa");
+	leer_valores_almacenados();
 }
 
-int recibir_clave(int sockfd){
+char * recibir_clave(int sockfd){
 	package_int tamanio_clave = recibir_packed(sockfd);
 	char *buffer_clave = recibir_cadena(sockfd, tamanio_clave.packed);
 	log_trace(logger, "Clave recibida!: %s", buffer_clave);
-	free(buffer_clave);
 	confirmar_resultado_de_operacion(51);
-	int hay_mas_claves = recibir_packed(sockfd).packed;
-	return hay_mas_claves;
+	return buffer_clave;
 }
+
+char * leer_valor_de_archivo(FILE * archivo_a_leer){
+	size_t len = 0;
+	ssize_t read;
+
+	read = getline(&line, &len, archivo_a_leer);
+	linea_parseada = malloc(obtener_entradas_que_ocupa(read) * tamanio_entrada);
+	memcpy(linea_parseada, line, read);
+
+	if(line){
+		free(line);
+	}
+
+	linea_parseada[read] = '\0';
+	log_warning(logger, "Linea parseada: %s, %i", linea_parseada, read);
+	return linea_parseada;
+}
+
 
 void send_name(int socket_coordinador) {
 	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
@@ -199,6 +222,29 @@ FILE* open_file(char* file_name) {
 
 	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
 
+	free(path);
+
+	return fd;
+}
+
+FILE* open_file_lectura(char* file_name) {
+	char* path = malloc(strlen(file_name) + strlen(PUNTO_MONTAJE) + 1);
+	strcpy(path, PUNTO_MONTAJE);
+	strcat(path, file_name);
+
+	FILE* fd = fopen(path, "r");
+
+	if (fd == NULL) {
+		log_error(logger, "Falló la apertura del archivo %s.", file_name);
+		exit(-1);
+	}
+
+	log_info(logger, "Archivo abierto exitosamente");
+
+	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
+
+	free(path);
+
 	return fd;
 }
 
@@ -216,6 +262,27 @@ void write_file(char* file_name, char* text) {
 
 	loggear("Archivo escrito correctamente");
 	fclose(fd);
+}
+
+void dump(){
+
+	char * valor_a_dumpear;
+	char * clave_a_dumpear;
+
+	while(1){
+		sleep(DUMP);
+		loggear("Iniciando DUMP");
+		nodo_auxiliar = entradas_asignadas.head;
+
+		while(nodo_auxiliar != NULL){
+			valor_a_dumpear = leer_valor(nodo_auxiliar->una_entrada.pos_valor, nodo_auxiliar->una_entrada.tamanio_valor);
+			free(auxiliar);
+			clave_a_dumpear = nodo_auxiliar -> una_entrada.clave;
+			log_debug(logger, "Persistiendo %s...", clave_a_dumpear);
+			write_file(clave_a_dumpear, valor_a_dumpear);
+			nodo_auxiliar = nodo_auxiliar -> siguiente;
+		}
+	}
 }
 
 void setup_montaje(void) {
@@ -438,6 +505,8 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	almacenar_valor(puntero_entrada_a_actualizar->una_entrada.pos_valor,
 			entradas_que_ocupa, parametros.valor);
+
+	confirmar_resultado_de_operacion(111);
 }
 
 void generar_entrada(parametros_set parametros) {
@@ -1032,6 +1101,13 @@ char * leer_clave_valor(entradas_node * puntero) {
 	//Sobre el final de lo que copie pongo un \0 para que sepa que se termina ahi
 	auxiliar[tamanio_total] = '\0';
 
+	return auxiliar;
+}
+
+char * leer_valor(int posicion_entrada, int tamanio_valor){
+	auxiliar = malloc(tamanio_valor + 1);
+	memcpy(auxiliar, almacenamiento_de_valores + posicion_entrada * tamanio_entrada, tamanio_valor);
+	auxiliar[tamanio_valor] = '\0';
 	return auxiliar;
 }
 

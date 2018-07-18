@@ -55,7 +55,7 @@ void almacenar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * va
 /*
  * Almacena un valor asociado a una clave en la posicion de memoria correspondiente a la entrada
  */
-char * leer_valor(entradas_node * unaEntrada);
+char * leer_valor(int posicion_entrada, int tamanio_valor);
 /*
  * Se llama a un buffer auxiliar para ver lo almacenado en una entrada particular
  * Siempre debe liberarse el puntero auxiliar al llamarse
@@ -182,6 +182,11 @@ void recibir_orden_inicial(int socket_coordinador);
 void confirmar_resultado_de_operacion();
 void ping(int sockfd);
 int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
+void dump();
+char * recibir_clave(int sockfd);
+char * leer_valor_de_archivo(FILE * archivo_a_leer);
+
+FILE* open_file_lectura(char* file_name);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar = NULL;
@@ -191,6 +196,10 @@ t_entrada_list entradas_asignadas;
 
 //Planteo el puntero entrada como un simple int que coincide con la posicion de la entrada
 int puntero_entrada;
+
+//Para las lineas parseadas por el getline
+char * line;
+char * linea_parseada;
 
 //Funciones para el coordinador
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador);

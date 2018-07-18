@@ -1035,6 +1035,8 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 
 		package_int ok = recv_packed_no_exit(sockfd);
 
+		esperar_confirmacion_de_exito(sockfd);
+
 		puntero = puntero->sgte;
 
 		if(puntero == NULL){
@@ -1076,10 +1078,7 @@ t_clave_list get_claves(char* name) {
 void update(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
-	log_error(logger, "VIEJO SOCKET: %i", puntero->instancia.sockfd);
-	log_error(logger, "NUEVO SOCKET: %i", sockfd);
 	while (puntero != NULL) {
-		log_error(logger, "ESTOY EN EL WHILE");
 
 		if (mismoString(puntero->instancia.nombre, name)) {
 			puntero->instancia.disponible = true;
