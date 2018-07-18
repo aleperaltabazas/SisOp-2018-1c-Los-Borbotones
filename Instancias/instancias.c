@@ -90,10 +90,10 @@ void revivir(int sockfd) {
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
+		free(linea_parseada);
 		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
 				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave) };
 		generar_entrada(unos_parametros);
-		free(linea_parseada);
 		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
 	loggear("Resurreccion exitosa");
@@ -113,7 +113,7 @@ char * leer_valor_de_archivo(FILE * archivo_a_leer) {
 	ssize_t read;
 
 	read = getline(&line, &len, archivo_a_leer);
-	linea_parseada = malloc(obtener_entradas_que_ocupa(read) * tamanio_entrada);
+	linea_parseada = malloc(obtener_entradas_que_ocupa(read) * tamanio_entrada + 1);
 	memcpy(linea_parseada, line, read);
 
 	if (line) {
@@ -221,10 +221,10 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
-	//strcpy(dump_spot, "/home/utnso/dump/");
 
 	//descomenten este y comenten el mio
 	//--Alesaurio-bot
@@ -299,13 +299,14 @@ void* dump(void* buffer) {
 			char* valor_a_dumpear = leer_valor(
 					nodo_auxiliar->una_entrada.pos_valor,
 					nodo_auxiliar->una_entrada.tamanio_valor);
-			free(auxiliar);
+
 			char* clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
 			log_debug(logger, "Clave: %s", clave_a_dumpear);
 			log_debug(logger, "Valor: %s", valor_a_dumpear);
 
 			log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
+			free(auxiliar);
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
 
@@ -1169,12 +1170,6 @@ void leer_valores_almacenados() {
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
 	confirmar_resultado_de_operacion(115);
-	/*
-	 int i;
-	 for (i = 0; i < cantidad_entradas; i++) {
-	 log_trace(logger, "%i", entradas_disponibles[i]);
-	 }
-	 */
 
 }
 
@@ -1183,7 +1178,7 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 	if (codigo_exito_operacion == 100) {
 		loggear("ENVIO DE PING");
 	} else if (codigo_exito_operacion == 51) {
-		loggear("SOLICITUD DE COMPACTACION ENVIADA");
+		loggear("CLAVE RESTAURADA CORRECTAMENTE");
 	} else if (codigo_exito_operacion == 101) {
 		loggear("SOLICITUD DE COMPACTACION ENVIADA");
 	} else if (codigo_exito_operacion == 110) {
