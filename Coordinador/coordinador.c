@@ -229,17 +229,31 @@ uint32_t decimeID(int sockfd) {
 }
 
 void liberar_claves(uint32_t id) {
+
+	if(claves_bloqueadas.head == NULL){
+		loggear("No hay claves bloqueadas");
+		return;
+	}
+
 	t_clave_node* puntero = claves_bloqueadas.head;
+	t_clave_node* aux = puntero -> sgte;
 
 	while (puntero != NULL) {
 		log_debug(logger, "Blocker: %i", puntero->block_id);
 		log_debug(logger, "ESI: %i", id);
-
+		sleep(1);
 		if (puntero->block_id == id) {
+			log_debug(logger, "Bloqueando...");
 			desbloquear(puntero->clave);
+			puntero = aux;
+			if(puntero!= NULL){
+				aux = puntero -> sgte;
+			}
 		}
-
-		puntero = puntero->sgte;
+		else{
+			puntero = puntero->sgte;
+			aux = puntero -> sgte;
+		}
 	}
 }
 
@@ -453,8 +467,6 @@ int settear(char* valor, char* clave, uint32_t id) {
 				log_warning(logger, "Abortando ESI %i.", id);
 				return -3;
 			}
-
-			puntero->valor = valor;
 
 			operacion op = { .op_type = op_SET, .clave = clave, .valor = valor,
 					.id = id };

@@ -142,6 +142,7 @@ char* headClaves(t_clave_list lista);
 	 * Argumentos:
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
 	 */
+int contiene_la_clave(t_clave_list * lista, char * clave);
 
 /*
  * ==============================
