@@ -50,6 +50,8 @@ package_int packed_recv_error = { .packed = -20 };
 
 aviso_con_ID aviso_recv_error = { .aviso = -20 };
 
+
+
 char* string_recv_error = "RECV ERROR";
 
 //Funciones servidor

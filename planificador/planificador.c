@@ -359,7 +359,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		esi.tiempo_arribo = tiempo;
 		pthread_mutex_unlock(&sem_clock);
 
-		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_new_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
 		agregar_ESI(&new_ESIs, esi);
 
