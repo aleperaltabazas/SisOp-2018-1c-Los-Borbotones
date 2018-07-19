@@ -20,9 +20,6 @@ int main(int argc, char** argv) {
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
-	cantidad_entradas = 8;
-	tamanio_entrada = 10;
-
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
 
@@ -309,7 +306,9 @@ void* dump(void* buffer) {
 
 			log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
-			free(auxiliar);
+			if(auxiliar){
+				free(auxiliar);
+			}
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
 
