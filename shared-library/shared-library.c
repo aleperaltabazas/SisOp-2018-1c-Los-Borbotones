@@ -464,6 +464,7 @@ void loggear(char* mensaje) {
 
 void salir_con_error(char* mensaje, int socket) {
 	log_error(logger, mensaje);
+	log_error(logger, "Error de errno: %s", strerror(errno));
 	close(socket);
 
 	exit_gracefully(1);
