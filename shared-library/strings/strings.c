@@ -22,5 +22,5 @@ void cerrar_cadena(char* cadena) {
 }
 
 bool esParseable(char caracter) {
-	return isalnum(caracter) || caracter == ':';
+	return isalnum(caracter) || caracter == ':' || caracter == '/';
 }

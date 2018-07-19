@@ -87,7 +87,7 @@ void revivir(int sockfd) {
 	int hay_mas_claves = 61;
 	while (hay_mas_claves == 61) {
 		char * clave = recibir_clave(sockfd);
-		FILE * archivo_a_leer = open_file(clave, "r", PUNTO_MONTAJE);
+		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
 		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
@@ -202,6 +202,21 @@ void iniciar(char** argv) {
 
 	cargar_configuracion(argv);
 	setup_montaje();
+	init_dump_thread();
+	iniciar_semaforos();
+}
+
+void iniciar_semaforos(void) {
+	pthread_mutex_init(&sem_entradas, NULL);
+}
+
+void init_dump_thread(void) {
+	pthread_t dump_thread;
+	strcpy(dump_spot, "/home/alesaurio/dump_");
+	strcat(dump_spot, NOMBRE);
+
+	pthread_create(&dump_thread, NULL, dump, (void*) dump_spot);
+	pthread_detach(dump_thread);
 }
 
 FILE* open_file(char* file_name, char* mode, char* directory) {
@@ -241,7 +256,21 @@ void write_file(char* file_name, char* text, char* directory) {
 	fclose(fd);
 }
 
-void dump() {
+void cerrar_directorio(char* directorio) {
+	int i = 0;
+
+	while (directorio[i] != '\0') {
+		i++;
+	}
+
+	directorio[i] = '/';
+	cerrar_cadena(directorio);
+}
+
+void* dump(void* buffer) {
+	char* dump_path = (char*) buffer;
+	crear_directorio(dump_path);
+	strcat(dump_path, "/");
 
 	char* valor_a_dumpear;
 	char* clave_a_dumpear;
@@ -249,6 +278,8 @@ void dump() {
 	while (1) {
 		sleep(DUMP);
 		loggear("Iniciando DUMP");
+
+		pthread_mutex_lock(&sem_entradas);
 		nodo_auxiliar = entradas_asignadas.head;
 
 		while (nodo_auxiliar != NULL) {
@@ -257,33 +288,43 @@ void dump() {
 			free(auxiliar);
 			clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
 			log_debug(logger, "Persistiendo %s...", clave_a_dumpear);
-			write_file(clave_a_dumpear, valor_a_dumpear, PUNTO_MONTAJE);
+			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
+
+		pthread_mutex_unlock(&sem_entradas);
 	}
+
+	return NULL;
 }
 
 void setup_montaje(void) {
 	log_info(logger, "Creando punto de montaje...");
 
-	struct stat sb;
-
-	sleep(1);
-
-	if (stat(PUNTO_MONTAJE, &sb) == 0) {
-		log_warning(logger, "Ya existe una carpeta %s.", PUNTO_MONTAJE);
-		return;
-	}
-
-	int status = mkdir(PUNTO_MONTAJE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-
-	if (status < 0) {
-		log_error(logger, "Falló la creación de punto de montaje.");
-		exit(-1);
-	}
+	crear_directorio(PUNTO_MONTAJE);
 
 	log_info(logger, "Punto de montaje creado exitósamente.");
 
+}
+
+void crear_directorio(char* nombre) {
+	struct stat sb;
+
+	if (stat(nombre, &sb) == 0) {
+		log_warning(logger, "Ya existe una carpeta %s.", nombre);
+		return;
+	}
+
+	int status = mkdir(nombre, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+	if (status < 0) {
+		log_error(logger, "Falló la creación del directorio: %s", nombre);
+		log_error(logger, strerror(errno));
+		exit_gracefully(-1);
+	}
+
+	string_append(&nombre, "/");
+	log_info(logger, "Directorio %s creado con éxito.", nombre);
 }
 
 algoritmo_reemplazo dame_algoritmo(char* algoritmo_src) {
@@ -318,10 +359,11 @@ void cargar_configuracion(char** argv) {
 	log_info(logger, "Algoritmo: %s", algoritmo);
 
 	PUNTO_MONTAJE = config_get_string_value(config, "PUNTO_MONTAJE");
-	strcat(PUNTO_MONTAJE, "\0");
+	cerrar_cadena(PUNTO_MONTAJE);
 	log_info(logger, "Punto de montaje: %s", PUNTO_MONTAJE);
 
 	NOMBRE = config_get_string_value(config, "NOMBRE");
+	cerrar_cadena(NOMBRE);
 	log_info(logger, "Nombre: %s", NOMBRE);
 
 	DUMP = config_get_int_value(config, "DUMP");

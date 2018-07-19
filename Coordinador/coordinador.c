@@ -220,7 +220,7 @@ void liberar_claves(uint32_t id) {
 }
 
 int chequear_solicitud(int socket_cliente, uint32_t id) {
-	aviso_con_ID aviso_cliente = recibir_aviso(socket_cliente);
+	aviso_con_ID aviso_cliente = recv_aviso_no_exit(socket_cliente);
 
 	log_debug(logger, "%i", aviso_cliente.aviso);
 
@@ -277,12 +277,12 @@ int get(int socket_cliente, uint32_t id) {
 
 	sleep(RETARDO);
 
-	enviar_aviso(socket_cliente, aviso_ok);
+	send_aviso_no_exit(aviso_ok, socket_cliente);
 
-	package_int size_packed = recibir_packed(socket_cliente);
+	package_int size_packed = recv_packed_no_exit(socket_cliente);
 	uint32_t clave_size = size_packed.packed;
 
-	char* clave = recibir_cadena(socket_cliente, clave_size);
+	char* clave = recv_string_no_exit(socket_cliente, clave_size);
 
 	package_int response;
 
@@ -292,7 +292,7 @@ int get(int socket_cliente, uint32_t id) {
 
 	sleep(2);
 
-	enviar_packed(response, socket_cliente);
+	send_packed_no_exit(response, socket_cliente);
 
 	return 20;
 }
@@ -332,15 +332,15 @@ int set(int socket_cliente, uint32_t id) {
 
 	sleep(RETARDO);
 
-	enviar_aviso(socket_cliente, aviso_ok);
+	send_aviso_no_exit(aviso_ok, socket_cliente);
 
-	package_int clave_size_packed = recibir_packed(socket_cliente);
+	package_int clave_size_packed = recv_packed_no_exit(socket_cliente);
 	uint32_t clave_size = clave_size_packed.packed;
-	char* clave = recibir_cadena(socket_cliente, clave_size);
+	char* clave = recv_string_no_exit(socket_cliente, clave_size);
 
-	package_int valor_size_packed = recibir_packed(socket_cliente);
+	package_int valor_size_packed = recv_packed_no_exit(socket_cliente);
 	uint32_t valor_size = valor_size_packed.packed;
-	char* valor = recibir_cadena(socket_cliente, valor_size);
+	char* valor = recv_string_no_exit(socket_cliente, valor_size);
 
 	package_int response;
 
@@ -354,7 +354,7 @@ int set(int socket_cliente, uint32_t id) {
 
 	sleep(2);
 
-	enviar_packed(response, socket_cliente);
+	send_packed_no_exit(response, socket_cliente);
 
 	return 20;
 }
@@ -364,17 +364,17 @@ int store(int socket_cliente, uint32_t id) {
 
 	sleep(RETARDO);
 
-	enviar_aviso(socket_cliente, aviso_ok);
+	send_aviso_no_exit(aviso_ok, socket_cliente);
 
-	package_int size_packed = recibir_packed(socket_cliente);
+	package_int size_packed = recv_packed_no_exit(socket_cliente);
 	uint32_t clave_size = size_packed.packed;
 
-	char* clave = recibir_cadena(socket_cliente, clave_size);
+	char* clave = recv_string_no_exit(socket_cliente, clave_size);
 
 	package_int response;
 	response.packed = get_packed(clave, id);
 
-	enviar_packed(response, socket_cliente);
+	send_packed_no_exit(response, socket_cliente);
 
 	if (response.packed == -3) {
 		return -5;
@@ -487,7 +487,6 @@ int do_set(char* valor, char* clave) {
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
-
 
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
@@ -1039,11 +1038,10 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 
 		puntero = puntero->sgte;
 
-		if(puntero == NULL){
+		if (puntero == NULL) {
 			size_package.packed = 60;
 			send_packed_no_exit(size_package, sockfd);
-		}
-		else{
+		} else {
 			size_package.packed = 61;
 			send_packed_no_exit(size_package, sockfd);
 		}
@@ -1055,7 +1053,6 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			return;
 		}
 	}
-
 
 }
 
@@ -1178,42 +1175,34 @@ void esperar_confirmacion_de_exito(int un_socket) {
 
 	if (confirmacion.packed == 100) {
 		loggear("Comprobacion de PING finalizada con exito");
-	}
-	else if(confirmacion.packed == 101){
+	} else if (confirmacion.packed == 101) {
 		loggear("Pedido de compactacion recibido, mandando a compactar...");
 		enviar_instancias_a_compactar();
 		esperar_confirmacion_de_exito(un_socket);
-	}
-	else if(confirmacion.packed == 110){
+	} else if (confirmacion.packed == 110) {
 		loggear("Operacion Inicial finalizada con exito");
-	}
-	else if(confirmacion.packed == 111){
+	} else if (confirmacion.packed == 111) {
 		loggear("Operacion SET finalizada con exito");
-	}
-	else if(confirmacion.packed == 112){
+	} else if (confirmacion.packed == 112) {
 		loggear("Operacion STORE finalizada con exito");
-	}
-	else if(confirmacion.packed == 115){
+	} else if (confirmacion.packed == 115) {
 		loggear("Operacion Lectura finalizada con exito");
-	}
-	else if(confirmacion.packed == 140){
+	} else if (confirmacion.packed == 140) {
 		loggear("Nombre asignado con exito");
-	}
-	else if(confirmacion.packed == 666){
+	} else if (confirmacion.packed == 666) {
 		log_error(logger, "Tengo que abortar el ESI");
 		//magicamente matar el ESI
-	}
-	else {
+	} else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
 		//desconectar instancia
 		//magicamente matar al ESI
 	}
 }
 
-void enviar_instancias_a_compactar(){
+void enviar_instancias_a_compactar() {
 	t_instancia_node * nodo_aux = instancias.head;
 
-	while(nodo_aux != NULL){
+	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
 		enviar_orden_instancia(0, (void*) nodo_aux->instancia.sockfd, 14);
 		nodo_aux = nodo_aux->sgte;
@@ -1258,242 +1247,242 @@ int instanciasDisponibles() {
 }
 
 /*
-//PARA 3 Entradas de tamanio 8
-void enviar_ordenes_de_prueba(void* un_socket) {
+ //PARA 3 Entradas de tamanio 8
+ void enviar_ordenes_de_prueba(void* un_socket) {
 
-	asignar_parametros_a_enviar_de_prueba();
+ asignar_parametros_a_enviar_de_prueba();
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
-			+ valor_set.tamanio_valor;
+ int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
+ + valor_set.tamanio_valor;
 
-	int i;
+ int i;
 
-	for (i = 0; i < 3; i++) {
+ for (i = 0; i < 3; i++) {
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-		enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	}
+ }
 
-	valor_set.clave = "OtraClave";
-	valor_set.tamanio_clave = 9;
-	valor_set.valor = "PALABRAGRANDE";
-	valor_set.tamanio_valor = 13;
+ valor_set.clave = "OtraClave";
+ valor_set.tamanio_clave = 9;
+ valor_set.valor = "PALABRAGRANDE";
+ valor_set.tamanio_valor = 13;
 
-	tamanio_parametros_set = 9 + 13 + 2 * 4;
+ tamanio_parametros_set = 9 + 13 + 2 * 4;
 
-	for (i = 0; i < 4; i++) {
+ for (i = 0; i < 4; i++) {
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-		enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	}
+ }
 
-	valor_set.clave = "OtraClaveDe21Letras00";
-	valor_set.tamanio_clave = 21;
-	valor_set.valor = "NAPARECE";
-	valor_set.tamanio_valor = 8;
+ valor_set.clave = "OtraClaveDe21Letras00";
+ valor_set.tamanio_clave = 21;
+ valor_set.valor = "NAPARECE";
+ valor_set.tamanio_valor = 8;
 
-	tamanio_parametros_set = 21 + 8 + 2 * 4;
+ tamanio_parametros_set = 21 + 8 + 2 * 4;
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	for (i = 0; i < 2; i++) {
+ for (i = 0; i < 2; i++) {
 
-		enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-		enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	}
+ }
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras01";
-	valor_set.tamanio_clave = 21;
-	valor_set.valor = "VALOR01";
-	valor_set.tamanio_valor = 7;
+ valor_set.clave = "OtraClaveDe21Letras01";
+ valor_set.tamanio_clave = 21;
+ valor_set.valor = "VALOR01";
+ valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 21 + 7 + 2 * 4;
+ tamanio_parametros_set = 21 + 7 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras02";
-	valor_set.valor = "VALOR02";
+ valor_set.clave = "OtraClaveDe21Letras02";
+ valor_set.valor = "VALOR02";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras03";
-	valor_set.valor = "APARECEGrande";
-	valor_set.tamanio_valor = 13;
+ valor_set.clave = "OtraClaveDe21Letras03";
+ valor_set.valor = "APARECEGrande";
+ valor_set.tamanio_valor = 13;
 
-	tamanio_parametros_set = 21 + 13 + 2 * 4;
+ tamanio_parametros_set = 21 + 13 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 14);
+ enviar_orden_instancia(0, un_socket, 14);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras04";
-	valor_set.valor = "VALOR04";
-	valor_set.tamanio_valor = 7;
+ valor_set.clave = "OtraClaveDe21Letras04";
+ valor_set.valor = "VALOR04";
+ valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 21 + 7 + 2 * 4;
+ tamanio_parametros_set = 21 + 7 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 14);
+ enviar_orden_instancia(0, un_socket, 14);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras05";
-	valor_set.valor = "VALOR05";
+ valor_set.clave = "OtraClaveDe21Letras05";
+ valor_set.valor = "VALOR05";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	enviar_orden_instancia(0, un_socket, 14);
+ enviar_orden_instancia(0, un_socket, 14);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras06";
-	valor_set.valor = "VALOR06";
+ valor_set.clave = "OtraClaveDe21Letras06";
+ valor_set.valor = "VALOR06";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	valor_set.clave = "OtraClaveDe21Letras07";
-	valor_set.valor = "VALOR07";
+ valor_set.clave = "OtraClaveDe21Letras07";
+ valor_set.valor = "VALOR07";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-}
+ }
 
-void asignar_parametros_a_enviar_de_prueba() {
+ void asignar_parametros_a_enviar_de_prueba() {
 
-	valor_set.clave = "Clave";
-	valor_set.tamanio_clave = strlen(valor_set.clave);
-	valor_set.valor = "UnValor";
-	valor_set.tamanio_valor = strlen(valor_set.valor);
+ valor_set.clave = "Clave";
+ valor_set.tamanio_clave = strlen(valor_set.clave);
+ valor_set.valor = "UnValor";
+ valor_set.tamanio_valor = strlen(valor_set.valor);
 
-}
+ }
 
-//PARA 17 Entradas de tamanio 8 y BSU
-void enviar_ordenes_de_prueba_compactacion(void* un_socket) {
+ //PARA 17 Entradas de tamanio 8 y BSU
+ void enviar_ordenes_de_prueba_compactacion(void* un_socket) {
 
-	int tamanio_parametros_set;
+ int tamanio_parametros_set;
 
-	valor_set.clave = "Clave00";
-	valor_set.tamanio_clave = 7;
-	valor_set.valor = "Valor00";
-	valor_set.tamanio_valor = 7;
+ valor_set.clave = "Clave00";
+ valor_set.tamanio_clave = 7;
+ valor_set.valor = "Valor00";
+ valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 7 + 7 + 2 * 4;
+ tamanio_parametros_set = 7 + 7 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave01";
-	valor_set.valor = "Valor01";
+ valor_set.clave = "Clave01";
+ valor_set.valor = "Valor01";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave02";
-	valor_set.valor = "Valor02888888888888888888888888";
-	valor_set.tamanio_valor = 7 + 8 * 3;
+ valor_set.clave = "Clave02";
+ valor_set.valor = "Valor02888888888888888888888888";
+ valor_set.tamanio_valor = 7 + 8 * 3;
 
-	tamanio_parametros_set += 24;
+ tamanio_parametros_set += 24;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave03";
-	valor_set.valor = "Valor03";
-	valor_set.tamanio_valor = 7;
+ valor_set.clave = "Clave03";
+ valor_set.valor = "Valor03";
+ valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 7 + 7 + 2 * 4;
+ tamanio_parametros_set = 7 + 7 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave04";
-	valor_set.valor = "Valor028888888888888888";
-	valor_set.tamanio_valor = 7 + 8 * 2;
+ valor_set.clave = "Clave04";
+ valor_set.valor = "Valor028888888888888888";
+ valor_set.tamanio_valor = 7 + 8 * 2;
 
-	tamanio_parametros_set += 16;
+ tamanio_parametros_set += 16;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave05";
-	valor_set.valor = "Valor05";
-	valor_set.tamanio_valor = 7;
+ valor_set.clave = "Clave05";
+ valor_set.valor = "Valor05";
+ valor_set.tamanio_valor = 7;
 
-	tamanio_parametros_set = 7 + 7 + 2 * 4;
+ tamanio_parametros_set = 7 + 7 + 2 * 4;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave06";
-	valor_set.valor = "Valor068888888888888888";
-	valor_set.tamanio_valor = 7 + 8 * 2;
+ valor_set.clave = "Clave06";
+ valor_set.valor = "Valor068888888888888888";
+ valor_set.tamanio_valor = 7 + 8 * 2;
 
-	tamanio_parametros_set += 16;
+ tamanio_parametros_set += 16;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	valor_set.clave = "Clave07";
-	valor_set.valor = "Valor078888888888888888";
+ valor_set.clave = "Clave07";
+ valor_set.valor = "Valor078888888888888888";
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	enviar_orden_instancia(0, un_socket, 14);
+ enviar_orden_instancia(0, un_socket, 14);
 
-	valor_set.clave = "Clave08";
-	valor_set.valor = "Valor088888888888888888888888888888888888888888";
-	valor_set.tamanio_valor = 7 + 8 * 5;
+ valor_set.clave = "Clave08";
+ valor_set.valor = "Valor088888888888888888888888888888888888888888";
+ valor_set.tamanio_valor = 7 + 8 * 5;
 
-	tamanio_parametros_set += 24;
+ tamanio_parametros_set += 24;
 
-	enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
+ enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
 
-	enviar_valores_set(tamanio_parametros_set, un_socket);
+ enviar_valores_set(tamanio_parametros_set, un_socket);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-	enviar_orden_instancia(0, un_socket, 14);
+ enviar_orden_instancia(0, un_socket, 14);
 
-	enviar_orden_instancia(0, un_socket, 15);
+ enviar_orden_instancia(0, un_socket, 15);
 
-}
+ }
 
-*/
+ */

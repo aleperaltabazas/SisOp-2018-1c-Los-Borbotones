@@ -17,6 +17,10 @@ char* PUNTO_MONTAJE;
 char* NOMBRE;
 int DUMP;
 
+char dump_spot[80];
+
+pthread_mutex_t sem_entradas;
+
 //Socket del coordinador
 int socket_coordinador;
 
@@ -140,6 +144,35 @@ void revivir(int sockfd);
 	 * 		int sockfd: socket por el cual realizar la comunicación.
 	 */
 
+void cerrar_directorio(char* directorio);
+	/*
+	 * Descripción: agrega una / al final del directorio.
+	 * Argumentos:
+	 * 		char* directorio: path del directorio.
+	 */
+
+void crear_directorio(char* nombre);
+	/*
+	 * Descripción: crea un directorio con nombre. El nombre puede ser un path.
+	 * Argumentos:
+	 * 		char* nombre: nombre del directorio.
+	 */
+
+void init_dump_thread(void);
+	/*
+	 * Descripción: inicializa el hilo de dump, Este hilo crea un directorio con el nombre
+	 * 		"dump_NOMBRE" en /home/usr/.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void iniciar_semaforos(void);
+	/*
+	 * Descripción: inicializa los semáforos del proceso.
+	 * Argumentos:
+	 * 		void
+	 */
+
 void store(uint32_t longitud_parametros, int socket_coordinador);
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);
@@ -185,7 +218,7 @@ void recibir_orden_inicial(int socket_coordinador);
 void confirmar_resultado_de_operacion();
 void ping(int sockfd);
 int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
-void dump();
+void* dump();
 char * recibir_clave(int sockfd);
 char * leer_valor_de_archivo(FILE * archivo_a_leer);
 
