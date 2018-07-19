@@ -474,6 +474,20 @@ void send_OK(int sockfd);
 	 * 		int sockfd: socket por el cual establecer la comunicación.
 	 */
 
+void sigHandler_sigint(int signo);
+	/*
+	 * Descripción: atrapa la señal SIGINT ante un CTRL+C, logea el último error y cierra el listening_socket.
+	 * Argumentos:
+	 * 		int signo
+	 */
+
+void sigHandler_segfault(int signo);
+	/*
+	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
+	 * Argumentos:
+	 * 		int signo
+	 */
+
 int do_set(char* valor, char* clave);
 
 Instancia getInstanciaSet(char* clave);

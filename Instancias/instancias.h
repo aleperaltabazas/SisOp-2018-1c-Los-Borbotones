@@ -173,6 +173,13 @@ void iniciar_semaforos(void);
 	 * 		void
 	 */
 
+void sigHandler_segfault(int signo);
+	/*
+	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
+	 * Argumentos:
+	 * 		int signo
+	 */
+
 void store(uint32_t longitud_parametros, int socket_coordinador);
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);

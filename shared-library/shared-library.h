@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <commons/string.h>
+#include <signal.h>
 #include "structs/estructuras.h"
 #include "lists/lists.h"
 #include "strings/strings.h"

@@ -366,6 +366,9 @@ int levantar_servidor(char* puerto, int tries) {
 			server_info->ai_addrlen);
 	freeaddrinfo(server_info);
 
+	int yes = 1;
+	setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
 	if (bindeo < 0) {
 		if (tries == 5) {
 			log_error(logger, "%s", strerror(errno));

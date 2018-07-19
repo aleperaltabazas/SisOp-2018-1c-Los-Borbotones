@@ -84,7 +84,7 @@ void pausarOContinuar(void);
 void bloquear(int codigo);
 void desbloquear(int codigo);
 void listar(char * clave);
-void kill(int codigo);
+void kill_esi(int codigo);
 void status(int codigo);
 void deadlock(void);
 float recibirCodigo(void);

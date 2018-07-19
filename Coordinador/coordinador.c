@@ -7,6 +7,8 @@
 
 #include "coordinador.h"
 
+int listening_socket;
+
 int main(int argc, char** argv) {
 	iniciar(argv);
 
@@ -18,7 +20,8 @@ int main(int argc, char** argv) {
 }
 
 void coordinar(void) {
-	int listening_socket = levantar_servidor(PUERTO_COORDINADOR, 0);
+	listening_socket = levantar_servidor(PUERTO_COORDINADOR, 0);
+
 	int socketCliente;
 
 	while (seguir_ejecucion) {
@@ -34,12 +37,31 @@ void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 	cargar_configuracion(argv);
 
+	signal(SIGINT, sigHandler_sigint);
+	signal(SIGSEGV, sigHandler_segfault);
+
 	log_operaciones = log_create("Operaciones.log", "Log de operaciones", false,
 			LOG_LEVEL_INFO);
 
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
 	instancia_id = 0;
+}
+
+void sigHandler_segfault(int signo) {
+	log_warning(logger, "uh la puta madre, seg fault.");
+	log_error(logger, strerror(errno));
+
+	close(listening_socket);
+	exit(-1);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(logger, "Tiraste un CTRL+C, macho, abortaste el proceso.");
+	log_error(logger, strerror(errno));
+
+	close(listening_socket);
+	exit(0);
 }
 
 void cargar_configuracion(char** argv) {
@@ -94,18 +116,17 @@ float dame_retardo(int retardo_int) {
 	return ret_val;
 }
 
-int manejar_cliente(int listening_socket, int socketCliente, package_int id) {
+int manejar_cliente(int server_socket, int socketCliente, package_int id) {
 
 	log_info(logger, "Esperando cliente...");
 
-	listen(listening_socket, BACKLOG);
+	listen(server_socket, BACKLOG);
 
 	log_trace(logger, "Esperando...");
 	struct sockaddr_in addr; // Esta estructura contendra los datos de la conexion del cliente. IP, puerto, etc.
 	socklen_t addrlen = sizeof(addr);
 
-	socketCliente = accept(listening_socket, (struct sockaddr *) &addr,
-			&addrlen);
+	socketCliente = accept(server_socket, (struct sockaddr *) &addr, &addrlen);
 
 	log_info(logger, "Cliente conectado.");
 
@@ -923,7 +944,10 @@ void levantar_instancia(char* name, int sockfd) {
 bool murio(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
+	loggear("menem");
+
 	while (puntero != NULL) {
+		loggear("Carlitos");
 		if (mismoString(name, puntero->instancia.nombre)) {
 			if (puntero->instancia.disponible) {
 				if (!ping(puntero->instancia)) {
@@ -941,9 +965,11 @@ bool murio(char* name, int sockfd) {
 				}
 			}
 
-			puntero = puntero->sgte;
+			loggear("asd");
+
 		}
 
+		puntero = puntero->sgte;
 	}
 
 	loggear("Esta instancia no se encontraba en el sistema");

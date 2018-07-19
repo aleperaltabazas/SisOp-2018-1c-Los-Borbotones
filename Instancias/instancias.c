@@ -200,10 +200,19 @@ void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
 
+	signal(SIGSEGV, sigHandler_segfault);
+
 	cargar_configuracion(argv);
 	setup_montaje();
-	init_dump_thread();
+	//init_dump_thread();
 	iniciar_semaforos();
+}
+
+void sigHandler_segfault(int signo) {
+	log_warning(logger, "uh la puta madre, seg fault.");
+	log_error(logger, strerror(errno));
+
+	exit(-1);
 }
 
 void iniciar_semaforos(void) {
@@ -213,6 +222,11 @@ void iniciar_semaforos(void) {
 void init_dump_thread(void) {
 	pthread_t dump_thread;
 	strcpy(dump_spot, "/home/alesaurio/dump_");
+	//strcpy(dump_spot, "/home/utnso/dump_");
+
+	//descomenten este y comenten el mio
+	//--Alesaurio-bot
+
 	strcat(dump_spot, NOMBRE);
 
 	pthread_create(&dump_thread, NULL, dump, (void*) dump_spot);
@@ -272,9 +286,6 @@ void* dump(void* buffer) {
 	crear_directorio(dump_path);
 	strcat(dump_path, "/");
 
-	char* valor_a_dumpear;
-	char* clave_a_dumpear;
-
 	while (1) {
 		sleep(DUMP);
 		loggear("Iniciando DUMP");
@@ -283,11 +294,15 @@ void* dump(void* buffer) {
 		nodo_auxiliar = entradas_asignadas.head;
 
 		while (nodo_auxiliar != NULL) {
-			valor_a_dumpear = leer_valor(nodo_auxiliar->una_entrada.pos_valor,
+			char* valor_a_dumpear = leer_valor(
+					nodo_auxiliar->una_entrada.pos_valor,
 					nodo_auxiliar->una_entrada.tamanio_valor);
 			free(auxiliar);
-			clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
-			log_debug(logger, "Persistiendo %s...", clave_a_dumpear);
+			char* clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
+			log_debug(logger, "Clave: %s", clave_a_dumpear);
+			log_debug(logger, "Valor: %s", valor_a_dumpear);
+
+			log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}

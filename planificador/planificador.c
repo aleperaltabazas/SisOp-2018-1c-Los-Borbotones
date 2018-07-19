@@ -688,7 +688,7 @@ void interpretarYEjecutarCodigo(int comando) {
 	case 5:
 		printf("Introduzca el ESI ID \n");
 		scanf("%i", &codigoSubsiguiente);
-		kill(codigoSubsiguiente);
+		kill_esi(codigoSubsiguiente);
 		break;
 	case 6:
 		printf("Introduzca el ESI ID \n");
@@ -961,7 +961,7 @@ void desbloquear(int codigo) {
 void listar(char* clave) { //Comunicarse con el coordi para que busque al ESI
 
 }
-void kill(int codigo) {
+void kill_esi(int codigo) {
 	codigo = (uint32_t) codigo;
 	ESI aMatar;
 	aMatar.id = codigo;
