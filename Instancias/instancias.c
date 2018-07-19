@@ -204,7 +204,7 @@ void iniciar(char** argv) {
 
 	cargar_configuracion(argv);
 	setup_montaje();
-	//init_dump_thread();
+	init_dump_thread();
 	iniciar_semaforos();
 }
 
@@ -221,13 +221,16 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump_");
-	//strcpy(dump_spot, "/home/utnso/dump_");
+	strcpy(dump_spot, "/home/alesaurio/dump/");
+
+	crear_directorio(dump_spot);
+	//strcpy(dump_spot, "/home/utnso/dump/");
 
 	//descomenten este y comenten el mio
 	//--Alesaurio-bot
 
 	strcat(dump_spot, NOMBRE);
+	strcat(dump_spot, "/");
 
 	pthread_create(&dump_thread, NULL, dump, (void*) dump_spot);
 	pthread_detach(dump_thread);
@@ -284,7 +287,6 @@ void cerrar_directorio(char* directorio) {
 void* dump(void* buffer) {
 	char* dump_path = (char*) buffer;
 	crear_directorio(dump_path);
-	strcat(dump_path, "/");
 
 	while (1) {
 		sleep(DUMP);
@@ -338,7 +340,6 @@ void crear_directorio(char* nombre) {
 		exit_gracefully(-1);
 	}
 
-	string_append(&nombre, "/");
 	log_info(logger, "Directorio %s creado con éxito.", nombre);
 }
 
