@@ -62,11 +62,24 @@ void establecer_conexiones(void) {
 	loggear("Conexiones realizadas.");
 }
 
+void swap_values(aviso_con_ID* aviso) {
+	uint32_t aviso_aux = aviso->aviso;
+	aviso->aviso = aviso->id;
+	aviso->id = aviso_aux;
+
+	log_debug(logger, "Nuevo aviso: %i", aviso->aviso);
+	log_debug(logger, "Nuevo ID: %i", aviso->id);
+}
+
 uint32_t recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
 	log_debug(logger, "Aviso: %i", aviso.aviso);
 	log_debug(logger, "ID: %i", aviso.id);
+
+	if (aviso.id == 1 && aviso.aviso > 1) {
+		swap_values(&aviso);
+	}
 
 	if (aviso.aviso == 0) {
 		clear(&parsed_ops);
