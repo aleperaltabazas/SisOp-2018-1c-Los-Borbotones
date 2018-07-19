@@ -65,7 +65,8 @@ void establecer_conexiones(void) {
 uint32_t recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
-	log_debug(logger, "%i", aviso.aviso);
+	log_debug(logger, "Aviso: %i", aviso.aviso);
+	log_debug(logger, "ID: %i", aviso.id);
 
 	if (aviso.aviso == 0) {
 		clear(&parsed_ops);

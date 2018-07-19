@@ -268,7 +268,8 @@ void identificar_cliente(package_int id, int socket_cliente) {
 	if (id.packed == 2) {
 		loggear(mensajeESI);
 
-		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
+		pthread_create(&hilo_ESI, NULL, atender_ESI,
+				(void *) (intptr_t) socket_cliente);
 
 		loggear(mensajeESILista);
 
@@ -285,7 +286,7 @@ void identificar_cliente(package_int id, int socket_cliente) {
 }
 
 void* atender_ESI(void* buffer) {
-	int socket_ESI = (int) buffer;
+	int socket_ESI = (intptr_t) buffer;
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
@@ -315,7 +316,7 @@ void* atender_ESI(void* buffer) {
 int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	aviso_con_ID aviso = recv_aviso_no_exit(socket_cliente);
 
-	log_trace(logger, "Mensaje recibidio del ESI numero: %i", id);
+	log_trace(logger, "Mensaje recibido del ESI numero: %i", id);
 
 	if (aviso.aviso == 0) {
 		log_info(logger,
@@ -327,8 +328,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		pthread_mutex_lock(&sem_new_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
 		if (!esta(new_ESIs, esi)) {
-			agregar_ESI(&new_ESIs, esi);
-			ESIs_size++;
+			return 0;
 		}
 
 		eliminar_ESI(&new_ESIs, esi);
@@ -524,17 +524,21 @@ void kill_ESI(ESI esi) {
 int asignar_ID(ESI esi) {
 	int socket_ESI = esi.socket;
 
+	aviso_con_ID aviso;
+	aviso.aviso = 1;
+
 	pthread_mutex_lock(&sem_ID);
-	aviso_id.id = ESI_id;
+	aviso.id = ESI_id;
 
 	ESI_id++;
-
-	enviar_aviso(socket_ESI, aviso_id);
 	pthread_mutex_unlock(&sem_ID);
 
-	log_debug(logger, "%i", aviso_id.id);
+	enviar_aviso(socket_ESI, aviso);
 
-	return (int) aviso_id.id;
+	log_debug(logger, "Aviso: %i", aviso.aviso);
+	log_debug(logger, "ID: %i", aviso.id);
+
+	return (int) aviso.id;
 
 }
 

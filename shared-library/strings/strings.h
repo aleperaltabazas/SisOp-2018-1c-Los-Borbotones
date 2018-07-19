@@ -8,6 +8,8 @@
 #ifndef STRINGS_H_
 #define STRINGS_H_
 
+#include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 
 bool mismoString(char* unString, char* OtroString);

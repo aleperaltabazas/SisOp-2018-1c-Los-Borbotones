@@ -152,20 +152,21 @@ void identificar_cliente(package_int id, int socket_cliente) {
 	if (id.packed == 1) {
 		log_info(logger, mensajePlanificador);
 		pthread_create(&hilo_planificador, NULL, atender_Planificador,
-				(void*) socket_cliente);
+				(void *) (intptr_t) socket_cliente);
 		pthread_detach(hilo_planificador);
 	}
 
 	else if (id.packed == 2) {
 		log_info(logger, mensajeESI);
-		pthread_create(&hilo_ESI, NULL, atender_ESI, (void*) socket_cliente);
+		pthread_create(&hilo_ESI, NULL, atender_ESI,
+				(void *) (intptr_t) socket_cliente);
 		pthread_detach(hilo_ESI);
 	}
 
 	else if (id.packed == 3) {
 		log_info(logger, mensajeInstancia);
 		pthread_create(&hilo_instancia, NULL, atender_instancia,
-				(void*) socket_cliente);
+				(void *) (intptr_t) socket_cliente);
 		pthread_detach(hilo_instancia);
 	}
 
@@ -178,7 +179,7 @@ void identificar_cliente(package_int id, int socket_cliente) {
 }
 
 void* atender_ESI(void* un_socket) {
-	int socket_cliente = (int) un_socket;
+	int socket_cliente = (intptr_t) un_socket;
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
@@ -495,15 +496,16 @@ int do_set(char* valor, char* clave) {
 	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
 			valor_size, tamanio_parametros_set);
 
-	enviar_orden_instancia(tamanio_parametros_set, (void*) instancia.sockfd,
-			11);
-	enviar_valores_set(tamanio_parametros_set, (void*) instancia.sockfd);
+	enviar_orden_instancia(tamanio_parametros_set,
+			(void*) (intptr_t) instancia.sockfd, 11);
+	enviar_valores_set(tamanio_parametros_set,
+			(void*) (intptr_t) instancia.sockfd);
 
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
 
-	enviar_orden_instancia(0, (void*) instancia.sockfd, 15);
+	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 15);
 
 	log_debug(logger, "Esperando confirmacion...");
 
@@ -671,7 +673,7 @@ int hacer_store(char* clave) {
 		return -1;
 	}
 
-	enviar_orden_instancia(0, (void*) sockfd, 12);
+	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 12);
 	sleep(1);
 
 	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
@@ -739,7 +741,7 @@ uint32_t get_clave_id(char* clave) {
 }
 
 void* atender_Planificador(void* un_socket) {
-	socket_planificador = (int) un_socket;
+	socket_planificador = (intptr_t) un_socket;
 
 	loggear("Hilo de planificador inicializado correctamente.");
 
@@ -906,7 +908,7 @@ void crear(char* clave) {
 
 void* atender_instancia(void* un_socket) {
 
-	int sockfd = (int) un_socket;
+	int sockfd = (intptr_t) un_socket;
 
 	loggear("Hilo de instancia inicializado correctamente.");
 
@@ -1047,7 +1049,7 @@ void revivir(char* name, int sockfd) {
 void enviar_claves(t_clave_list claves, int sockfd) {
 	t_clave_node* puntero = claves.head;
 
-	enviar_orden_instancia(0, (void*) sockfd, 50);
+	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 50);
 
 	while (puntero != NULL) {
 		int size = strlen(puntero->clave) + 1;
@@ -1155,7 +1157,8 @@ void log_op(operacion op) {
 void asignar_entradas(int sockfd) {
 	log_trace(logger, "Cant entradas: %d, Tamanio_entrada: %d",
 			CANTIDAD_ENTRADAS, TAMANIO_ENTRADAS);
-	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) sockfd, TAMANIO_ENTRADAS);
+	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) (intptr_t) sockfd,
+			TAMANIO_ENTRADAS);
 
 	log_debug(logger, "Esperando confirmacion...");
 
@@ -1182,8 +1185,8 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((int) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL)
-			< 0) {
+	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden,
+	MSG_NOSIGNAL) < 0) {
 		log_warning(logger, "Error en el envio de la orden: %s",
 				strerror(errno));
 		return;
@@ -1230,13 +1233,13 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
-		enviar_orden_instancia(0, (void*) nodo_aux->instancia.sockfd, 14);
+		enviar_orden_instancia(0, (void*)(intptr_t) nodo_aux->instancia.sockfd, 14);
 		nodo_aux = nodo_aux->sgte;
 	}
 }
 
 void send_orden_no_exit(int op_code, int sockfd) {
-	enviar_orden_instancia(0, (void*) sockfd, op_code);
+	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, op_code);
 
 	log_debug(logger, "Esperando confirmacion...");
 
@@ -1251,7 +1254,7 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
-	send((int) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+	send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
 
 	loggear("Parametros enviados!");
 

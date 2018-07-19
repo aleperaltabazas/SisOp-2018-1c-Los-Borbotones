@@ -33,10 +33,6 @@ int ESIs_size;
 
 int socket_coordinador;
 
-aviso_con_ID aviso_id = {
-		.aviso = 1
-};
-
 aviso_con_ID aviso_bloqueo = {
 		.aviso = 25
 };
