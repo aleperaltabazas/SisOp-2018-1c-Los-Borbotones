@@ -398,4 +398,26 @@ void bloqueo_inicial(void);
 	 * 		void
 	 */
 
+
+void startSigHandlers(void);
+	/*
+	 * Descripción: invoca signal() con los signal handlers necesarios para el proceso.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void sigHandler_sigint(int signo);
+	/*
+	 * Descripción: atrapa la señal SIGINT ante un CTRL+C, logea el último error y cierra el listening_socket.
+	 * Argumentos:
+	 * 		int signo
+	 */
+
+void sigHandler_segfault(int signo);
+	/*
+	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
+	 * Argumentos:
+	 * 		int signo
+	 */
+
 #endif /* PLANIFICADOR_H_ */

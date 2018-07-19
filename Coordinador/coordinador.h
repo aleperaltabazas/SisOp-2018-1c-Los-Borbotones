@@ -474,6 +474,13 @@ void send_OK(int sockfd);
 	 * 		int sockfd: socket por el cual establecer la comunicación.
 	 */
 
+void startSigHandlers(void);
+	/*
+	 * Descripción: invoca signal() con los signal handlers necesarios para el proceso.
+	 * Argumentos:
+	 * 		void
+	 */
+
 void sigHandler_sigint(int signo);
 	/*
 	 * Descripción: atrapa la señal SIGINT ante un CTRL+C, logea el último error y cierra el listening_socket.

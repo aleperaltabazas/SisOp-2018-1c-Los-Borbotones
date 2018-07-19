@@ -37,15 +37,17 @@ void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 	cargar_configuracion(argv);
 
-	signal(SIGINT, sigHandler_sigint);
-	signal(SIGSEGV, sigHandler_segfault);
-
 	log_operaciones = log_create("Operaciones.log", "Log de operaciones", false,
 			LOG_LEVEL_INFO);
 
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
 	instancia_id = 0;
+}
+
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+	signal(SIGSEGV, sigHandler_segfault);
 }
 
 void sigHandler_segfault(int signo) {
@@ -1233,7 +1235,8 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
-		enviar_orden_instancia(0, (void*)(intptr_t) nodo_aux->instancia.sockfd, 14);
+		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd,
+				14);
 		nodo_aux = nodo_aux->sgte;
 	}
 }

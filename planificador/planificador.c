@@ -6,6 +6,8 @@
 
 #include "planificador.h"
 
+int listening_socket;
+
 int main(int argc, char** argv) {
 	iniciar(argv);
 
@@ -16,7 +18,7 @@ int main(int argc, char** argv) {
 }
 
 void manejar_conexiones(void) {
-	int listening_socket = levantar_servidor(PUERTO_PLANIFICADOR, 0);
+	listening_socket = levantar_servidor(PUERTO_PLANIFICADOR, 0);
 	int socketCliente;
 
 	while (seguir_ejecucion) {
@@ -43,7 +45,28 @@ void iniciar(char** argv) {
 	cargar_configuracion(argv);
 	iniciar_semaforos();
 	iniciar_hilos();
+	startSigHandlers();
+}
 
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+	signal(SIGSEGV, sigHandler_segfault);
+}
+
+void sigHandler_segfault(int signo) {
+	log_warning(logger, "uh la puta madre, seg fault.");
+	log_error(logger, strerror(errno));
+
+	close(listening_socket);
+	exit(-1);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(logger, "Tiraste un CTRL+C, macho, abortaste el proceso.");
+	log_error(logger, strerror(errno));
+
+	close(listening_socket);
+	exit(0);
 }
 
 void iniciar_hilos(void) {
