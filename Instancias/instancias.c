@@ -85,14 +85,13 @@ int main(int argc, char** argv) {
 
 void revivir(int sockfd) {
 	int hay_mas_claves = 61;
-	while(hay_mas_claves == 61){
+	while (hay_mas_claves == 61) {
 		char * clave = recibir_clave(sockfd);
-		FILE * archivo_a_leer = open_file_lectura(clave);
+		FILE * archivo_a_leer = open_file(clave, "r", PUNTO_MONTAJE);
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
-		parametros_set unos_parametros = {
-				.valor = valor, .tamanio_valor = strlen(valor), .clave = clave, .tamanio_clave = strlen(clave)
-		};
+		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
+				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave) };
 		generar_entrada(unos_parametros);
 		free(linea_parseada);
 		hay_mas_claves = recibir_packed(sockfd).packed;
@@ -101,7 +100,7 @@ void revivir(int sockfd) {
 	leer_valores_almacenados();
 }
 
-char * recibir_clave(int sockfd){
+char * recibir_clave(int sockfd) {
 	package_int tamanio_clave = recibir_packed(sockfd);
 	char *buffer_clave = recibir_cadena(sockfd, tamanio_clave.packed);
 	log_trace(logger, "Clave recibida!: %s", buffer_clave);
@@ -109,7 +108,7 @@ char * recibir_clave(int sockfd){
 	return buffer_clave;
 }
 
-char * leer_valor_de_archivo(FILE * archivo_a_leer){
+char * leer_valor_de_archivo(FILE * archivo_a_leer) {
 	size_t len = 0;
 	ssize_t read;
 
@@ -117,7 +116,7 @@ char * leer_valor_de_archivo(FILE * archivo_a_leer){
 	linea_parseada = malloc(obtener_entradas_que_ocupa(read) * tamanio_entrada);
 	memcpy(linea_parseada, line, read);
 
-	if(line){
+	if (line) {
 		free(line);
 	}
 
@@ -125,7 +124,6 @@ char * leer_valor_de_archivo(FILE * archivo_a_leer){
 	log_warning(logger, "Linea parseada: %s, %i", linea_parseada, read);
 	return linea_parseada;
 }
-
 
 void send_name(int socket_coordinador) {
 	uint32_t size = (uint32_t) strlen(NOMBRE) + 1;
@@ -165,7 +163,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
 			posicion_de_entrada);
 
-	if(entrada_seleccionada == NULL){
+	if (entrada_seleccionada == NULL) {
 		log_warning(logger, "La clave para STORE no se encuentra disponible");
 		confirmar_resultado_de_operacion(666);
 		return;
@@ -190,7 +188,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	log_trace(logger, "%s", valor);
 
-	write_file(clave, valor);
+	write_file(clave, valor, PUNTO_MONTAJE);
 
 	free(valor);
 
@@ -206,12 +204,12 @@ void iniciar(char** argv) {
 	setup_montaje();
 }
 
-FILE* open_file(char* file_name) {
-	char* path = malloc(strlen(file_name) + strlen(PUNTO_MONTAJE) + 1);
-	strcpy(path, PUNTO_MONTAJE);
+FILE* open_file(char* file_name, char* mode, char* directory) {
+	char* path = malloc(strlen(file_name) + strlen(directory) + 1);
+	strcpy(path, directory);
 	strcat(path, file_name);
 
-	FILE* fd = fopen(path, "w");
+	FILE* fd = fopen(path, mode);
 
 	if (fd == NULL) {
 		log_error(logger, "Falló la apertura del archivo %s.", file_name);
@@ -220,36 +218,15 @@ FILE* open_file(char* file_name) {
 
 	log_info(logger, "Archivo abierto exitosamente");
 
-	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
+	log_trace(logger, "DIRECTORIO: %s PATH: %s", directory, path);
 
 	free(path);
 
 	return fd;
 }
 
-FILE* open_file_lectura(char* file_name) {
-	char* path = malloc(strlen(file_name) + strlen(PUNTO_MONTAJE) + 1);
-	strcpy(path, PUNTO_MONTAJE);
-	strcat(path, file_name);
-
-	FILE* fd = fopen(path, "r");
-
-	if (fd == NULL) {
-		log_error(logger, "Falló la apertura del archivo %s.", file_name);
-		exit(-1);
-	}
-
-	log_info(logger, "Archivo abierto exitosamente");
-
-	log_trace(logger, "PUNTO MONTAJE: %s PATH: %s", PUNTO_MONTAJE, path);
-
-	free(path);
-
-	return fd;
-}
-
-void write_file(char* file_name, char* text) {
-	FILE* fd = open_file(file_name);
+void write_file(char* file_name, char* text, char* directory) {
+	FILE* fd = open_file(file_name, "w", directory);
 
 	int res = fputs(text, fd);
 
@@ -264,23 +241,24 @@ void write_file(char* file_name, char* text) {
 	fclose(fd);
 }
 
-void dump(){
+void dump() {
 
-	char * valor_a_dumpear;
-	char * clave_a_dumpear;
+	char* valor_a_dumpear;
+	char* clave_a_dumpear;
 
-	while(1){
+	while (1) {
 		sleep(DUMP);
 		loggear("Iniciando DUMP");
 		nodo_auxiliar = entradas_asignadas.head;
 
-		while(nodo_auxiliar != NULL){
-			valor_a_dumpear = leer_valor(nodo_auxiliar->una_entrada.pos_valor, nodo_auxiliar->una_entrada.tamanio_valor);
+		while (nodo_auxiliar != NULL) {
+			valor_a_dumpear = leer_valor(nodo_auxiliar->una_entrada.pos_valor,
+					nodo_auxiliar->una_entrada.tamanio_valor);
 			free(auxiliar);
-			clave_a_dumpear = nodo_auxiliar -> una_entrada.clave;
+			clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
 			log_debug(logger, "Persistiendo %s...", clave_a_dumpear);
-			write_file(clave_a_dumpear, valor_a_dumpear);
-			nodo_auxiliar = nodo_auxiliar -> siguiente;
+			write_file(clave_a_dumpear, valor_a_dumpear, PUNTO_MONTAJE);
+			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
 	}
 }
@@ -537,7 +515,7 @@ void generar_entrada(parametros_set parametros) {
 		return;
 	}
 
-	if (puedo_almacenar_si_compacto(entradas_que_ocupa)){
+	if (puedo_almacenar_si_compacto(entradas_que_ocupa)) {
 		loggear("Puedo almacenar si compacto...");
 		compactacion();
 		generar_entrada(parametros);
@@ -554,16 +532,16 @@ void generar_entrada(parametros_set parametros) {
 	generar_entrada(parametros);
 }
 
-int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas){
-	int cantidad_entradas_libres = cantidad_entradas - obtener_cantidad_de_entradas_ocupadas();
+int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas) {
+	int cantidad_entradas_libres = cantidad_entradas
+			- obtener_cantidad_de_entradas_ocupadas();
 
-	if(cantidad_entradas_libres >= cantidad_entradas_solicitadas){
+	if (cantidad_entradas_libres >= cantidad_entradas_solicitadas) {
 		return 1;
 	}
 
 	return 0;
 }
-
 
 void eliminar_entrada_segun_algoritmo() {
 	switch (ALGORITMO_REEMPLAZO) {
@@ -1104,9 +1082,11 @@ char * leer_clave_valor(entradas_node * puntero) {
 	return auxiliar;
 }
 
-char * leer_valor(int posicion_entrada, int tamanio_valor){
+char * leer_valor(int posicion_entrada, int tamanio_valor) {
 	auxiliar = malloc(tamanio_valor + 1);
-	memcpy(auxiliar, almacenamiento_de_valores + posicion_entrada * tamanio_entrada, tamanio_valor);
+	memcpy(auxiliar,
+			almacenamiento_de_valores + posicion_entrada * tamanio_entrada,
+			tamanio_valor);
 	auxiliar[tamanio_valor] = '\0';
 	return auxiliar;
 }
@@ -1140,33 +1120,25 @@ void leer_valores_almacenados() {
 
 }
 
-void confirmar_resultado_de_operacion(int codigo_exito_operacion){
+void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 
-	if(codigo_exito_operacion == 100){
+	if (codigo_exito_operacion == 100) {
 		loggear("ENVIO DE PING");
-	}
-	else if(codigo_exito_operacion == 51){
+	} else if (codigo_exito_operacion == 51) {
 		loggear("SOLICITUD DE COMPACTACION ENVIADA");
-	}
-	else if(codigo_exito_operacion == 101){
+	} else if (codigo_exito_operacion == 101) {
 		loggear("SOLICITUD DE COMPACTACION ENVIADA");
-	}
-	else if(codigo_exito_operacion == 110){
+	} else if (codigo_exito_operacion == 110) {
 		loggear("ENTRADAS Y TAMANIO INICIADO CORRECTAMENTE");
-	}
-	else if(codigo_exito_operacion == 111){
+	} else if (codigo_exito_operacion == 111) {
 		loggear("CONFIRMO SET");
-	}
-	else if(codigo_exito_operacion == 112){
+	} else if (codigo_exito_operacion == 112) {
 		loggear("CONFIRMO STORE");
-	}
-	else if(codigo_exito_operacion == 115){
+	} else if (codigo_exito_operacion == 115) {
 		loggear("CONFIRMO LECTURA");
-	}
-	else if(codigo_exito_operacion == 140){
+	} else if (codigo_exito_operacion == 140) {
 		loggear("CONFIRMO NOMBRE ENVIADO");
-	}
-	else if(codigo_exito_operacion == 666){
+	} else if (codigo_exito_operacion == 666) {
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}
 
@@ -1174,7 +1146,6 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion){
 
 	enviar_packed(ping, socket_coordinador);
 }
-
 
 /*
  //Lleno con el valor ejemplo

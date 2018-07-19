@@ -105,19 +105,22 @@ void setup_montaje(void);
 	 * 		void
 	 */
 
-FILE* open_file(char* name);
+FILE* open_file(char* name, char* mode, char* directory);
 	/*
 	 * Descripción: devuelve un file descriptor del archivo creado con name en el punto de montaje.
 	 * Argumentos:
 	 * 		char* name: nombre del archivo.
+	 * 		char* mode: modo de apertura del archivo.
+	 * 		char* directory: directorio donde abrir el archivo.
 	 */
 
-void write_file(char* file_name, char* text);
+void write_file(char* file_name, char* text, char* directory);
 	/*
-	 * Descripción: llama a open_file() para abrir un archivo con file_name y le escribe text.
+	 * Descripción: llama a open_file() para abrir un archivo con file_name en directory y le escribe text.
 	 * Argumentos:
 	 * 		char* file_name: nombre del archivo.
 	 * 		char* valor: valor a escribir en el archivo.
+	 * 		char* directory: directorio donde guardar el archivo.
 	 */
 
 void send_name(int sockfd);
@@ -185,8 +188,6 @@ int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
 void dump();
 char * recibir_clave(int sockfd);
 char * leer_valor_de_archivo(FILE * archivo_a_leer);
-
-FILE* open_file_lectura(char* file_name);
 
 //Nodo para recorrer lista
 entradas_node * nodo_auxiliar = NULL;
