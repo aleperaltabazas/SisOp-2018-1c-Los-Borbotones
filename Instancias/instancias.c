@@ -20,6 +20,9 @@ int main(int argc, char** argv) {
 
 	inicializar(cantidad_entradas, tamanio_entrada);
 
+	cantidad_entradas = 8;
+	tamanio_entrada = 10;
+
 	//Para desconectarla habria que cambiar este valor simplemente
 	disponibilidad_de_conexion = 1;
 
@@ -221,8 +224,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -525,6 +528,8 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
 
+	desactualizar_entradas(puntero_entrada_a_actualizar->una_entrada.tamanio_valor, posicion_entrada_clave);
+
 	puntero_entrada_a_actualizar->una_entrada.tamanio_valor =
 			nuevo_tamanio_valor;
 
@@ -535,8 +540,6 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(nuevo_tamanio_valor);
 
-	//Tendria que desactualizar como estaba antes pero Adriano dijo que no habia problema con eso
-
 	actualizar_entradas(puntero_entrada_a_actualizar->una_entrada.pos_valor,
 			entradas_que_ocupa);
 
@@ -544,6 +547,15 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 			entradas_que_ocupa, parametros.valor);
 
 	confirmar_resultado_de_operacion(111);
+}
+
+void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave){
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
+	int i;
+
+	for(i = 0; i < entradas_que_ocupa; i++){
+		entradas_disponibles[posicion_entrada_clave + i] = 0;
+	}
 }
 
 void generar_entrada(parametros_set parametros) {
@@ -1168,6 +1180,11 @@ void leer_valores_almacenados() {
 	}
 
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
+
+	int i;
+		 for (i = 0; i < cantidad_entradas; i++) {
+		 log_trace(logger, "%i", entradas_disponibles[i]);
+	}
 
 	confirmar_resultado_de_operacion(115);
 

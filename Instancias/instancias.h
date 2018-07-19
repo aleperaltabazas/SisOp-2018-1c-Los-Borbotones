@@ -198,6 +198,7 @@ int obtener_primera_entrada_disponible();
 /*
  * Se obtiene la primer entrada libre que se utilizara como referencia para compactar
  */
+void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave);
 
 entradas_node * buscar_entrada_en_posicion(int posicion);
 int obtener_cantidad_de_entradas_ocupadas();
