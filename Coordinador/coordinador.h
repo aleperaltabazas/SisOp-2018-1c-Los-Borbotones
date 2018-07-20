@@ -537,6 +537,14 @@ int getParteEntera(double x);
 	 * 		double x
 	 */
 
+bool leCorresponde(Instancia instancia, char caracter);
+	/*
+	 * Descripción: indica si caracter está entre el valor máximo y mínimo de la instancia.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 * 		char caracter
+	 */
+
 int do_set(char* valor, char* clave);
 
 Instancia getInstanciaSet(char* clave);

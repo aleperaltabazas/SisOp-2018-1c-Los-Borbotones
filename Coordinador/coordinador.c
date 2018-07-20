@@ -602,7 +602,34 @@ Instancia leastSpaceUsed(void) {
 }
 
 Instancia keyExplicit(char* clave) {
+	char firstChar = tolower(clave[0]);
+
+	if (!isalnum(firstChar)) {
+		return inst_error;
+	}
+
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (leCorresponde(puntero->instancia, firstChar)) {
+			if (!ping(puntero->instancia)) {
+				desconectar(puntero->instancia);
+				redistribuir_claves();
+
+				return inst_error;
+			}
+
+			return puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
 	return inst_error;
+}
+
+bool leCorresponde(Instancia instancia, char caracter) {
+	return instancia.keyMin <= caracter && instancia.keyMax >= caracter;
 }
 
 int get_packed(char* clave, uint32_t id) {

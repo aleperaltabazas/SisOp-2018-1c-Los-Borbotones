@@ -1,5 +1,11 @@
 GET futbol:messi
 SET futbol:messi valor
+GET pokemon:treecko
+SET pokemon:treecko starter
+GET pokemon:mudkip
+SET pokemon:mudkip starter
+GET pokemon:torchic
+SET pokemon:torchic starter
 GET futbol:kun
 SET futbol:kun muchomuchovalor
 GET futbol:pipa
@@ -16,3 +22,6 @@ STORE futbol:pipa
 STORE futbol:willy
 STORE futbol:sampa
 STORE futbol:masche
+STORE pokemon:treecko
+STORE pokemon:mudkip
+STORE pokemon:torchic
