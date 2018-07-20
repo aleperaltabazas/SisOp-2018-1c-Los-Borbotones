@@ -251,7 +251,11 @@ void liberar_claves(uint32_t id) {
 			}
 		} else {
 			puntero = puntero->sgte;
-			aux = puntero->sgte;
+			if (puntero != NULL) {
+				aux = puntero->sgte;
+			} else {
+				aux = NULL;
+			}
 		}
 	}
 }

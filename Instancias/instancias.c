@@ -113,7 +113,8 @@ char * leer_valor_de_archivo(FILE * archivo_a_leer) {
 	ssize_t read;
 
 	read = getline(&line, &len, archivo_a_leer);
-	linea_parseada = malloc(obtener_entradas_que_ocupa(read) * tamanio_entrada + 1);
+	linea_parseada = malloc(
+			obtener_entradas_que_ocupa(read) * tamanio_entrada + 1);
 	memcpy(linea_parseada, line, read);
 
 	if (line) {
@@ -221,8 +222,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	//strcpy(dump_spot, "/home/alesaurio/dump/");
-	strcpy(dump_spot, "/home/utnso/dump/");
+	strcpy(dump_spot, "/home/alesaurio/dump/");
+	//strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -306,7 +307,7 @@ void* dump(void* buffer) {
 
 			log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
-			if(auxiliar){
+			if (auxiliar) {
 				free(auxiliar);
 			}
 			nodo_auxiliar = nodo_auxiliar->siguiente;
@@ -527,7 +528,9 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 
 	uint32_t nuevo_tamanio_valor = parametros.tamanio_valor;
 
-	desactualizar_entradas(puntero_entrada_a_actualizar->una_entrada.tamanio_valor, posicion_entrada_clave);
+	desactualizar_entradas(
+			puntero_entrada_a_actualizar->una_entrada.tamanio_valor,
+			posicion_entrada_clave);
 
 	puntero_entrada_a_actualizar->una_entrada.tamanio_valor =
 			nuevo_tamanio_valor;
@@ -548,11 +551,11 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 	confirmar_resultado_de_operacion(111);
 }
 
-void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave){
+void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave) {
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(tamanio_valor);
 	int i;
 
-	for(i = 0; i < entradas_que_ocupa; i++){
+	for (i = 0; i < entradas_que_ocupa; i++) {
 		entradas_disponibles[posicion_entrada_clave + i] = 0;
 	}
 }
@@ -1181,8 +1184,8 @@ void leer_valores_almacenados() {
 	log_trace(logger, "PUNTERO: %i", puntero_entrada);
 
 	int i;
-		 for (i = 0; i < cantidad_entradas; i++) {
-		 log_trace(logger, "%i", entradas_disponibles[i]);
+	for (i = 0; i < cantidad_entradas; i++) {
+		log_trace(logger, "%i", entradas_disponibles[i]);
 	}
 
 	confirmar_resultado_de_operacion(115);
