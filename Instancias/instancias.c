@@ -90,10 +90,10 @@ void revivir(int sockfd) {
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
-		free(linea_parseada);
 		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
 				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave) };
 		generar_entrada(unos_parametros);
+		free(linea_parseada);
 		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
 	loggear("Resurreccion exitosa");
@@ -221,8 +221,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	//strcpy(dump_spot, "/home/alesaurio/dump/");
-	strcpy(dump_spot, "/home/utnso/dump/");
+	strcpy(dump_spot, "/home/alesaurio/dump/");
+	//strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
