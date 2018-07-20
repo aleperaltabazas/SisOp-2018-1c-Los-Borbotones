@@ -9,28 +9,8 @@
 
 int listening_socket;
 
-void testKeyExplicit(void) {
-	Instancia instancia1;
-	Instancia instancia2;
-	Instancia instancia3;
-
-	asignarKeyMinMax(&instancia1, 0, 3);
-	asignarKeyMinMax(&instancia2, 1, 3);
-	asignarKeyMinMax(&instancia3, 2, 3);
-
-	log_debug(logger, "Instancia 1 min: %c", instancia1.keyMin);
-	log_debug(logger, "Instancia 1 max: %c", instancia1.keyMax);
-	log_debug(logger, "Instancia 2 min: %c", instancia2.keyMin);
-	log_debug(logger, "Instancia 2 max: %c", instancia2.keyMax);
-	log_debug(logger, "Instancia 3 min: %c", instancia3.keyMin);
-	log_debug(logger, "Instancia 3 max: %c", instancia3.keyMax);
-
-	exit(0);
-}
-
 int main(int argc, char** argv) {
 	iniciar(argv);
-	testKeyExplicit();
 
 	coordinar();
 
@@ -1032,6 +1012,11 @@ void asignarKeyMinMax(Instancia* instancia, int posicion,
 		instancia->keyMax = abecedario[offset + asignaciones - 1];
 		log_debug(logger, "Letra máxima: %c",
 				abecedario[offset + asignaciones - 1]);
+	}
+
+	if (posicion == totalDeDisponibles - 1) {
+		instancia->keyMax = 'z';
+		log_debug(logger, "Letra máxima: z");
 	}
 }
 
