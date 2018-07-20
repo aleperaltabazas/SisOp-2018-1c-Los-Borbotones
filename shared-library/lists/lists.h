@@ -135,12 +135,19 @@ void eliminar_clave(t_clave_list* lista, char* clave);
 	 * 		char* clave: la clave a eliminar.
 	 */
 
-
 char* headClaves(t_clave_list lista);
 	/*
 	 * Descripción: retorna la primer clave de una lista.
 	 * Argumentos:
 	 * 		t_clave_list lista: lista de la cual tomar el elemento.
+	 */
+
+int contiene_la_clave(t_clave_list * lista, char * clave);
+	/*
+	 * Descripción: devuelve si una lista contiene la clave.
+	 * Argumentos:
+	 * 		t_clave_list* lista: la lista de donde buscar.
+	 * 		char* clave: la clave a buscar.
 	 */
 
 /*
