@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <commons/log.h>
 #include "../structs/estructuras.h"
 #include "../strings/strings.h"
 
@@ -241,6 +242,8 @@ uint32_t headBlockedID(t_blocked_list lista);
 	 * Argumentos:
 	 * 		t_blocked_list lista: la lista en cuestión.
 	 */
+
+t_log * logger;
 
 /*
  * ==============================

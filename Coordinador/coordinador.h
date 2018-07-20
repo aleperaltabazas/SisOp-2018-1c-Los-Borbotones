@@ -564,5 +564,6 @@ void esperar_confirmacion_de_exito(int un_socket);
 void enviar_instancias_a_compactar();
 
 int instanciasDisponibles(void);
+void mostrar_listas();
 
 #endif /* COORDINADOR_H_ */

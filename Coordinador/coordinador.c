@@ -241,7 +241,6 @@ void liberar_claves(uint32_t id) {
 	while (puntero != NULL) {
 		log_debug(logger, "Blocker: %i", puntero->block_id);
 		log_debug(logger, "ESI: %i", id);
-		sleep(1);
 		if (puntero->block_id == id) {
 			log_debug(logger, "Bloqueando...");
 			desbloquear(puntero->clave);
@@ -331,8 +330,6 @@ int get(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "%i", response.packed);
 
-	sleep(2);
-
 	send_packed_no_exit(response, socket_cliente);
 
 	return 20;
@@ -392,8 +389,6 @@ int set(int socket_cliente, uint32_t id) {
 	}
 
 	log_debug(logger, "%i", response.packed);
-
-	sleep(2);
 
 	send_packed_no_exit(response, socket_cliente);
 
@@ -670,6 +665,22 @@ int get_packed(char* clave, uint32_t id) {
 	}
 }
 
+void mostrar_listas(){
+	t_clave_node * puntero_bloqueadas = claves_bloqueadas.head;
+	loggear("Bloqueadas:");
+	while(puntero_bloqueadas != NULL){
+		log_trace(logger, "Clave: %s", puntero_bloqueadas->clave);
+		puntero_bloqueadas = puntero_bloqueadas->sgte;
+	}
+	t_clave_node * puntero_disponibles = claves_disponibles.head;
+	loggear("Disponibles:");
+	while(puntero_disponibles != NULL){
+		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
+		puntero_disponibles = puntero_disponibles->sgte;
+	}
+	sleep(5);
+}
+
 bool tieneLaClave(Instancia unaInstancia, char* clave) {
 	t_clave_list claves = unaInstancia.claves;
 	t_clave_node* puntero = claves.head;
@@ -863,6 +874,7 @@ void desbloquear(char* clave) {
 	}
 
 	else if (existe(clave) && esta_bloqueada(clave)) {
+		mostrar_listas();
 		eliminar_clave(&claves_bloqueadas, clave);
 		agregar_clave(&claves_disponibles, clave, -1);
 

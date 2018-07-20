@@ -193,22 +193,59 @@ int contiene_la_clave(t_clave_list * lista, char * clave) {
 }
 
 void eliminar_clave(t_clave_list* lista, char* clave) {
-	if (lista->head != NULL) {
+	/*if (lista->head != NULL) {
 		char* head = headClaves(*lista);
 		if (strcmp(clave, head) == 0) {
 			t_clave_node* eliminado = lista->head;
 			lista->head = lista->head->sgte;
+			log_warning(logger, "A Puntero: %s, clave: %s", eliminado->clave, clave);
 			destruir_nodo_clave(eliminado);
 		} else {
 			t_clave_node* puntero = lista->head;
 
-			while (!strcmp(puntero->clave, clave) != 0) {
+			while (!mismoString(puntero->clave, clave)) {
 				puntero = puntero->sgte;
 			}
 
 			t_clave_node* eliminado = puntero->sgte;
 			puntero->sgte = eliminado->sgte;
+			log_warning(logger, "B: Puntero: %s, clave: %s", eliminado->clave, clave);
 			destruir_nodo_clave(eliminado);
+		}
+	}*/
+
+	if (lista->head != NULL) {
+
+		char* head = headClaves(*lista);
+
+		if (mismoString(clave, head)) {
+			t_clave_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			log_warning(logger, "A: Puntero: %s, clave: %s", eliminado->clave, clave);
+			destruir_nodo_clave(eliminado);
+		}
+
+		else {
+
+			t_clave_node* puntero = lista->head;
+			t_clave_node * aux;
+
+			while (!mismoString(puntero->clave, clave)) {
+				aux = puntero;
+				puntero = puntero->sgte;
+			}
+
+			if (puntero->sgte != NULL) {
+				aux->sgte = puntero->sgte;
+				log_warning(logger, "B: Puntero: %s, clave: %s", puntero->clave, clave);
+				destruir_nodo_clave(puntero);
+			}
+
+			else {
+				aux->sgte = NULL;
+				log_warning(logger, "C: Puntero: %s, clave: %s", puntero->clave, clave);
+				destruir_nodo_clave(puntero);
+			}
 		}
 	}
 }
