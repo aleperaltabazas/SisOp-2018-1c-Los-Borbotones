@@ -25,6 +25,8 @@ int seguir_ejecucion = 1;
 
 int socket_planificador;
 
+char abecedario[] = "abcdefghijklmnopqrstuvwxyz";
+
 package_int bloqueo_ok = {
 		.packed = 26
 };
@@ -493,6 +495,46 @@ void sigHandler_segfault(int signo);
 	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
 	 * Argumentos:
 	 * 		int signo
+	 */
+
+void redistribuir_claves(void);
+	/*
+	 * Descripción: en caso de usar el algoritmo Key Explicit, redistribuye las claves que toma cada
+	 * 		instancia, en base al total de instancias disponibles.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void asignarKeyMinMax(Instancia* instancia, int posicion, int totalDeDisponibles);
+	/*
+	 * Descripción: asigna las claves máximas y mínimas correspondientes a la posición respecto al total
+	 * 		de instancias disponibles.
+	 * Argumentos:
+	 * 		Instancia* instancia: a quien asignar los valores.
+	 * 		int posicion: número de instancia.
+	 * 		int totalDeDisponibles: número total de instancias disponibles en el sistema.
+	 */
+
+int redondearDivision(double x, double y);
+	/*
+	 * Descripción: devuelve el redondeo de x/y.
+	 * Argumentos:
+	 * 		double x
+	 * 		double y
+	 */
+
+double getParteFraccional(double x);
+	/*
+	 * Descripción: devuelve la parte fraccional de un número.
+	 * Argumentos:
+	 * 		double x
+	 */
+
+int getParteEntera(double x);
+	/*
+	 * Descripción: devuelve la parte entera de un número.
+	 * Argumentos:
+	 * 		double x
 	 */
 
 int do_set(char* valor, char* clave);

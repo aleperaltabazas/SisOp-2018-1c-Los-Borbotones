@@ -9,8 +9,28 @@
 
 int listening_socket;
 
+void testKeyExplicit(void) {
+	Instancia instancia1;
+	Instancia instancia2;
+	Instancia instancia3;
+
+	asignarKeyMinMax(&instancia1, 0, 3);
+	asignarKeyMinMax(&instancia2, 1, 3);
+	asignarKeyMinMax(&instancia3, 2, 3);
+
+	log_debug(logger, "Instancia 1 min: %c", instancia1.keyMin);
+	log_debug(logger, "Instancia 1 max: %c", instancia1.keyMax);
+	log_debug(logger, "Instancia 2 min: %c", instancia2.keyMin);
+	log_debug(logger, "Instancia 2 max: %c", instancia2.keyMax);
+	log_debug(logger, "Instancia 3 min: %c", instancia3.keyMin);
+	log_debug(logger, "Instancia 3 max: %c", instancia3.keyMax);
+
+	exit(0);
+}
+
 int main(int argc, char** argv) {
 	iniciar(argv);
+	testKeyExplicit();
 
 	coordinar();
 
@@ -943,6 +963,76 @@ void levantar_instancia(char* name, int sockfd) {
 
 	loggear("Instancia agregada correctamente");
 	agregar_instancia(&instancias, instancia);
+
+	redistribuir_claves();
+
+}
+
+void redistribuir_claves(void) {
+	if (ALGORITMO_DISTRIBUCION == KE) {
+		int disponibles = instanciasDisponibles();
+
+		int contador = 0;
+
+		t_instancia_node* puntero = instancias.head;
+
+		while (puntero != NULL) {
+			if (puntero->instancia.disponible) {
+				asignarKeyMinMax(&(puntero->instancia), contador, disponibles);
+
+				contador++;
+			}
+
+			puntero = puntero->sgte;
+		}
+
+	}
+}
+
+int getParteEntera(double x) {
+	return (int) x;
+}
+
+double getParteFraccional(double x) {
+	return x - getParteEntera(x);
+}
+
+int redondearDivision(double x, double y) {
+	double division = x / y;
+	int division_as_int = getParteEntera(division);
+
+	if (getParteFraccional(division) >= 0.5) {
+		return division_as_int + 1;
+	} else {
+		return division_as_int;
+	}
+}
+
+void asignarKeyMinMax(Instancia* instancia, int posicion,
+		int totalDeDisponibles) {
+
+	int cantidadDeLetras = strlen(abecedario);
+	int asignaciones = redondearDivision((double) cantidadDeLetras,
+			(double) totalDeDisponibles);
+
+	log_debug(logger, "Cantidad de letras: %i", cantidadDeLetras);
+	log_debug(logger, "Número de asignaciones: %i", asignaciones);
+
+	int offset = posicion * asignaciones;
+
+	log_debug(logger, "Offset: %i", offset);
+
+	instancia->keyMin = abecedario[offset];
+	log_debug(logger, "Letra mínima: %c", abecedario[offset]);
+
+	if (offset + asignaciones >= cantidadDeLetras) {
+		instancia->keyMax = 'z';
+		log_debug(logger, "Letra máxima: z");
+	} else {
+		instancia->keyMax = abecedario[offset + asignaciones - 1];
+		log_debug(logger, "Letra máxima: %c",
+				abecedario[offset + asignaciones - 1]);
+	}
 }
 
 bool murio(char* name, int sockfd) {

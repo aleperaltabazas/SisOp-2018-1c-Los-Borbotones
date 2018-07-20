@@ -165,6 +165,8 @@ typedef struct Instancia {
 	int id;
 	bool disponible;
 	char* nombre;
+	char keyMin;
+	char keyMax;
 	t_clave_list claves;
 } Instancia;
 
