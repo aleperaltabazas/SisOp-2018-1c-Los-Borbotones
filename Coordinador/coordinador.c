@@ -539,6 +539,10 @@ int do_set(char* valor, char* clave) {
 
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
+	package_int paquete;
+	paquete.packed = recv_packed_no_exit(instancia.sockfd).packed;
+	actualizarEntradas(instancia, paquete.packed);
+
 	return 1;
 }
 
@@ -647,7 +651,20 @@ Instancia equitativeLoad(void) {
 }
 
 Instancia leastSpaceUsed(void) {
-	return inst_error;
+	t_instancia_node * puntero;
+	t_instancia_node * aux = malloc(sizeof(t_instancia_node *));
+	puntero = instancias.head;
+	aux->instancia.espacio_usado = puntero->instancia.espacio_usado;
+	aux->instancia.sockfd = puntero->instancia.sockfd;
+	while(puntero != NULL){
+		if(puntero->instancia.espacio_usado << aux->instancia.espacio_usado){
+			aux->instancia.espacio_usado = puntero->instancia.espacio_usado;
+			strcpy(aux->instancia.nombre, puntero->instancia.nombre);
+		}
+
+		puntero = puntero->sgte;
+	}
+	return aux->instancia;
 }
 
 Instancia keyExplicit(char* clave) {
@@ -884,6 +901,9 @@ void* atender_Planificador(void* un_socket) {
 
 		else if (aviso_plani.aviso == 27) {
 			desbloquear_clave(socket_planificador);
+		}
+		else if (aviso_plani.aviso == 62){
+			comunicarDeadlock(socket_planificador);
 		}
 
 	}
@@ -1730,3 +1750,138 @@ int instanciasDisponibles() {
  }
 
  */
+char * darLosDeadlock(void){
+	return pasarACadena(estanEnDL(tienenAlgoRetenido(blocked_ESIs)));
+}
+t_blocked_list tienenAlgoRetenido (t_blocked_list lista){
+	t_blocked_node* puntero = blocked_ESIs.head;
+	t_blocked_list retenientes;
+
+	while(puntero != NULL){
+		if(tieneAlgoRetenido(puntero->id)){
+			blocked newBlocked = {
+				.id = puntero->id,
+				.clave = puntero->clave
+			};
+
+			agregar_blocked(&retenientes, newBlocked);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return retenientes;
+}
+bool tieneAlgoRetenido(uint32_t id){
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL){
+		if(puntero->block_id == id) return true;
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+t_blocked_list estanEnDL (t_blocked_list lista){
+	t_blocked_node * puntero = lista.head;
+	t_blocked_list * deadlock = NULL;
+
+	while(puntero != NULL){
+		if(puedeLlegarA(puntero)){
+			blocked newBlocked = {
+							.id = puntero->id,
+							.clave = puntero->clave
+						};
+			agregar_blocked(deadlock, newBlocked);
+
+		}
+
+		puntero = puntero->sgte;
+		}
+
+	return * deadlock;
+}
+
+bool puedeLlegarA (t_blocked_node * puntero){
+	t_clave_node * aux;
+	t_blocked_node * aux2 = NULL;
+	aux = duenioDe(puntero->clave);
+
+	if (listaAuxiliar.head->id == aux->block_id){
+		liberar(&listaAuxiliar);
+		return true;
+	}
+	else {
+		if(!estaEn(listaAuxiliar, puntero->id)){
+			aux2->id = aux->block_id;
+			strcpy(aux2->clave, aux->clave);
+			agregar(listaAuxiliar, *aux2);
+			puedeLlegarA(aux2);
+		}
+	}
+	liberar(&listaAuxiliar);
+	return false;
+}
+t_clave_node * duenioDe (char * claveBuscada){
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while(puntero != NULL){
+		if (mismoString(puntero -> clave, claveBuscada)){
+			return puntero;
+		}
+		puntero = puntero->sgte;
+	}
+	return NULL;
+}
+void liberar(t_blocked_list * lista){
+	while(lista->head != NULL){
+		eliminar_blockeados(lista);
+	}
+}
+
+bool estaEn(t_blocked_list lista, uint32_t id){
+	t_blocked_node * puntero = lista.head;
+	while(puntero != NULL){
+		if (puntero->id == id) return true;
+		puntero = puntero->sgte;
+	}
+	return false;
+}
+void agregar(t_blocked_list lista, t_blocked_node nodo){
+	t_blocked_node * puntero = lista.head;
+	while(puntero != NULL){
+		puntero = puntero->sgte;
+	}
+	puntero->id = nodo.id;
+	strcpy (puntero->clave, nodo.clave);
+	puntero->sgte = NULL;
+}
+char * pasarACadena(t_blocked_list lista){
+	t_blocked_node * puntero = lista.head;
+	char * cadena = malloc(sizeof(char*));
+	char stringAux [20];
+	int i;
+	while (puntero != NULL){
+		i = (int) puntero->id;
+		strcpy(stringAux, string_itoa(i));
+		strcat(cadena, stringAux);
+		puntero = puntero -> sgte;
+	}
+	return cadena;
+}
+
+void comunicarDeadlock(int socket){
+	char * cadena = malloc(sizeof(char*));
+	int i=0;
+	package_int paquete;
+	strcpy(cadena, darLosDeadlock());
+	while(cadena[i] != '\0'){
+		i++;
+	}
+	paquete.packed = (uint32_t) i;
+	send_package_int(paquete, socket_planificador);
+	enviar_cadena(cadena, socket_planificador);
+}
+void actualizarEntradas(Instancia instancia, uint32_t cantidad){
+	instancia.espacio_usado = instancia.espacio_usado + cantidad;
+}

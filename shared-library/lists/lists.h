@@ -151,6 +151,8 @@ int contiene_la_clave(t_clave_list * lista, char * clave);
 	 * 		char* clave: la clave a buscar.
 	 */
 
+void eliminar_blockeados(t_blocked_list * lista);
+
 /*
  * ==============================
  * =====       PARSED       =====
