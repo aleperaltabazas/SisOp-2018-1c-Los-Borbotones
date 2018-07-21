@@ -426,6 +426,15 @@ int store(int socket_cliente, uint32_t id) {
 			return -5;
 		}
 
+		if (status == 5) {
+			abortar_ESI(socket_cliente);
+		}
+
+		if (status == -7) {
+			abortar_ESI(socket_cliente);
+			//desconectar instancia?
+		}
+
 		if (!emptyBlocked(&blocked_ESIs)) {
 			aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
 					blocked_ESIs) };
@@ -787,7 +796,15 @@ int hacer_store(char* clave) {
 
 	log_debug(logger, "Esperando confirmacion...");
 
-	esperar_confirmacion_de_exito((int) sockfd);
+	int res = esperar_confirmacion_de_exito((int) sockfd);
+
+	if(res == -5){
+		return -5;
+	}
+
+	if(res == -7){
+		return -7;
+	}
 
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
@@ -1124,10 +1141,7 @@ void asignarKeyMinMax(Instancia* instancia, int posicion,
 bool murio(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
-	loggear("menem");
-
 	while (puntero != NULL) {
-		loggear("Carlitos");
 		if (mismoString(name, puntero->instancia.nombre)) {
 			if (puntero->instancia.disponible) {
 				if (!ping(puntero->instancia)) {
@@ -1144,8 +1158,6 @@ bool murio(char* name, int sockfd) {
 					return false;
 				}
 			}
-
-			loggear("asd");
 
 		}
 
@@ -1375,8 +1387,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden,
-	MSG_NOSIGNAL) < 0) {
+	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL) < 0) {
 		log_warning(logger, "Error en el envio de la orden: %s",
 				strerror(errno));
 		return;
@@ -1388,34 +1399,42 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 }
 
-void esperar_confirmacion_de_exito(int un_socket) {
+int esperar_confirmacion_de_exito(int un_socket) {
 
 	package_int confirmacion = recv_packed_no_exit(un_socket);
 
 	if (confirmacion.packed == 100) {
 		loggear("Comprobacion de PING finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 101) {
 		loggear("Pedido de compactacion recibido, mandando a compactar...");
 		enviar_instancias_a_compactar();
 		esperar_confirmacion_de_exito(un_socket);
+		return 0;
 	} else if (confirmacion.packed == 110) {
 		loggear("Operacion Inicial finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 111) {
 		loggear("Operacion SET finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 112) {
 		loggear("Operacion STORE finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 115) {
 		loggear("Operacion Lectura finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 140) {
 		loggear("Nombre asignado con exito");
+		return 0;
 	} else if (confirmacion.packed == 666) {
 		log_error(logger, "Tengo que abortar el ESI");
-		//magicamente matar el ESI
+		return -5;
 	} else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
-		//desconectar instancia
-		//magicamente matar al ESI
+		return -7;
 	}
+
+	return -10;
 }
 
 void enviar_instancias_a_compactar() {
@@ -1423,7 +1442,9 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
+		pthread_mutex_lock(&sem_socket_operaciones_coordi);
 		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd, 14);
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 		nodo_aux = nodo_aux->sgte;
 	}
 }
