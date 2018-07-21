@@ -890,7 +890,6 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 	pthread_mutex_lock(&sem_socket_coordi);
 
 	enviar_packed(size_package, server_socket);
-	sleep(2);
 	enviar_cadena(clave, server_socket);
 
 	pthread_mutex_lock(&sem_socket_coordi);
@@ -1173,7 +1172,11 @@ void deadlock(void) {
 	char * ids;
 	paquete.packed = 62;
 	enviar_packed(paquete, socket_coordinador);
+<<<<<<< HEAD
 	paquete.packed = recibir_packed(socket_coordinador).packed;
+=======
+	paquete.packed = recibir_packed (socket_coordinador).packed;
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 	strcpy(ids, recibir_cadena(socket_coordinador, paquete.packed));
 	printf("%s", ids);
 }

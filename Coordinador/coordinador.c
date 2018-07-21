@@ -43,6 +43,9 @@ void iniciar(char** argv) {
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
 	instancia_id = 0;
+
+	pthread_mutex_init(&sem_socket_operaciones_coordi, NULL);
+
 }
 
 void startSigHandlers(void) {
@@ -446,8 +449,6 @@ int store(int socket_cliente, uint32_t id) {
 
 	}
 
-	sleep(2);
-
 	log_debug(logger, "%i", response.packed);
 
 	return 20;
@@ -581,7 +582,13 @@ Instancia elQueLaTiene(char* clave) {
 
 	while (puntero != NULL) {
 		if (tieneLaClave(puntero->instancia, clave)) {
+<<<<<<< HEAD
 			return puntero->instancia;
+=======
+			t_instancia_node puntero_de_la_entrada = *puntero;
+			Instancia instancia_que_la_tiene = puntero_de_la_entrada.instancia;
+			return instancia_que_la_tiene;
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 		}
 
 		puntero = puntero->sgte;
@@ -590,11 +597,20 @@ Instancia elQueLaTiene(char* clave) {
 	return inst_error;
 }
 
+<<<<<<< HEAD
 bool estaAsignada(char* clave) {
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero != NULL) {
 		if (tieneLaClave(puntero->instancia, clave)) {
+=======
+bool estaAsignada(char * clave){
+	t_instancia_node* puntero = instancias.head;
+	while (puntero != NULL) {
+
+		Instancia una_instancia = puntero->instancia;
+		if(tieneLaClave(una_instancia, clave)){
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 			return true;
 		}
 
@@ -608,7 +624,12 @@ Instancia getInstanciaSet(char* clave) {
 	Instancia ret_inst;
 
 	if (estaAsignada(clave)) {
+<<<<<<< HEAD
 		return elQueLaTiene(clave);
+=======
+		ret_inst = elQueLaTiene(clave);
+		return ret_inst;
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 	}
 
 	switch (ALGORITMO_DISTRIBUCION) {
@@ -663,7 +684,24 @@ Instancia equitativeLoad(void) {
 }
 
 Instancia leastSpaceUsed(void) {
+<<<<<<< HEAD
 	return menorEspacio(instancias);
+=======
+	t_instancia_node * puntero;
+	t_instancia_node * aux = malloc(sizeof(t_instancia_node *));
+	puntero = instancias.head;
+	aux->instancia.espacio_usado = puntero->instancia.espacio_usado;
+	aux->instancia.sockfd = puntero->instancia.sockfd;
+	while(puntero != NULL){
+		if(puntero->instancia.espacio_usado << aux->instancia.espacio_usado){
+			aux->instancia.espacio_usado = puntero->instancia.espacio_usado;
+			strcpy(aux->instancia.nombre, puntero->instancia.nombre);
+		}
+
+		puntero = puntero->sgte;
+	}
+	return aux->instancia;
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 }
 
 Instancia keyExplicit(char* clave) {
@@ -744,7 +782,10 @@ void mostrar_listas() {
 		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
 		puntero_disponibles = puntero_disponibles->sgte;
 	}
+<<<<<<< HEAD
 	sleep(1);
+=======
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 }
 
 bool tieneLaClave(Instancia unaInstancia, char* clave) {
@@ -794,8 +835,12 @@ int hacer_store(char* clave) {
 		return -1;
 	}
 
+<<<<<<< HEAD
 	log_trace(logger, "La instancia %s tiene la clave %s", instancia.nombre,
 			clave);
+=======
+	log_trace(logger, "La instancia %s tiene la clave %s", instancia.nombre, clave);
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 
 	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 
@@ -816,11 +861,19 @@ int hacer_store(char* clave) {
 
 	int res = esperar_confirmacion_de_exito((int) sockfd);
 
+<<<<<<< HEAD
 	if (res == -5) {
 		return -5;
 	}
 
 	if (res == -7) {
+=======
+	if(res == -5){
+		return -5;
+	}
+
+	if(res == -7){
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 		return -7;
 	}
 
@@ -898,6 +951,9 @@ void* atender_Planificador(void* un_socket) {
 
 		else if (aviso_plani.aviso == 27) {
 			desbloquear_clave(socket_planificador);
+		}
+		else if (aviso_plani.aviso == 62){
+			comunicarDeadlock(socket_planificador);
 		}
 
 		else if (aviso_plani.aviso == 60) {
@@ -1603,8 +1659,7 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden,
-	MSG_NOSIGNAL) < 0) {
+	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL) < 0) {
 		log_warning(logger, "Error en el envio de la orden: %s",
 				strerror(errno));
 		return;
@@ -1660,8 +1715,12 @@ void enviar_instancias_a_compactar() {
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
 		pthread_mutex_lock(&sem_socket_operaciones_coordi);
+<<<<<<< HEAD
 		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd,
 				14);
+=======
+		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd, 14);
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 		nodo_aux = nodo_aux->sgte;
 	}
@@ -1685,8 +1744,12 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
+<<<<<<< HEAD
 	int res = send((intptr_t) un_socket, buffer_parametros,
 			tamanio_parametros_set, 0);
+=======
+	int res = send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 
 	log_trace(logger, "Enviado: %i", res);
 
@@ -2080,3 +2143,138 @@ void actualizarEntradas(Instancia instancia, uint32_t cantidad) {
  }
 
  */
+char * darLosDeadlock(void){
+	return pasarACadena(estanEnDL(tienenAlgoRetenido(blocked_ESIs)));
+}
+t_blocked_list tienenAlgoRetenido (t_blocked_list lista){
+	t_blocked_node* puntero = blocked_ESIs.head;
+	t_blocked_list retenientes;
+
+	while(puntero != NULL){
+		if(tieneAlgoRetenido(puntero->id)){
+			blocked newBlocked = {
+				.id = puntero->id,
+				.clave = puntero->clave
+			};
+
+			agregar_blocked(&retenientes, newBlocked);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return retenientes;
+}
+bool tieneAlgoRetenido(uint32_t id){
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL){
+		if(puntero->block_id == id) return true;
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+t_blocked_list estanEnDL (t_blocked_list lista){
+	t_blocked_node * puntero = lista.head;
+	t_blocked_list * deadlock = NULL;
+
+	while(puntero != NULL){
+		if(puedeLlegarA(puntero)){
+			blocked newBlocked = {
+							.id = puntero->id,
+							.clave = puntero->clave
+						};
+			agregar_blocked(deadlock, newBlocked);
+
+		}
+
+		puntero = puntero->sgte;
+		}
+
+	return * deadlock;
+}
+
+bool puedeLlegarA (t_blocked_node * puntero){
+	t_clave_node * aux;
+	t_blocked_node * aux2 = NULL;
+	aux = duenioDe(puntero->clave);
+
+	if (listaAuxiliar.head->id == aux->block_id){
+		liberar(&listaAuxiliar);
+		return true;
+	}
+	else {
+		if(!estaEn(listaAuxiliar, puntero->id)){
+			aux2->id = aux->block_id;
+			strcpy(aux2->clave, aux->clave);
+			agregar(listaAuxiliar, *aux2);
+			puedeLlegarA(aux2);
+		}
+	}
+	liberar(&listaAuxiliar);
+	return false;
+}
+t_clave_node * duenioDe (char * claveBuscada){
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while(puntero != NULL){
+		if (mismoString(puntero -> clave, claveBuscada)){
+			return puntero;
+		}
+		puntero = puntero->sgte;
+	}
+	return NULL;
+}
+void liberar(t_blocked_list * lista){
+	while(lista->head != NULL){
+		eliminar_blockeados(lista);
+	}
+}
+
+bool estaEn(t_blocked_list lista, uint32_t id){
+	t_blocked_node * puntero = lista.head;
+	while(puntero != NULL){
+		if (puntero->id == id) return true;
+		puntero = puntero->sgte;
+	}
+	return false;
+}
+void agregar(t_blocked_list lista, t_blocked_node nodo){
+	t_blocked_node * puntero = lista.head;
+	while(puntero != NULL){
+		puntero = puntero->sgte;
+	}
+	puntero->id = nodo.id;
+	strcpy (puntero->clave, nodo.clave);
+	puntero->sgte = NULL;
+}
+char * pasarACadena(t_blocked_list lista){
+	t_blocked_node * puntero = lista.head;
+	char * cadena = malloc(sizeof(char*));
+	char stringAux [20];
+	int i;
+	while (puntero != NULL){
+		i = (int) puntero->id;
+		strcpy(stringAux, string_itoa(i));
+		strcat(cadena, stringAux);
+		puntero = puntero -> sgte;
+	}
+	return cadena;
+}
+
+void comunicarDeadlock(int socket){
+	char * cadena = malloc(sizeof(char*));
+	int i=0;
+	package_int paquete;
+	strcpy(cadena, darLosDeadlock());
+	while(cadena[i] != '\0'){
+		i++;
+	}
+	paquete.packed = (uint32_t) i;
+	send_package_int(paquete, socket_planificador);
+	enviar_cadena(cadena, socket_planificador);
+}
+void actualizarEntradas(Instancia instancia, uint32_t cantidad){
+	instancia.espacio_usado = instancia.espacio_usado + cantidad;
+}

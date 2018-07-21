@@ -1214,9 +1214,16 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 		loggear("CONFIRMO LECTURA");
 	} else if (codigo_exito_operacion == 140) {
 		loggear("CONFIRMO NOMBRE ENVIADO");
+<<<<<<< HEAD
 		/*} else if (codigo_exito_operacion == 114) {
 		 loggear("COMPACTACION FINALIZADA");*/
 	} else if (codigo_exito_operacion == 666) {
+=======
+	/*} else if (codigo_exito_operacion == 114) {
+		loggear("COMPACTACION FINALIZADA");*/
+	}
+	else if (codigo_exito_operacion == 666) {
+>>>>>>> a921484f91de91a91a72115fd44f7b61b65bc5a7
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}
 
