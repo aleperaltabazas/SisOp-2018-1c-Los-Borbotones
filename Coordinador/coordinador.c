@@ -542,8 +542,40 @@ void actualizarInstancia(Instancia instancia, char* clave) {
 	}
 }
 
+Instancia elQueLaTiene(char* clave) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (tieneLaClave(puntero->instancia, clave)) {
+			return puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return inst_error;
+}
+
+bool estaAsignada(char* clave) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (tieneLaClave(puntero->instancia, clave)) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 Instancia getInstanciaSet(char* clave) {
 	Instancia ret_inst;
+
+	if (estaAsignada(clave)) {
+		return elQueLaTiene(clave);
+	}
 
 	switch (ALGORITMO_DISTRIBUCION) {
 	case EL:
@@ -665,16 +697,16 @@ int get_packed(char* clave, uint32_t id) {
 	}
 }
 
-void mostrar_listas(){
+void mostrar_listas() {
 	t_clave_node * puntero_bloqueadas = claves_bloqueadas.head;
 	loggear("Bloqueadas:");
-	while(puntero_bloqueadas != NULL){
+	while (puntero_bloqueadas != NULL) {
 		log_trace(logger, "Clave: %s", puntero_bloqueadas->clave);
 		puntero_bloqueadas = puntero_bloqueadas->sgte;
 	}
 	t_clave_node * puntero_disponibles = claves_disponibles.head;
 	loggear("Disponibles:");
-	while(puntero_disponibles != NULL){
+	while (puntero_disponibles != NULL) {
 		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
 		puntero_disponibles = puntero_disponibles->sgte;
 	}
@@ -822,11 +854,57 @@ void* atender_Planificador(void* un_socket) {
 			desbloquear_clave(socket_planificador);
 		}
 
+		else if (aviso_plani.aviso == 60) {
+			status(socket_planificador);
+		}
 	}
 
 	seguir_ejecucion = 0;
 
 	return NULL;
+}
+
+char* getValor(char* recurso) {
+	if (!existe(recurso)) {
+		return "La clave no existe.";
+	}
+}
+
+char* getInstancia(char* recurso) {
+	return NULL;
+}
+
+char* getBloqueados(char* recurso) {
+	return NULL;
+}
+
+char* armarStatus(char* recurso) {
+	if (!existe(recurso)) {
+		return "La clave no existe.";
+	}
+
+	char* lineaValor = getValor(recurso);
+	char* lineaInstancia = getInstancia(recurso);
+	char* lineaBloqueados = getBloqueados(recurso);
+
+	char* status = malloc(
+			strlen(lineaValor) + strlen(lineaInstancia)
+					+ strlen(lineaBloqueados) + 1);
+
+	return status;
+}
+
+void status(int sockfd) {
+	package_int string_size = recibir_packed(sockfd);
+	char* recurso = recibir_cadena(sockfd, string_size.packed);
+
+	char* status_return = armarStatus(recurso);
+
+	uint32_t size = (uint32_t) strlen(status_return);
+	package_int size_package = { .packed = size };
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(status_return, sockfd);
 }
 
 void desbloquear_clave(int socket_cliente) {

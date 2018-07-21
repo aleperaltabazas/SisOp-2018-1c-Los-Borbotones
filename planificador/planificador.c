@@ -718,9 +718,7 @@ void interpretarYEjecutarCodigo(int comando) {
 		kill_esi(codigoSubsiguiente);
 		break;
 	case 6:
-		printf("Introduzca el ESI ID: ");
-		scanf("%i", &codigoSubsiguiente);
-		status(codigoSubsiguiente);
+		status();
 		break;
 	case 7:
 		deadlock();
@@ -1036,29 +1034,32 @@ void kill_esi(int id) {
 			id);
 }
 
-void status(int codigo) {
-	codigo = (uint32_t) codigo;
-	ESI aux;
-	aux.id = codigo;
-	if (executing_ESI.id == codigo)
-		printf("El ESI esta ejecutando \n");
-	else {
-		if (esta(new_ESIs, aux))
-			printf("El ESI esta en cola de ready \n");
-		else {
-			if (esta(blocked_ESIs, aux))
-				printf("El ESI esta en cola de bloqueados \n");
-			else {
-				if (esta(finished_ESIs, aux))
-					printf("El ESI ha terminado \n");
-				else
-					printf("No conozco ese codigo. \n");
-			}
-		}
-	}
+void status(void) {
+	char recurso[255] = "futbol:messi";
+	printf("Introduzca el recurso: ");
+	scanf("%s", recurso);
+
+	cerrar_cadena(recurso);
+
+	aviso_con_ID aviso_status = { .aviso = 60 };
+
+	enviar_aviso(socket_coordinador, aviso_status);
+
+	uint32_t size = strlen(recurso + 1);
+	package_int size_package = { .packed = size };
+
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(recurso, socket_coordinador);
+
+	package_int recv_size = recibir_packed(socket_coordinador);
+	char* status = recibir_cadena(socket_coordinador, recv_size.packed);
+
+	printf("%s \n", status);
 }
+
 void deadlock(void) {
 }
+
 void listarESI(t_esi_node lista) {
 	/*printf("Los ESI esperando la clave pedida son: \n");
 	 while (lista.sgte != NULL){

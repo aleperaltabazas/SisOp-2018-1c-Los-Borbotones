@@ -545,6 +545,27 @@ bool leCorresponde(Instancia instancia, char caracter);
 	 * 		char caracter
 	 */
 
+bool estaAsignada(char* clave);
+	/*
+	 * Descripción: indica si una clave está asignada a alguna instancia.
+	 * Argumentos:
+	 * 		char* clave: la clave a buscar.
+	 */
+
+Instancia elQueLaTiene(char* clave);
+	/*
+	 * Descripción: devuelve la instancia que posee la clave.
+	 * Argumentos:
+	 * 		char* clave
+	 */
+
+void status(int sockfd);
+	/*
+	 * Descripción: le envía el status de una clave al planificador.
+	 * Argumentos:
+	 * 		int sockfd: socket por el cual comunicar.
+	 */
+
 int do_set(char* valor, char* clave);
 
 Instancia getInstanciaSet(char* clave);
