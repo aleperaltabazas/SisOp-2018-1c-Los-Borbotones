@@ -728,20 +728,92 @@ float recibirCodigo() {
 	scanf("%i", &code);
 	return code;
 }
+
+bool existe(uint32_t id) {
+	ESI blocked = findByIDIn(id, blocked_ESIs);
+	if (blocked.id != ESI_error.id) {
+		return true;
+	}
+
+	ESI finished = findByIDIn(id, finished_ESIs);
+	if (finished.id != ESI_error.id) {
+		return true;
+	}
+
+	ESI ready = findByIDIn(id, new_ESIs);
+	if (ready.id != ESI_error.id) {
+		return true;
+	}
+
+	return false;
+}
+
+void bloquearSegunClave(void) {
+	int id = 0;
+	printf("Ingrese el ID: ");
+	scanf("%i", &id);
+
+	if (!existe(id)) {
+		printf("Ese ESI no se encuentra en el sistema.");
+		return;
+	}
+
+	ESI finished = get_ESI((uint32_t) id, finished_ESIs);
+
+	if (finished.id != ESI_error.id) {
+		printf("El ESI ya terminó.");
+		return;
+	}
+
+	ESI blocked = get_ESI((uint32_t) id, blocked_ESIs);
+
+	if (blocked.id != ESI_error.id) {
+		printf("El ESI ya está bloqueado.");
+		return;
+	}
+
+	ESI esi = get_ESI((uint32_t) id, new_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+	eliminar_ESI(&new_ESIs, esi);
+
+	ESIs_size--;
+	pthread_mutex_unlock(&sem_ESIs_size);
+	agregar_ESI(&blocked_ESIs, esi);
+
+	char clave[40] = "futbol:messi";
+	printf("Ingrese la clave: ");
+	scanf("%s", clave);
+
+	log_warning(logger, "El ESI %i fue bloqueado por la clave %s", id, clave);
+
+	avisarBloqueoESIPorClave(esi, clave, socket_coordinador);
+}
+
+void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd) {
+	aviso_con_ID aviso_bloqueo = { .aviso = 70 };
+
+	enviar_aviso(sockfd, aviso_bloqueo);
+
+	package_int id_package = { .packed = esi.id };
+
+	enviar_packed(id_package, sockfd);
+
+	package_int size_package = { .packed = strlen(clave) + 1 };
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(clave, sockfd);
+
+}
+
 void interpretarYEjecutarCodigo(int comando) {
 	int codigoSubsiguiente;
 	char clave[40];
 	switch (comando) {
-	case 0:
-		pthread_cancel(pthread_self()); //Usar esto lo hace no portable, preguntarle a Lean
-		break;
 	case 1:
 		pausarOContinuar();
 		break;
 	case 2:
-		printf("Introduzca el ESI ID: ");
-		scanf("%i", &codigoSubsiguiente);
-		bloquear(codigoSubsiguiente);
+		bloquearSegunClave();
 		break;
 	case 3:
 		printf("Introduzca el ESI ID: ");
@@ -860,13 +932,13 @@ ESI get_ESI(uint32_t id, t_esi_list lista) {
 
 	while (puntero != NULL) {
 		if (id == puntero->esi.id) {
-			break;
+			return puntero->esi;
 		}
 
 		puntero = puntero->sgte;
 	}
 
-	return puntero->esi;
+	return ESI_error;
 }
 
 void bloquear_clave() {
@@ -956,7 +1028,6 @@ void cerrar_ESIs() {
 }
 
 void listarOpciones() {
-	printf("0: Cancelar consola \n");
 	printf("1: Pausar o reactivar la planificación \n");
 	printf("2.<ESI ID>: Bloquea al ESI elegido \n");
 	printf("3.<ESI ID>: Desbloquea al ESI elegido \n");

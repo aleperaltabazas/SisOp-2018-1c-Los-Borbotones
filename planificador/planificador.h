@@ -433,4 +433,13 @@ ESI findByIDIn(uint32_t id, t_esi_list lista);
 	 * 		t_esi_list lista: lista donde buscar.
 	 */
 
+void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd);
+	/*
+	 * Descripción: avisa al coordinador para que bloquee a un ESI detrás de la clave.
+	 * Argumentos:
+	 * 		ESI esi: ESI a bloquear.
+	 * 		char* clave: clave por la cual bloquear al ESI.
+	 * 		int sockfd: socket del coordinador.
+	 */
+
 #endif /* PLANIFICADOR_H_ */

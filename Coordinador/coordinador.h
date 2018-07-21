@@ -586,6 +586,13 @@ char* getInstancia(char* recurso);
 	 * 		char* recurso: recurso a buscar.
 	 */
 
+void bloquearSegunClave(int sockfd);
+	/*
+	 * Descripción: intercambia mensajes con el planificador para bloquear a un ESI tras una determinada clave
+	 * Argumentos:
+	 * 		int sockfd: socket del planificador.
+	 */
+
 char* getValor(char* recurso);
 
 int do_set(char* valor, char* clave);

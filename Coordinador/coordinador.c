@@ -727,7 +727,7 @@ void mostrar_listas() {
 		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
 		puntero_disponibles = puntero_disponibles->sgte;
 	}
-	sleep(5);
+	sleep(1);
 }
 
 bool tieneLaClave(Instancia unaInstancia, char* clave) {
@@ -874,11 +874,27 @@ void* atender_Planificador(void* un_socket) {
 		else if (aviso_plani.aviso == 60) {
 			status(socket_planificador);
 		}
+
+		else if (aviso_plani.aviso == 70) {
+			bloquearSegunClave(socket_planificador);
+		}
 	}
 
 	seguir_ejecucion = 0;
 
 	return NULL;
+}
+
+void bloquearSegunClave(int sockfd) {
+	package_int id_package = recibir_packed(sockfd);
+
+	package_int size_package = recibir_packed(sockfd);
+	char* string = recibir_cadena(sockfd, size_package.packed);
+
+	bloquear_ESI(string, id_package.packed);
+
+	log_warning(logger, "El ESI %i fue bloqueado tras la clave %s",
+			id_package.packed, string);
 }
 
 bool esta(char* clave, t_clave_list claves) {
