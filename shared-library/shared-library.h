@@ -20,9 +20,9 @@
 #include <commons/string.h>
 #include <signal.h>
 #include <math.h>
-#include "structs/estructuras.h"
-#include "lists/lists.h"
-#include "strings/strings.h"
+#include "estructuras.h"
+#include "lists.h"
+#include "strings.h"
 
 //Variables super globales
 

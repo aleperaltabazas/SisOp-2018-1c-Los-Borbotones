@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <commons/log.h>
-#include "../structs/estructuras.h"
-#include "../strings/strings.h"
+#include "estructuras.h"
+#include "strings.h"
 
 /*
  * ==============================

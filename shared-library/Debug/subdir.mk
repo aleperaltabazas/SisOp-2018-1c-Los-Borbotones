@@ -5,15 +5,21 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../getPokemon.c \
-../shared-library.c 
+../lists.c \
+../shared-library.c \
+../strings.c 
 
 OBJS += \
 ./getPokemon.o \
-./shared-library.o 
+./lists.o \
+./shared-library.o \
+./strings.o 
 
 C_DEPS += \
 ./getPokemon.d \
-./shared-library.d 
+./lists.d \
+./shared-library.d \
+./strings.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
