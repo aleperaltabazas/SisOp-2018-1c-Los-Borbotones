@@ -1,16 +1,39 @@
-GET futbol:ansaldi
-SET futbol:ansaldi TraeVodka
-GET futbol:messi
-SET futbol:messi TraemeLaCopa
-SET futbol:messi TraemeLaCo
-SET futbol:messi TraemeLaCopa
-SET futbol:messi TraemeLaCo
-SET futbol:messi TraemeLaCopa
-SET futbol:messi TraemeLaCo
-SET futbol:messi TraemeLaCopa
-SET futbol:messi TraemeLaCo
-SET futbol:messi PorqueMessi
-SET futbol:messi SeLoMeressi
-SET futbol:messi TraemeLaCopa
-STORE futbol:messi
-STORE futbol:ansaldi
+GET losBorbotones:nacho
+SET losBorbotones:nacho consolita
+GET losBorbotones:juancho
+SET losBorbotones:juancho mate
+GET losBorbotones:mati
+SET losBorbotones:mati instancia
+GET losBorbotones:ale 
+SET losBorbotones:ale planificador
+GET losBorbotones:paula
+SET losBorbotones:paula fantasma
+GET tutor:lean
+SET tutor:lean call
+GET tutor:tom
+SET tutor:tom anteojos
+GET clima:buenosAires
+GET clima:santaFe
+GET clima:cordoba
+GET clima:conurbano
+GET clima:burzaco
+SET clima:buenosAires 10
+SET clima:buenosAires frio
+SET clima:buenosAires humedo
+SET clima:cordoba templado
+SET clima:cordoba samuraiCordobes
+SET clima:santaFe soleado
+SET clima:conurbano TeRoban
+SET clima:burzaco alf
+STORE losBorbotones:nacho
+STORE losBorbotones:juancho
+STORE losBorbotones:mati
+STORE losBorbotones:ale
+STORE losBorbotones:paula
+STORE tutor:lean
+STORE tutor:tom
+STORE clima:buenosAires
+STORE clima:santaFe
+STORE clima:cordoba
+STORE clima:conurbano
+STORE clima:burzaco

@@ -1,30 +1,23 @@
 GET futbol:messi
 SET futbol:messi TraemeLaCopa
 STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCo
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCopa
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCo
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCopa
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCo
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCopa
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi TraemeLaCo
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi PorqueMessi
-STORE futbol:messi
-GET futbol:messi
-SET futbol:messi SeLoMeressi
-STORE futbol:messi
+GET basquet:ginobilli
+SET basquet:ginobilli losSpurs
+STORE basquet:ginobilli
+GET digimon:agumon
+SET digimon:agumon Evoluciona
+STORE digimon:agumon
+GET materia:sisop
+SET materia:sisop DaleQueSeAprueba
+SET materia:sisop Ahre
+STORE materia:sisop
+GET pc:hp
+SET pc:hp JuanTieneUnaDelLaburo
+STORE pc:hp
+GET zelda:link
+SET zelda:link HeyListen
+STORE zelda:link
+GET colchon:canon
+SET colchon:canon EsMiColchon
+SET colchon:canon EnLaCocina
+STORE colchon:canon

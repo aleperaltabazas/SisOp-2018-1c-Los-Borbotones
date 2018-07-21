@@ -81,6 +81,10 @@ uint32_t recibir_ID(int server_socket) {
 		swap_values(&aviso);
 	}
 
+	if (aviso.id <= 0) {
+		salir_con_error("Id erróneo.", server_socket);
+	}
+
 	if (aviso.aviso == 0) {
 		clear(&parsed_ops);
 		salir_con_error("Fin de este ESI por parte del planificador",

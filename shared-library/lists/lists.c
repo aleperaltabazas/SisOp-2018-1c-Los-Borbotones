@@ -267,7 +267,8 @@ char* headClaves(t_clave_list lista) {
  */
 
 t_blocked_node* crear_nodo_blocked(blocked bloqueado) {
-	t_blocked_node* nodo = (t_blocked_node*) malloc(sizeof(t_blocked_node));
+	t_blocked_node* nodo = (t_blocked_node*) malloc(
+			sizeof(t_blocked_node) + strlen(bloqueado.clave) + 1);
 	nodo->clave = bloqueado.clave;
 	nodo->id = bloqueado.id;
 

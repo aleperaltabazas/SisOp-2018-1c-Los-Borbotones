@@ -194,6 +194,11 @@ void* atender_ESI(void* un_socket) {
 		return NULL;
 	}
 
+	if (id <= 0) {
+		close(socket_cliente);
+		log_error(logger, "ESI con id inválido (0).");
+	}
+
 	send_OK(socket_cliente);
 
 	while (status) {
@@ -268,7 +273,9 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 
 	if (aviso_cliente.aviso == 0) {
 		log_info(logger, "Fin de ESI.");
-		liberar_claves(id);
+		if (aviso_cliente.id == id) {
+			liberar_claves(id);
+		}
 		return 0;
 	}
 
@@ -549,7 +556,8 @@ int do_set(char* valor, char* clave) {
 
 	cantidad_entradas_ocupadas_instancia = recibir_packed(instancia.sockfd);
 
-	log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i", instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
+	log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i",
+			instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
 
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
@@ -854,6 +862,9 @@ void desconectar(Instancia instancia) {
 void bloquear_ESI(char* clave, uint32_t id) {
 	blocked bloqueado = { .clave = clave, .id = id };
 
+	log_debug(logger, "Clave: %s", clave);
+	log_debug(logger, "ID: %i", id);
+
 	agregar_blocked(&blocked_ESIs, bloqueado);
 }
 
@@ -1084,8 +1095,12 @@ char* getInstancia(char* recurso) {
 }
 
 char* getBloqueados(char* recurso) {
-	if (!existe(recurso)) {
+	char* dup_recurso = strdup(recurso);
+
+	if (!existe(dup_recurso)) {
 		return "La clave no existe.";
+		free(dup_recurso);
+
 	}
 
 	t_blocked_node* puntero = blocked_ESIs.head;
@@ -1094,7 +1109,7 @@ char* getBloqueados(char* recurso) {
 	int i = 0;
 
 	while (puntero != NULL) {
-		if (mismoString(puntero->clave, recurso)) {
+		if (mismoString(puntero->clave, dup_recurso)) {
 			char* num = string_itoa(puntero->id);
 			bloqueados[i] = num[0];
 			i++;
@@ -1107,6 +1122,7 @@ char* getBloqueados(char* recurso) {
 
 	char* dup = strdup(bloqueados);
 	flag_free_asignada = true;
+	free(dup_recurso);
 	return dup;
 }
 
@@ -1185,33 +1201,39 @@ void desbloquear_clave(int socket_cliente) {
 }
 
 uint32_t dame_desbloqueado(char* clave, t_blocked_list lista) {
+	char* dup_clave = strdup(clave);
 	t_blocked_node* puntero = lista.head;
 
 	while (puntero != NULL) {
-		if (strcmp(clave, puntero->clave) == 0) {
+		if (strcmp(dup_clave, puntero->clave) == 0) {
+			free(dup_clave);
 			return puntero->id;
 		}
 
 		puntero = puntero->sgte;
 	}
 
+	free(dup_clave);
+
 	return -5;
 }
 
 void desbloquear(char* clave) {
-	if (!existe(clave)) {
-		crear(clave);
-		desbloquear(clave);
+	char* dup_clave = strdup(clave);
+	if (!existe(dup_clave)) {
+		crear(dup_clave);
+		desbloquear(dup_clave);
 	}
 
-	else if (existe(clave) && esta_bloqueada(clave)) {
+	else if (existe(dup_clave) && esta_bloqueada(dup_clave)) {
 		mostrar_listas();
-		eliminar_clave(&claves_bloqueadas, clave);
-		agregar_clave(&claves_disponibles, clave, -1);
+		eliminar_clave(&claves_bloqueadas, dup_clave);
+		agregar_clave(&claves_disponibles, dup_clave, -1);
 
-		log_info(logger, "La clave %s fue desbloqueada.", clave);
+		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
 	}
 
+	free(dup_clave);
 }
 
 void bloquear_clave(int socket_cliente) {
@@ -1345,6 +1367,9 @@ void redistribuir_claves(void) {
 			if (puntero->instancia.disponible) {
 				asignarKeyMinMax(&(puntero->instancia), contador, disponibles);
 
+				log_debug(logger, "%s tiene min %c y max %c",
+						puntero->instancia.nombre, puntero->instancia.keyMin,
+						puntero->instancia.keyMax);
 				contador++;
 			}
 
@@ -1549,6 +1574,8 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 		}
 	}
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
+	esperar_confirmacion_de_exito(sockfd);
 }
 
 t_clave_list get_claves(char* name) {
