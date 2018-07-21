@@ -698,27 +698,27 @@ void interpretarYEjecutarCodigo(int comando) {
 		pausarOContinuar();
 		break;
 	case 2:
-		printf("Introduzca el ESI ID \n");
+		printf("Introduzca el ESI ID: ");
 		scanf("%i", &codigoSubsiguiente);
 		bloquear(codigoSubsiguiente);
 		break;
 	case 3:
-		printf("Introduzca el ESI ID \n");
+		printf("Introduzca el ESI ID: ");
 		scanf("%i", &codigoSubsiguiente);
 		desbloquear(codigoSubsiguiente);
 		break;
 	case 4:
-		printf("Introduzca la clave \n");
+		printf("Introduzca la clave: ");
 		scanf("%s", clave);
 		listar(clave);
 		break;
 	case 5:
-		printf("Introduzca el ESI ID \n");
+		printf("Introduzca el ESI ID: ");
 		scanf("%i", &codigoSubsiguiente);
 		kill_esi(codigoSubsiguiente);
 		break;
 	case 6:
-		printf("Introduzca el ESI ID \n");
+		printf("Introduzca el ESI ID: ");
 		scanf("%i", &codigoSubsiguiente);
 		status(codigoSubsiguiente);
 		break;
@@ -988,27 +988,54 @@ void desbloquear(int codigo) {
 void listar(char* clave) { //Comunicarse con el coordi para que busque al ESI
 
 }
-void kill_esi(int codigo) {
-	codigo = (uint32_t) codigo;
-	ESI aMatar;
-	aMatar.id = codigo;
-	if (executing_ESI.id == codigo) {
-		//sarasa de semaforos y desalojos
-	} else {
-		if (esta(new_ESIs, aMatar)) {
-			aMatar = copiarEsi(&new_ESIs, aMatar);
-			kill_ESI(aMatar);
-			eliminar_ESI(&new_ESIs, aMatar);
-		} else {
-			if (esta(blocked_ESIs, aMatar)) {
-				aMatar = copiarEsi(&blocked_ESIs, aMatar);
-				kill_ESI(aMatar);
-				eliminar_ESI(&blocked_ESIs, aMatar);
-			} else
-				loggear("No encuentro al ESI");
+
+ESI findByIDIn(uint32_t id, t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			return puntero->esi;
 		}
+
+		puntero = puntero->sgte;
 	}
+
+	return ESI_error;
 }
+
+void kill_esi(int id) {
+	uint32_t id_as_uint = (uint32_t) id;
+
+	ESI asesina3 = findByIDIn(id_as_uint, new_ESIs);
+
+	if (asesina3.id != ESI_error.id) {
+		kill_ESI(asesina3);
+		eliminar_ESI(&new_ESIs, asesina3);
+		printf("ESI %i abortado. \n", id);
+		return;
+	}
+
+	asesina3 = findByIDIn(id_as_uint, blocked_ESIs);
+
+	if (asesina3.id != ESI_error.id) {
+		kill_ESI(asesina3);
+		printf("ESI %i abortado. \n", id);
+		return;
+	}
+
+	asesina3 = findByIDIn(id_as_uint, finished_ESIs);
+
+	if (asesina3.id != ESI_error.id) {
+		kill_ESI(asesina3);
+		printf("El ESI %i ya terminó, así que no pudo ser abortado. \n", id);
+		return;
+	}
+
+	printf(
+			"El ESI %i no se encuentra en el sistema, por lo que no se pudo abortar. \n",
+			id);
+}
+
 void status(int codigo) {
 	codigo = (uint32_t) codigo;
 	ESI aux;

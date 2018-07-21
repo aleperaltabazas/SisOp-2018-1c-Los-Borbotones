@@ -46,6 +46,9 @@ bool ejecutando = false;
 
 ESI executing_ESI;
 
+ESI ESI_error = {
+		.id = -2
+};
 bool seguir_ejecucion = true;
 bool display = true;
 
@@ -418,6 +421,14 @@ void sigHandler_segfault(int signo);
 	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
 	 * Argumentos:
 	 * 		int signo
+	 */
+
+ESI findByIDIn(uint32_t id, t_esi_list lista);
+	/*
+	 * Descripción: busca un con el ID en la lista. Si no lo encuentra, retorna ESI_error.
+	 * Argumentos:
+	 * 		uint32_t id: ID de ESI a buscar.
+	 * 		t_esi_list lista: lista donde buscar.
 	 */
 
 #endif /* PLANIFICADOR_H_ */

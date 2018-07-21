@@ -362,12 +362,17 @@ int levantar_servidor(char* puerto, int tries) {
 	int listening_socket = socket(server_info->ai_family,
 			server_info->ai_socktype, server_info->ai_protocol);
 
+	int yes = 1;
+	int setsock = setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &yes,
+			sizeof(yes));
+
+	if (setsock == -1) {
+		salir_con_error("Falló el setsockopt", listening_socket);
+	}
+
 	int bindeo = bind(listening_socket, server_info->ai_addr,
 			server_info->ai_addrlen);
 	freeaddrinfo(server_info);
-
-	int yes = 1;
-	setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
 	if (bindeo < 0) {
 		if (tries == 5) {
