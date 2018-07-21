@@ -859,7 +859,8 @@ void interpretarYEjecutarCodigo(int comando) {
 		status();
 		break;
 	case 7:
-		deadlock();
+		//deadlock();
+		printf("WIP \n");
 		break;
 	case 8:
 		terminar();

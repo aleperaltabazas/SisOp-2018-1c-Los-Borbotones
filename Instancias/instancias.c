@@ -224,8 +224,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
