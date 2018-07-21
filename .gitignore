@@ -45,8 +45,8 @@ planificador/.gitignore
 *.i*86
 *.x86_64
 *.hex
-coordinador
-instancia
+Coordinador
+Instancia
 planificador
 ESI
 

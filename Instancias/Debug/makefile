@@ -22,22 +22,22 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: instancia
+all: Instancias
 
 dependents:
-	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
+	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) clean all
 
 # Tool invocations
-instancia: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
+Instancias: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "instancia" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "Instancias" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) instancia
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Instancias
 	-@echo ' '
 
 .PHONY: all clean dependents
