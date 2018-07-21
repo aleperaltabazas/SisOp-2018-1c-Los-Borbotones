@@ -423,6 +423,15 @@ int store(int socket_cliente, uint32_t id) {
 			return -5;
 		}
 
+		if (status == 5) {
+			abortar_ESI(socket_cliente);
+		}
+
+		if (status == -7) {
+			abortar_ESI(socket_cliente);
+			//desconectar instancia?
+		}
+
 		if (!emptyBlocked(&blocked_ESIs)) {
 			aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
 					blocked_ESIs) };
@@ -525,6 +534,8 @@ int do_set(char* valor, char* clave) {
 	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
 			valor_size, tamanio_parametros_set);
 
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(tamanio_parametros_set,
 			(void*) (intptr_t) instancia.sockfd, 11);
 	enviar_valores_set(tamanio_parametros_set,
@@ -540,7 +551,13 @@ int do_set(char* valor, char* clave) {
 
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
 
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+
+	package_int paquete;
+	paquete.packed = recv_packed_no_exit(instancia.sockfd).packed;
+	actualizarEntradas(instancia, paquete.packed);
 
 	return 1;
 }
@@ -646,7 +663,7 @@ Instancia equitativeLoad(void) {
 }
 
 Instancia leastSpaceUsed(void) {
-	return inst_error;
+	return menorEspacio(instancias);
 }
 
 Instancia keyExplicit(char* clave) {
@@ -777,10 +794,16 @@ int hacer_store(char* clave) {
 		return -1;
 	}
 
+	log_trace(logger, "La instancia %s tiene la clave %s", instancia.nombre,
+			clave);
+
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 12);
-	sleep(1);
 
 	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	log_warning(logger, "Clave size %i", clave_size);
 
 	package_int package_size = { .packed = clave_size };
 
@@ -791,7 +814,17 @@ int hacer_store(char* clave) {
 
 	log_debug(logger, "Esperando confirmacion...");
 
-	esperar_confirmacion_de_exito((int) sockfd);
+	int res = esperar_confirmacion_de_exito((int) sockfd);
+
+	if (res == -5) {
+		return -5;
+	}
+
+	if (res == -7) {
+		return -7;
+	}
+
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (status == 0) {
 		log_warning(logger, "Falló el store.");
@@ -818,10 +851,6 @@ void bloquear_ESI(char* clave, uint32_t id) {
 	blocked bloqueado = { .clave = clave, .id = id };
 
 	agregar_blocked(&blocked_ESIs, bloqueado);
-}
-
-bool emptyBlocked(t_blocked_list* lista) {
-	return lista->head == NULL;
 }
 
 void liberar_ESI(t_blocked_list* lista, uint32_t id) {
@@ -873,6 +902,10 @@ void* atender_Planificador(void* un_socket) {
 
 		else if (aviso_plani.aviso == 60) {
 			status(socket_planificador);
+		}
+
+		else if (aviso_plani.aviso == 62) {
+			comunicarDeadlock(socket_planificador);
 		}
 
 		else if (aviso_plani.aviso == 70) {
@@ -1324,10 +1357,7 @@ void asignarKeyMinMax(Instancia* instancia, int posicion,
 bool murio(char* name, int sockfd) {
 	t_instancia_node* puntero = instancias.head;
 
-	loggear("menem");
-
 	while (puntero != NULL) {
-		loggear("Carlitos");
 		if (mismoString(name, puntero->instancia.nombre)) {
 			if (puntero->instancia.disponible) {
 				if (!ping(puntero->instancia)) {
@@ -1345,8 +1375,6 @@ bool murio(char* name, int sockfd) {
 				}
 			}
 
-			loggear("asd");
-
 		}
 
 		puntero = puntero->sgte;
@@ -1357,6 +1385,8 @@ bool murio(char* name, int sockfd) {
 }
 
 bool ping(Instancia instancia) {
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 100;
 	orden.tamanio_a_enviar = 0;
@@ -1379,6 +1409,8 @@ bool ping(Instancia instancia) {
 		instancia.disponible = false;
 		free(buffer);
 
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 		return false;
 	}
 
@@ -1389,11 +1421,14 @@ bool ping(Instancia instancia) {
 		instancia.disponible = false;
 		free(buffer);
 
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 		return false;
 	}
 
-	loggear("Ping ok, la instancia sigue en pie.");
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
+	loggear("Ping ok, la instancia sigue en pie.");
 	free(buffer);
 
 	return true;
@@ -1427,6 +1462,8 @@ void revivir(char* name, int sockfd) {
 void enviar_claves(t_clave_list claves, int sockfd) {
 	t_clave_node* puntero = claves.head;
 
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 50);
 
 	while (puntero != NULL) {
@@ -1456,10 +1493,11 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
 					strerror(errno));
 			close(sockfd);
+			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 			return;
 		}
 	}
-
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 }
 
 t_clave_list get_claves(char* name) {
@@ -1535,12 +1573,14 @@ void log_op(operacion op) {
 void asignar_entradas(int sockfd) {
 	log_trace(logger, "Cant entradas: %d, Tamanio_entrada: %d",
 			CANTIDAD_ENTRADAS, TAMANIO_ENTRADAS);
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) (intptr_t) sockfd,
 			TAMANIO_ENTRADAS);
 
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 }
 
@@ -1576,34 +1616,42 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 }
 
-void esperar_confirmacion_de_exito(int un_socket) {
+int esperar_confirmacion_de_exito(int un_socket) {
 
 	package_int confirmacion = recv_packed_no_exit(un_socket);
 
 	if (confirmacion.packed == 100) {
 		loggear("Comprobacion de PING finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 101) {
 		loggear("Pedido de compactacion recibido, mandando a compactar...");
 		enviar_instancias_a_compactar();
 		esperar_confirmacion_de_exito(un_socket);
+		return 0;
 	} else if (confirmacion.packed == 110) {
 		loggear("Operacion Inicial finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 111) {
 		loggear("Operacion SET finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 112) {
 		loggear("Operacion STORE finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 115) {
 		loggear("Operacion Lectura finalizada con exito");
+		return 0;
 	} else if (confirmacion.packed == 140) {
 		loggear("Nombre asignado con exito");
+		return 0;
 	} else if (confirmacion.packed == 666) {
 		log_error(logger, "Tengo que abortar el ESI");
-		//magicamente matar el ESI
+		return -5;
 	} else {
 		log_error(logger, "La instancia no pudo finalizar la operacion");
-		//desconectar instancia
-		//magicamente matar al ESI
+		return -7;
 	}
+
+	return -10;
 }
 
 void enviar_instancias_a_compactar() {
@@ -1611,18 +1659,22 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
+		pthread_mutex_lock(&sem_socket_operaciones_coordi);
 		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd,
 				14);
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 		nodo_aux = nodo_aux->sgte;
 	}
 }
 
 void send_orden_no_exit(int op_code, int sockfd) {
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, op_code);
 
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 }
 
@@ -1633,7 +1685,10 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
-	send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+	int res = send((intptr_t) un_socket, buffer_parametros,
+			tamanio_parametros_set, 0);
+
+	log_trace(logger, "Enviado: %i", res);
 
 	loggear("Parametros enviados!");
 
@@ -1652,6 +1707,137 @@ int instanciasDisponibles() {
 	}
 
 	return size;
+}
+
+char * darLosDeadlock(void) {
+	return pasarACadena(estanEnDL(tienenAlgoRetenido(blocked_ESIs)));
+}
+t_blocked_list tienenAlgoRetenido(t_blocked_list lista) {
+	t_blocked_node* puntero = blocked_ESIs.head;
+	t_blocked_list retenientes;
+
+	while (puntero != NULL) {
+		if (tieneAlgoRetenido(puntero->id)) {
+			blocked newBlocked = { .id = puntero->id, .clave = puntero->clave };
+
+			agregar_blocked(&retenientes, newBlocked);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return retenientes;
+}
+bool tieneAlgoRetenido(uint32_t id) {
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		if (puntero->block_id == id)
+			return true;
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+t_blocked_list estanEnDL(t_blocked_list lista) {
+	t_blocked_node * puntero = lista.head;
+	t_blocked_list * deadlock = NULL;
+
+	while (puntero != NULL) {
+		if (puedeLlegarA(puntero)) {
+			blocked newBlocked = { .id = puntero->id, .clave = puntero->clave };
+			agregar_blocked(deadlock, newBlocked);
+
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return *deadlock;
+}
+
+bool puedeLlegarA(t_blocked_node * puntero) {
+	t_clave_node * aux;
+	t_blocked_node * aux2 = NULL;
+	aux = duenioDe(puntero->clave);
+
+	if (listaAuxiliar.head->id == aux->block_id) {
+		liberar(&listaAuxiliar);
+		return true;
+	} else {
+		if (!estaEn(listaAuxiliar, puntero->id)) {
+			aux2->id = aux->block_id;
+			strcpy(aux2->clave, aux->clave);
+			agregar(listaAuxiliar, *aux2);
+			puedeLlegarA(aux2);
+		}
+	}
+	liberar(&listaAuxiliar);
+	return false;
+}
+t_clave_node * duenioDe(char * claveBuscada) {
+	t_clave_node * puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, claveBuscada)) {
+			return puntero;
+		}
+		puntero = puntero->sgte;
+	}
+	return NULL;
+}
+void liberar(t_blocked_list * lista) {
+	while (lista->head != NULL) {
+		eliminar_blockeados(lista);
+	}
+}
+
+bool estaEn(t_blocked_list lista, uint32_t id) {
+	t_blocked_node * puntero = lista.head;
+	while (puntero != NULL) {
+		if (puntero->id == id)
+			return true;
+		puntero = puntero->sgte;
+	}
+	return false;
+}
+void agregar(t_blocked_list lista, t_blocked_node nodo) {
+	t_blocked_node * puntero = lista.head;
+	while (puntero != NULL) {
+		puntero = puntero->sgte;
+	}
+	puntero->id = nodo.id;
+	strcpy(puntero->clave, nodo.clave);
+	puntero->sgte = NULL;
+}
+char * pasarACadena(t_blocked_list lista) {
+	t_blocked_node * puntero = lista.head;
+	char * cadena = malloc(sizeof(char*));
+	char stringAux[20];
+	int i;
+	while (puntero != NULL) {
+		i = (int) puntero->id;
+		strcpy(stringAux, string_itoa(i));
+		strcat(cadena, stringAux);
+		puntero = puntero->sgte;
+	}
+	return cadena;
+}
+
+void comunicarDeadlock(int socket) {
+	char * cadena = malloc(sizeof(char*));
+	int i = 0;
+	package_int paquete;
+	strcpy(cadena, darLosDeadlock());
+	while (cadena[i] != '\0') {
+		i++;
+	}
+	paquete.packed = (uint32_t) i;
+	send_package_int(paquete, socket_planificador);
+	enviar_cadena(cadena, socket_planificador);
+}
+void actualizarEntradas(Instancia instancia, uint32_t cantidad) {
+	instancia.espacio_usado = instancia.espacio_usado + cantidad;
 }
 
 /*

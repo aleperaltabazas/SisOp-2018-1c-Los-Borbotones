@@ -154,6 +154,8 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 
 	package_int clave_size = recibir_packed(socket_coordinador);
 
+	log_warning(logger, "Tamanio clave %i", clave_size);
+
 	char* clave = recibir_cadena(socket_coordinador, clave_size.packed);
 
 	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
@@ -222,8 +224,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -982,6 +984,8 @@ void compactacion() {
 
 	actualizar_entradas_disponibles(total_de_entradas_ocupadas);
 
+	//confirmar_resultado_de_operacion(114);
+
 }
 
 entradas_node * buscar_entrada_en_posicion(int posicion) {
@@ -1210,6 +1214,8 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 		loggear("CONFIRMO LECTURA");
 	} else if (codigo_exito_operacion == 140) {
 		loggear("CONFIRMO NOMBRE ENVIADO");
+		/*} else if (codigo_exito_operacion == 114) {
+		 loggear("COMPACTACION FINALIZADA");*/
 	} else if (codigo_exito_operacion == 666) {
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}

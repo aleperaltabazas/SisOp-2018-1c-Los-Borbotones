@@ -314,6 +314,18 @@ void eliminar_blocked(t_blocked_list* lista, uint32_t id) {
 	}
 }
 
+bool emptyBlocked(t_blocked_list* lista) {
+	return lista->head == NULL;
+}
+
+void eliminar_blockeados(t_blocked_list * lista) {
+	if (!emptyBlocked(lista)) {
+		t_blocked_node* eliminado = lista->head;
+		lista->head = lista->head->sgte;
+		destruir_nodo_blocked(eliminado);
+	}
+}
+
 uint32_t headBlockedID(t_blocked_list lista) {
 	t_blocked_node* head = lista.head;
 

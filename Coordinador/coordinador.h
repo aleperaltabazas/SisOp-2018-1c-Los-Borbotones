@@ -50,6 +50,8 @@ Instancia inst_error = {
 
 bool flag_free_asignada;
 
+pthread_mutex_t sem_socket_operaciones_coordi;
+
 //Hilos
 
 pthread_t hilo_ESI;
@@ -593,6 +595,15 @@ void bloquearSegunClave(int sockfd);
 	 * 		int sockfd: socket del planificador.
 	 */
 
+Instancia menorEspacio(t_instancia_list lista);
+	/*
+	 * Descripción: devuelve la instancia cuyo atributo "espacio_usado" es el menor de la lista.
+	 * Argumentos:
+	 * 		t_instancia_list lista
+	 */
+
+t_blocked_list listaAuxiliar;
+
 char* getValor(char* recurso);
 
 int do_set(char* valor, char* clave);
@@ -610,10 +621,22 @@ Instancia equitativeLoad(void); //Devuelve el socket que corresponde
 Instancia leastSpaceUsed(void);
 int desempatar (t_instancia_node* a, int b);
 Instancia keyExplicit (char * clave);
-void esperar_confirmacion_de_exito(int un_socket);
+int esperar_confirmacion_de_exito(int un_socket);
 void enviar_instancias_a_compactar();
 
 int instanciasDisponibles(void);
 void mostrar_listas();
+
+t_blocked_list tienenAlgoRetenido (t_blocked_list lista); //Filtra de los esis bloqueados los que si tienen recursos asignados
+bool tieneAlgoRetenido(uint32_t id);
+char * pasarACadena(t_blocked_list lista);
+t_blocked_list estanEnDL (t_blocked_list lista);
+bool puedeLlegarA (t_blocked_node * puntero);
+t_clave_node * duenioDe (char * claveBuscada);
+void liberar(t_blocked_list * lista);
+bool estaEn(t_blocked_list lista, uint32_t id);
+void agregar(t_blocked_list lista, t_blocked_node nodo);
+void comunicarDeadlock(int socket);
+void actualizarEntradas(Instancia instancia, uint32_t cantidad);
 
 #endif /* COORDINADOR_H_ */

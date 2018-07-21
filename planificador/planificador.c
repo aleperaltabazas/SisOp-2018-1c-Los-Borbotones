@@ -1169,6 +1169,13 @@ void status(void) {
 }
 
 void deadlock(void) {
+	package_int paquete;
+	char * ids;
+	paquete.packed = 62;
+	enviar_packed(paquete, socket_coordinador);
+	paquete.packed = recibir_packed(socket_coordinador).packed;
+	strcpy(ids, recibir_cadena(socket_coordinador, paquete.packed));
+	printf("%s", ids);
 }
 
 void listarESI(t_esi_node lista) {
