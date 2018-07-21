@@ -589,6 +589,7 @@ void generar_entrada(parametros_set parametros) {
 			entradas_que_ocupa);
 
 	if (entrada_seleccionada >= 0) {
+		parametros.valor[parametros.tamanio_valor] = '\0';
 		almacenar_valor(entrada_seleccionada, entradas_que_ocupa,
 				parametros.valor);
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
@@ -1159,7 +1160,7 @@ char * leer_clave_valor(entradas_node * puntero) {
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
 	int tamanio_total = tamanio_de_la_clave_a_leer + 1
-			+ tamanio_del_valor_a_leer + 1;
+			+ tamanio_del_valor_a_leer;
 
 	auxiliar = malloc(tamanio_total + 1);
 
