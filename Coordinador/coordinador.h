@@ -639,4 +639,8 @@ void agregar(t_blocked_list lista, t_blocked_node nodo);
 void comunicarDeadlock(int socket);
 void actualizarEntradas(Instancia instancia, uint32_t cantidad);
 
+char* getValor(char* clave);
+char* getInstancia(char* clave);
+char* getBloqueados(char* clave);
+
 #endif /* COORDINADOR_H_ */

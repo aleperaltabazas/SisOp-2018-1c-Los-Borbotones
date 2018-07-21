@@ -22,7 +22,7 @@ void cerrar_cadena(char* cadena) {
 }
 
 bool esDePuntuacion(char caracter) {
-	char caracteresDePuntuacion[] = "!#~$%&/()=: \"\'¿¡|";
+	char caracteresDePuntuacion[] = "!,#~$%&/()=: \"\'¿¡|";
 
 	int i = 0;
 	while (caracteresDePuntuacion[i]) {

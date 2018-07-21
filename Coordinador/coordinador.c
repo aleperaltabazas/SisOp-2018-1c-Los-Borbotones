@@ -873,6 +873,30 @@ uint32_t get_clave_id(char* clave) {
 	return -1;
 }
 
+void conseguirBloqueados(int sockfd) {
+	package_int size_package = recibir_packed(sockfd);
+	char* clave = recibir_cadena(sockfd, size_package.packed);
+
+	char* bloqueados = getBloqueados(clave);
+	loggear(bloqueados);
+
+	char* dup_bloqueados = strdup(bloqueados);
+
+	aviso_con_ID aviso_bloqueados = { .aviso = 71 };
+
+	enviar_aviso(sockfd, aviso_bloqueados);
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(dup_bloqueados, sockfd);
+
+	free(dup_bloqueados);
+
+	if (flag_free_asignada) {
+		free(bloqueados);
+		flag_free_asignada = false;
+	}
+}
+
 void* atender_Planificador(void* un_socket) {
 	socket_planificador = (intptr_t) un_socket;
 
@@ -910,6 +934,10 @@ void* atender_Planificador(void* un_socket) {
 
 		else if (aviso_plani.aviso == 70) {
 			bloquearSegunClave(socket_planificador);
+		}
+
+		else if (aviso_plani.aviso == 71) {
+			conseguirBloqueados(socket_planificador);
 		}
 	}
 
@@ -1056,7 +1084,26 @@ char* getBloqueados(char* recurso) {
 		return "La clave no existe.";
 	}
 
-	return "asd";
+	t_blocked_node* puntero = blocked_ESIs.head;
+
+	char bloqueados[255] = "";
+	int i = 0;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, recurso)) {
+			char* num = string_itoa(puntero->id);
+			bloqueados[i] = num[0];
+			i++;
+			bloqueados[i] = ',';
+			i++;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	char* dup = strdup(bloqueados);
+	flag_free_asignada = true;
+	return dup;
 }
 
 void status(int sockfd) {

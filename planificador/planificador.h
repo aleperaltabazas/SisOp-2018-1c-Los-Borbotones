@@ -97,6 +97,7 @@ void bloquear_clave(void);
 void desbloquear_clave(void);
 void weed(void);
 void finishStatus(void);
+void finishListar(void);
 ESI copiarEsi (t_esi_node * lista, ESI esiACopiar);
 
 //Funciones de servidor

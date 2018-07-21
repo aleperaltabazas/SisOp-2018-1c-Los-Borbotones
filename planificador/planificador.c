@@ -226,6 +226,9 @@ int recibir_respuesta(int server_socket) {
 	else if (aviso_coordi.aviso == 61) {
 		loggear("Finish Status");
 		finishStatus();
+	} else if (aviso_coordi.aviso == 71) {
+		loggear("Finish listar");
+		finishListar();
 	}
 
 	else {
@@ -236,6 +239,14 @@ int recibir_respuesta(int server_socket) {
 	}
 
 	return 1;
+}
+
+void finishListar(void) {
+	package_int size_package = recibir_packed(socket_coordinador);
+	char* bloqueados = recibir_cadena(socket_coordinador, size_package.packed);
+
+	printf("Los ESIs bloqueados esperando la clave son: %s", bloqueados);
+	pthread_mutex_unlock(&sem_console_coordi);
 }
 
 void finishStatus() {
@@ -802,12 +813,30 @@ void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd) {
 
 	enviar_packed(size_package, sockfd);
 	enviar_cadena(clave, sockfd);
+}
 
+void listar_bloqueados(void) {
+	printf("Ingrese la clave: ");
+	char clave[255] = "futbol:messi";
+
+	scanf("%s", clave);
+
+	aviso_con_ID aviso_bloqueados = { .aviso = 71 };
+
+	enviar_aviso(socket_coordinador, aviso_bloqueados);
+
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	package_int size_package = { .packed = clave_size };
+
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(clave, socket_coordinador);
+
+	pthread_mutex_lock(&sem_console_coordi);
 }
 
 void interpretarYEjecutarCodigo(int comando) {
 	int codigoSubsiguiente;
-	char clave[40];
 	switch (comando) {
 	case 1:
 		pausarOContinuar();
@@ -816,14 +845,10 @@ void interpretarYEjecutarCodigo(int comando) {
 		bloquearSegunClave();
 		break;
 	case 3:
-		printf("Introduzca el ESI ID: ");
-		scanf("%i", &codigoSubsiguiente);
-		desbloquear(codigoSubsiguiente);
+		desbloquear_clave();
 		break;
 	case 4:
-		printf("Introduzca la clave: ");
-		scanf("%s", clave);
-		listar(clave);
+		listar_bloqueados();
 		break;
 	case 5:
 		printf("Introduzca el ESI ID: ");
@@ -852,9 +877,6 @@ void interpretarYEjecutarCodigo(int comando) {
 		bloquear_clave();
 		break;
 	case 13:
-		desbloquear_clave();
-		break;
-	case 14:
 		desalojar();
 		break;
 	case 420:
@@ -1028,11 +1050,11 @@ void cerrar_ESIs() {
 
 void listarOpciones() {
 	printf("1: Pausar o reactivar la planificación \n");
-	printf("2.<ESI ID>: Bloquea al ESI elegido \n");
-	printf("3.<ESI ID>: Desbloquea al ESI elegido \n");
-	printf("4.<Recurso>: Lista procesos esperando dicho recurso \n");
-	printf("5.<ESI ID>: Mata al ESI elegido \n");
-	printf("6.<ESI ID>: Brinda el estado del ESI elegido \n");
+	printf("2: Bloquea un ESI detrás de una clave \n");
+	printf("3: Desbloquea una clave \n");
+	printf("4: Lista los procesos esperando un recurso \n");
+	printf("5: Mata al ESI elegido \n");
+	printf("6: Brinda el estado del ESI elegido \n");
 	printf("7: Lista los ESI en deadlock \n");
 	printf("8: Termina el proceso \n");
 	printf("9: Muestra el clock interno del planificador \n");
@@ -1040,8 +1062,7 @@ void listarOpciones() {
 	printf(
 			"11: Muestra datos de la ejecución (ESI ejecutando, ESIs listos, bloqueados y terminados \n");
 	printf("12: Bloquea una clave \n");
-	printf("13: Desbloquea una clave \n");
-	printf("14: Desaloja al ESI actual \n");
+	printf("13: Desaloja al ESI actual \n");
 	printf("Introduzca la opcion deseada \n");
 
 }
