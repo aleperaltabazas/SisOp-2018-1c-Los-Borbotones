@@ -21,6 +21,21 @@ void cerrar_cadena(char* cadena) {
 	cadena[i] = '\0';
 }
 
+bool esDePuntuacion(char caracter) {
+	char caracteresDePuntuacion[] = "!#~$%&/()=: \"\'¿¡|";
+
+	int i = 0;
+	while (caracteresDePuntuacion[i]) {
+		if (caracter == caracteresDePuntuacion[i]) {
+			return true;
+		}
+
+		i++;
+	}
+
+	return false;
+}
+
 bool esParseable(char caracter) {
-	return isalnum(caracter) || caracter == ':' || caracter == '/';
+	return isalnum(caracter) || esDePuntuacion(caracter);
 }

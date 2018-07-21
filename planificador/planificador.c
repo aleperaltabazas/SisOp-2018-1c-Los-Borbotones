@@ -199,6 +199,7 @@ void* atender_coordinador(void* nada) {
 }
 
 int recibir_respuesta(int server_socket) {
+
 	aviso_con_ID aviso_coordi = recibir_aviso(server_socket);
 
 	log_debug(logger, "%i", aviso_coordi.aviso);
@@ -222,6 +223,11 @@ int recibir_respuesta(int server_socket) {
 		}
 	}
 
+	else if (aviso_coordi.aviso == 61) {
+		loggear("Finish Status");
+		finishStatus();
+	}
+
 	else {
 		avisar_cierre(socket_coordinador);
 		log_error(logger, "%s", strerror(errno));
@@ -230,6 +236,39 @@ int recibir_respuesta(int server_socket) {
 	}
 
 	return 1;
+}
+
+void finishStatus() {
+	package_int valor_size = recibir_packed(socket_coordinador);
+	char* valor = recibir_cadena(socket_coordinador, valor_size.packed);
+	log_debug(logger, "Valor: %s", valor);
+
+	package_int instancia_size = recibir_packed(socket_coordinador);
+	char* instancia = recibir_cadena(socket_coordinador, instancia_size.packed);
+	log_debug(logger, "Instancia: %s", instancia);
+
+	package_int blockedSize = recibir_packed(socket_coordinador);
+	char* blockeds = recibir_cadena(socket_coordinador, blockedSize.packed);
+	log_debug(logger, "Bloqueados: %s", blockeds);
+
+	if (mismoString(valor, "La clave no existe.")) {
+		printf("La clave no existe \n.");
+		free(valor);
+		free(instancia);
+		free(blockeds);
+		return;
+	}
+
+	printf("Valor: %s \n", valor);
+	printf("Instancia: %s \n", instancia);
+	printf("Bloqueados esperando: %s \n", blockeds);
+
+	free(valor);
+	free(instancia);
+	free(blockeds);
+
+	pthread_mutex_unlock(&sem_console_coordi);
+	loggear("Hice signal");
 }
 
 void iniciar_semaforos() {
@@ -243,6 +282,7 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_ESI_ID, NULL);
 	pthread_mutex_init(&sem_socket_coordi, NULL);
 	pthread_mutex_init(&sem_server_socket, NULL);
+	pthread_mutex_init(&sem_console_coordi, NULL);
 
 	pthread_mutex_lock(&sem_socket_coordi);
 }
@@ -1045,16 +1085,15 @@ void status(void) {
 
 	enviar_aviso(socket_coordinador, aviso_status);
 
-	uint32_t size = strlen(recurso + 1);
+	uint32_t size = strlen(recurso) + 1;
 	package_int size_package = { .packed = size };
 
 	enviar_packed(size_package, socket_coordinador);
 	enviar_cadena(recurso, socket_coordinador);
 
-	package_int recv_size = recibir_packed(socket_coordinador);
-	char* status = recibir_cadena(socket_coordinador, recv_size.packed);
-
-	printf("%s \n", status);
+	pthread_mutex_lock(&sem_console_coordi);
+	loggear("Hice wait");
+	return;
 }
 
 void deadlock(void) {

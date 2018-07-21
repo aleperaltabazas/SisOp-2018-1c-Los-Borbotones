@@ -48,6 +48,8 @@ Instancia inst_error = {
 		.nombre = "ERROR DE INSTANCIA"
 };
 
+bool flag_free_asignada;
+
 //Hilos
 
 pthread_t hilo_ESI;
@@ -565,6 +567,26 @@ void status(int sockfd);
 	 * Argumentos:
 	 * 		int sockfd: socket por el cual comunicar.
 	 */
+
+void actualizarClave(char* clave, char* valor);
+	/*
+	 * Descripción: actualiza la clave con el valor en la estructura de claves bloqueadas. Si no
+	 * 		encuentra la clave, no hace nada.
+	 * Argumentos:
+	 * 		char* clave: la clave a actualizar.
+	 * 		char* valor: el valor a actualizar en la clave.
+	 */
+
+char* getInstancia(char* recurso);
+	/*
+	 * Descripción: devuelve la instancia que posee el recurso. Si el recurso no existe, devuelve
+	 * 		un string avisando. Si ninguna instancia tiene el recurso, devuelve la instancia que le
+	 * 		tocaría tener el recurso.
+	 * Argumentos:
+	 * 		char* recurso: recurso a buscar.
+	 */
+
+char* getValor(char* recurso);
 
 int do_set(char* valor, char* clave);
 

@@ -486,6 +486,22 @@ int settear(char* valor, char* clave, uint32_t id) {
 	return -3;
 }
 
+void actualizarClave(char* clave, char* valor) {
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		log_debug(logger, "Clave en la lista: %s", puntero->clave);
+		log_debug(logger, "Mi clave: %s", clave);
+		if (mismoString(puntero->clave, clave)) {
+			puntero->valor = valor;
+
+			return;
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
 int do_set(char* valor, char* clave) {
 	uint32_t valor_size = (uint32_t) strlen(valor);
 	uint32_t clave_size = (uint32_t) strlen(clave);
@@ -501,6 +517,7 @@ int do_set(char* valor, char* clave) {
 		return -1;
 	}
 	actualizarInstancia(instancia, clave);
+	actualizarClave(clave, valor);
 
 	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
 			+ valor_set.tamanio_valor;
@@ -864,47 +881,193 @@ void* atender_Planificador(void* un_socket) {
 	return NULL;
 }
 
+bool esta(char* clave, t_clave_list claves) {
+	t_clave_node* puntero = claves.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, clave)) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 char* getValor(char* recurso) {
 	if (!existe(recurso)) {
 		return "La clave no existe.";
 	}
+
+	t_clave_node* puntero = claves_bloqueadas.head;
+
+	while (puntero != NULL) {
+		log_debug(logger, "Clave: %s", puntero->clave);
+		log_debug(logger, "Valor: %s", puntero->valor);
+
+		if (mismoString(puntero->clave, recurso)) {
+			if (puntero->valor == NULL) {
+				return "No tiene valor.";
+			}
+
+			return puntero->valor;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return "No tiene valor asignado.";
+}
+
+Instancia correspondiente(t_instancia_list lista, char* clave) {
+	t_instancia_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (leCorresponde(puntero->instancia, clave[0])) {
+			return puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return inst_error;
+}
+
+bool tieneMenosEspacio(Instancia unaInstancia, Instancia otraInstancia) {
+	return unaInstancia.espacio_usado < otraInstancia.espacio_usado;
+}
+
+Instancia menorEspacio(t_instancia_list lista) {
+	t_instancia_node* puntero = lista.head;
+	Instancia instancia = headInstancias(lista);
+
+	while (puntero != NULL) {
+		if (tieneMenosEspacio(puntero->instancia, instancia)) {
+			instancia = puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return instancia;
+}
+
+char* getNombrePotencial(char* recurso) {
+	Instancia ret_inst;
+	switch (ALGORITMO_DISTRIBUCION) {
+	case EL:
+		ret_inst = headInstancias(instancias);
+		break;
+	case KE:
+		ret_inst = correspondiente(instancias, recurso);
+		break;
+	case LSU:
+		ret_inst = menorEspacio(instancias);
+		break;
+	default:
+		ret_inst = inst_error;
+		salir_con_error("Fallo en el algoritmo.", 0);
+		break;
+	}
+
+	if (mismoString(ret_inst.nombre, inst_error.nombre)) {
+		salir_con_error("Falló la asignación potencial de clave", 0);
+	}
+
+	return ret_inst.nombre;
 }
 
 char* getInstancia(char* recurso) {
-	return NULL;
-}
+	char posible[255] = "(posible asignada en la proxima) ";
 
-char* getBloqueados(char* recurso) {
-	return NULL;
-}
-
-char* armarStatus(char* recurso) {
 	if (!existe(recurso)) {
 		return "La clave no existe.";
 	}
 
-	char* lineaValor = getValor(recurso);
-	char* lineaInstancia = getInstancia(recurso);
-	char* lineaBloqueados = getBloqueados(recurso);
+	if (!estaAsignada(recurso)) {
+		loggear("No está asignada.");
+		char* nombre = getNombrePotencial(recurso);
 
-	char* status = malloc(
-			strlen(lineaValor) + strlen(lineaInstancia)
-					+ strlen(lineaBloqueados) + 1);
+		strcat(posible, nombre);
 
-	return status;
+		char* ret_string = strdup(posible);
+		//Esto hace malloc y hay que hacerle free después
+
+		flag_free_asignada = true;
+		return ret_string;
+	}
+
+	Instancia asignada = elQueLaTiene(recurso);
+	return asignada.nombre;
+}
+
+char* getBloqueados(char* recurso) {
+	if (!existe(recurso)) {
+		return "La clave no existe.";
+	}
+
+	return "asd";
 }
 
 void status(int sockfd) {
 	package_int string_size = recibir_packed(sockfd);
 	char* recurso = recibir_cadena(sockfd, string_size.packed);
 
-	char* status_return = armarStatus(recurso);
+	log_debug(logger, "Recurso: %s", recurso);
 
-	uint32_t size = (uint32_t) strlen(status_return);
-	package_int size_package = { .packed = size };
+	char* valor = getValor(recurso);
+	char* instancia = getInstancia(recurso);
+	char* bloqueados = getBloqueados(recurso);
 
-	enviar_packed(size_package, sockfd);
-	enviar_cadena(status_return, sockfd);
+	char* dup_valor = strdup(valor);
+	char* dup_instancia = strdup(instancia);
+	char* dup_bloqueados = strdup(bloqueados);
+
+	log_debug(logger, "Valor: %s", dup_valor);
+	log_debug(logger, "Instancia: %s", dup_instancia);
+	log_debug(logger, "Bloqueados: %s", dup_bloqueados);
+
+	uint32_t valor_length = (uint32_t) strlen(dup_valor) + 1;
+	log_debug(logger, "Valor length: %i", valor_length);
+	uint32_t instancia_length = (uint32_t) strlen(dup_instancia) + 1;
+	log_debug(logger, "Instancia length: %i", instancia_length);
+	uint32_t bloqueados_length = (uint32_t) strlen(dup_bloqueados) + 1;
+	log_debug(logger, "Bloqueados length: %i", bloqueados_length);
+
+	package_int valor_size = { .packed = valor_length };
+
+	package_int instancia_size = { .packed = instancia_length };
+
+	package_int bloqueados_size = { .packed = bloqueados_length };
+
+	aviso_con_ID aviso_status = { .aviso = 61 };
+
+	enviar_aviso(sockfd, aviso_status);
+
+	enviar_packed(valor_size, sockfd);
+	enviar_cadena(dup_valor, sockfd);
+	loggear("Envié el valor.");
+
+	sleep(1);
+	enviar_packed(instancia_size, sockfd);
+	enviar_cadena(dup_instancia, sockfd);
+	loggear("Envié la instancia.");
+
+	log_debug(logger, "dup_instancia: %s", dup_instancia);
+
+	sleep(1);
+	enviar_packed(bloqueados_size, sockfd);
+	enviar_cadena(dup_bloqueados, sockfd);
+	loggear("Envié los bloqueados");
+
+	free(dup_valor);
+	free(dup_instancia);
+	free(dup_bloqueados);
+	if (flag_free_asignada) {
+		free(instancia);
+		flag_free_asignada = false;
+	}
 }
 
 void desbloquear_clave(int socket_cliente) {

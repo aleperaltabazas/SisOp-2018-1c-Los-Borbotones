@@ -69,6 +69,7 @@ pthread_mutex_t sem_ejecutando;
 pthread_mutex_t sem_new_ESIs;
 pthread_mutex_t sem_socket_coordi;
 pthread_mutex_t sem_server_socket;
+pthread_mutex_t sem_console_coordi;
 
 //Hilos
 
@@ -95,6 +96,7 @@ void dame_datos(void);
 void bloquear_clave(void);
 void desbloquear_clave(void);
 void weed(void);
+void finishStatus(void);
 ESI copiarEsi (t_esi_node * lista, ESI esiACopiar);
 
 //Funciones de servidor
