@@ -565,5 +565,8 @@ void enviar_instancias_a_compactar();
 
 int instanciasDisponibles(void);
 void mostrar_listas();
+Instancia elQueLaTiene(char* clave);
+
+pthread_mutex_t sem_socket_operaciones_coordi;
 
 #endif /* COORDINADOR_H_ */

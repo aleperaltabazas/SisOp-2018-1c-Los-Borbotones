@@ -43,6 +43,9 @@ void iniciar(char** argv) {
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
 	instancia_id = 0;
+
+	pthread_mutex_init(&sem_socket_operaciones_coordi, NULL);
+
 }
 
 void startSigHandlers(void) {
@@ -437,8 +440,6 @@ int store(int socket_cliente, uint32_t id) {
 
 	}
 
-	sleep(2);
-
 	log_debug(logger, "%i", response.packed);
 
 	return 20;
@@ -508,6 +509,8 @@ int do_set(char* valor, char* clave) {
 	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
 			valor_size, tamanio_parametros_set);
 
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(tamanio_parametros_set,
 			(void*) (intptr_t) instancia.sockfd, 11);
 	enviar_valores_set(tamanio_parametros_set,
@@ -522,6 +525,8 @@ int do_set(char* valor, char* clave) {
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
+
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
@@ -542,8 +547,44 @@ void actualizarInstancia(Instancia instancia, char* clave) {
 	}
 }
 
+Instancia elQueLaTiene(char* clave) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (tieneLaClave(puntero->instancia, clave)) {
+			t_instancia_node puntero_de_la_entrada = *puntero;
+			Instancia instancia_que_la_tiene = puntero_de_la_entrada.instancia;
+			return instancia_que_la_tiene;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return inst_error;
+}
+
+bool estaAsignada(char * clave){
+	t_instancia_node* puntero = instancias.head;
+	while (puntero != NULL) {
+
+		Instancia una_instancia = puntero->instancia;
+		if(tieneLaClave(una_instancia, clave)){
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 Instancia getInstanciaSet(char* clave) {
 	Instancia ret_inst;
+
+	if (estaAsignada(clave)) {
+		ret_inst = elQueLaTiene(clave);
+		return ret_inst;
+	}
 
 	switch (ALGORITMO_DISTRIBUCION) {
 	case EL:
@@ -678,7 +719,6 @@ void mostrar_listas(){
 		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
 		puntero_disponibles = puntero_disponibles->sgte;
 	}
-	sleep(5);
 }
 
 bool tieneLaClave(Instancia unaInstancia, char* clave) {
@@ -728,10 +768,15 @@ int hacer_store(char* clave) {
 		return -1;
 	}
 
+	log_trace(logger, "La instancia %s tiene la clave %s", instancia.nombre, clave);
+
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 12);
-	sleep(1);
 
 	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+
+	log_warning(logger, "Clave size %i", clave_size);
 
 	package_int package_size = { .packed = clave_size };
 
@@ -743,6 +788,8 @@ int hacer_store(char* clave) {
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
+
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (status == 0) {
 		log_warning(logger, "Falló el store.");
@@ -1110,6 +1157,8 @@ bool murio(char* name, int sockfd) {
 }
 
 bool ping(Instancia instancia) {
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 100;
 	orden.tamanio_a_enviar = 0;
@@ -1132,6 +1181,8 @@ bool ping(Instancia instancia) {
 		instancia.disponible = false;
 		free(buffer);
 
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 		return false;
 	}
 
@@ -1142,11 +1193,14 @@ bool ping(Instancia instancia) {
 		instancia.disponible = false;
 		free(buffer);
 
+		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 		return false;
 	}
 
-	loggear("Ping ok, la instancia sigue en pie.");
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
+	loggear("Ping ok, la instancia sigue en pie.");
 	free(buffer);
 
 	return true;
@@ -1180,6 +1234,8 @@ void revivir(char* name, int sockfd) {
 void enviar_claves(t_clave_list claves, int sockfd) {
 	t_clave_node* puntero = claves.head;
 
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 50);
 
 	while (puntero != NULL) {
@@ -1209,10 +1265,11 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
 					strerror(errno));
 			close(sockfd);
+			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 			return;
 		}
 	}
-
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 }
 
 t_clave_list get_claves(char* name) {
@@ -1288,12 +1345,14 @@ void log_op(operacion op) {
 void asignar_entradas(int sockfd) {
 	log_trace(logger, "Cant entradas: %d, Tamanio_entrada: %d",
 			CANTIDAD_ENTRADAS, TAMANIO_ENTRADAS);
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) (intptr_t) sockfd,
 			TAMANIO_ENTRADAS);
 
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 }
 
@@ -1364,18 +1423,19 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 		log_debug(logger, "Enviando instancia a compactar...");
-		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd,
-				14);
+		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd, 14);
 		nodo_aux = nodo_aux->sgte;
 	}
 }
 
 void send_orden_no_exit(int op_code, int sockfd) {
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, op_code);
 
 	log_debug(logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 }
 
@@ -1386,7 +1446,9 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
 	loggear("Enviando parametros a la instancia");
 
-	send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+	int res = send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+
+	log_trace(logger, "Enviado: %i", res);
 
 	loggear("Parametros enviados!");
 

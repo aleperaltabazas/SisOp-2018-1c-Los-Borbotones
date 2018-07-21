@@ -779,7 +779,6 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 	pthread_mutex_lock(&sem_socket_coordi);
 
 	enviar_packed(size_package, server_socket);
-	sleep(2);
 	enviar_cadena(clave, server_socket);
 
 	pthread_mutex_lock(&sem_socket_coordi);
