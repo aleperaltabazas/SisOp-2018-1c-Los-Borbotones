@@ -551,6 +551,15 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 			entradas_que_ocupa, parametros.valor);
 
 	confirmar_resultado_de_operacion(111);
+
+	package_int cantidad_entradas_ocupadas;
+
+	cantidad_entradas_ocupadas.packed = (uint32_t) obtener_cantidad_de_entradas_ocupadas();
+
+	log_debug(logger, "Enviando cantidad de entradas ocupadas... %i", cantidad_entradas_ocupadas.packed);
+
+	enviar_packed(cantidad_entradas_ocupadas, socket_coordinador);
+
 }
 
 void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave) {
@@ -587,6 +596,15 @@ void generar_entrada(parametros_set parametros) {
 				parametros.tamanio_clave);
 
 		confirmar_resultado_de_operacion(111);
+
+		package_int cantidad_entradas_ocupadas;
+
+		cantidad_entradas_ocupadas.packed = (uint32_t) obtener_cantidad_de_entradas_ocupadas();
+
+		log_debug(logger, "Enviando cantidad de entradas ocupadas... %i", cantidad_entradas_ocupadas.packed);
+
+		enviar_packed(cantidad_entradas_ocupadas, socket_coordinador);
+
 		return;
 	}
 

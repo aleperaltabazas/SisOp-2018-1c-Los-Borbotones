@@ -545,6 +545,16 @@ int do_set(char* valor, char* clave) {
 
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
 
+	package_int cantidad_entradas_ocupadas_instancia;
+
+	cantidad_entradas_ocupadas_instancia = recibir_packed(instancia.sockfd);
+
+	log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i", instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
+
+	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+
+	actualizarEntradas(instancia, cantidad_entradas_ocupadas_instancia.packed);
+
 	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 15);
 
 	log_debug(logger, "Esperando confirmacion...");
@@ -552,12 +562,6 @@ int do_set(char* valor, char* clave) {
 	esperar_confirmacion_de_exito((int) instancia.sockfd);
 
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-
-	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
-
-	package_int paquete;
-	paquete.packed = recv_packed_no_exit(instancia.sockfd).packed;
-	actualizarEntradas(instancia, paquete.packed);
 
 	return 1;
 }
@@ -1836,8 +1840,9 @@ void comunicarDeadlock(int socket) {
 	send_package_int(paquete, socket_planificador);
 	enviar_cadena(cadena, socket_planificador);
 }
+
 void actualizarEntradas(Instancia instancia, uint32_t cantidad) {
-	instancia.espacio_usado = instancia.espacio_usado + cantidad;
+	instancia.espacio_usado = cantidad;
 }
 
 /*
