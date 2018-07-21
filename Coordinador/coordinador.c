@@ -1014,8 +1014,6 @@ void status(int sockfd) {
 	package_int string_size = recibir_packed(sockfd);
 	char* recurso = recibir_cadena(sockfd, string_size.packed);
 
-	log_debug(logger, "Recurso: %s", recurso);
-
 	char* valor = getValor(recurso);
 	char* instancia = getInstancia(recurso);
 	char* bloqueados = getBloqueados(recurso);
@@ -1029,11 +1027,8 @@ void status(int sockfd) {
 	log_debug(logger, "Bloqueados: %s", dup_bloqueados);
 
 	uint32_t valor_length = (uint32_t) strlen(dup_valor) + 1;
-	log_debug(logger, "Valor length: %i", valor_length);
 	uint32_t instancia_length = (uint32_t) strlen(dup_instancia) + 1;
-	log_debug(logger, "Instancia length: %i", instancia_length);
 	uint32_t bloqueados_length = (uint32_t) strlen(dup_bloqueados) + 1;
-	log_debug(logger, "Bloqueados length: %i", bloqueados_length);
 
 	package_int valor_size = { .packed = valor_length };
 
@@ -1047,19 +1042,14 @@ void status(int sockfd) {
 
 	enviar_packed(valor_size, sockfd);
 	enviar_cadena(dup_valor, sockfd);
-	loggear("Envié el valor.");
 
 	sleep(1);
 	enviar_packed(instancia_size, sockfd);
 	enviar_cadena(dup_instancia, sockfd);
-	loggear("Envié la instancia.");
-
-	log_debug(logger, "dup_instancia: %s", dup_instancia);
 
 	sleep(1);
 	enviar_packed(bloqueados_size, sockfd);
 	enviar_cadena(dup_bloqueados, sockfd);
-	loggear("Envié los bloqueados");
 
 	free(dup_valor);
 	free(dup_instancia);

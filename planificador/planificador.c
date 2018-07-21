@@ -285,6 +285,7 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_console_coordi, NULL);
 
 	pthread_mutex_lock(&sem_socket_coordi);
+	pthread_mutex_lock(&sem_console_coordi);
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente,
