@@ -9,6 +9,52 @@
 
 int listening_socket;
 
+void testKE(void) {
+	ALGORITMO_DISTRIBUCION = KE;
+
+	Instancia inst1 = { .disponible = true };
+	strcpy(inst1.nombre, "Instancia 1");
+	Instancia inst2 = { .disponible = true };
+	strcpy(inst2.nombre, "Instancia 2");
+	Instancia inst3 = { .disponible = true };
+	strcpy(inst3.nombre, "Instancia 3");
+	Instancia inst4 = { .disponible = false };
+	strcpy(inst4.nombre, "Instancia 4");
+
+	agregar_instancia(&instancias, inst1, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	agregar_instancia(&instancias, inst2, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	Instancia nextInst = getInstanciaSet("futbol:messi");
+	log_debug(logger, "Instancia para futbol:messi: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("pokemon:ralts");
+	log_debug(logger, "Instancia para pokemon:rakts: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("tutor:lean");
+	log_debug(logger, "Instancia para tutor:lean: %s", nextInst.nombre);
+
+	agregar_instancia(&instancias, inst3, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	nextInst = getInstanciaSet("zelda:link");
+	log_debug(logger, "Instancia para zelda:link: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("comic:flash");
+	log_debug(logger, "Instancia para comic:flash: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("opera:laBoheme");
+	log_debug(logger, "Instancia para opera:laBoheme: %s", nextInst.nombre);
+
+	exit(0);
+
+}
+
 void testEL(void) {
 	ALGORITMO_DISTRIBUCION = EL;
 	Instancia inst1;
@@ -52,7 +98,7 @@ void testEL(void) {
 int main(int argc, char** argv) {
 	iniciar(argv);
 
-	testEL();
+	testKE();
 
 	coordinar();
 
@@ -728,23 +774,16 @@ Instancia leastSpaceUsed(void) {
 }
 
 Instancia keyExplicit(char* clave) {
-	char firstChar = tolower(clave[0]);
-
-	if (!isalnum(firstChar)) {
+	if (!isalnum(clave[0])) {
 		return inst_error;
 	}
+
+	char firstChar = tolower(clave[0]);
 
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero != NULL) {
 		if (leCorresponde(puntero->instancia, firstChar)) {
-			if (!ping(puntero->instancia)) {
-				desconectar(puntero->instancia);
-				redistribuir_claves();
-
-				return inst_error;
-			}
-
 			return puntero->instancia;
 		}
 
@@ -1414,6 +1453,7 @@ void levantar_instancia(char* name, int sockfd) {
 void redistribuir_claves(void) {
 	if (ALGORITMO_DISTRIBUCION == KE) {
 		int disponibles = instanciasDisponibles();
+		log_debug(logger, "Instancias disponibles: %i", disponibles);
 
 		int contador = 0;
 
@@ -1461,28 +1501,20 @@ void asignarKeyMinMax(Instancia* instancia, int posicion,
 	int asignaciones = redondearDivision((double) cantidadDeLetras,
 			(double) totalDeDisponibles);
 
-	log_debug(logger, "Cantidad de letras: %i", cantidadDeLetras);
-	log_debug(logger, "Número de asignaciones: %i", asignaciones);
-
 	int offset = posicion * asignaciones;
 
-	log_debug(logger, "Offset: %i", offset);
-
 	instancia->keyMin = abecedario[offset];
-	log_debug(logger, "Letra mínima: %c", abecedario[offset]);
 
 	if (offset + asignaciones >= cantidadDeLetras) {
 		instancia->keyMax = 'z';
-		log_debug(logger, "Letra máxima: z");
+		return;
 	} else {
 		instancia->keyMax = abecedario[offset + asignaciones - 1];
-		log_debug(logger, "Letra máxima: %c",
-				abecedario[offset + asignaciones - 1]);
 	}
 
 	if (posicion == totalDeDisponibles - 1) {
 		instancia->keyMax = 'z';
-		log_debug(logger, "Letra máxima: z");
+		return;
 	}
 }
 
