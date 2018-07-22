@@ -94,10 +94,10 @@ void destruir_nodo_instancia(t_instancia_node* nodo) {
 	free(nodo);
 }
 
-void agregar_instancia(t_instancia_list* lista, Instancia instancia) {
+void agregar_instancia(t_instancia_list* lista, Instancia instancia, int index) {
 
 	t_instancia_node* nodo = crear_nodo_instancia(instancia);
-
+	nodo->index = index;
 	if (lista->head == NULL) {
 		lista->head = nodo;
 	} else {
@@ -108,6 +108,7 @@ void agregar_instancia(t_instancia_list* lista, Instancia instancia) {
 
 		puntero->sgte = nodo;
 	}
+
 
 }
 

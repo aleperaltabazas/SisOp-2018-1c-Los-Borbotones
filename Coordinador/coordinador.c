@@ -9,8 +9,50 @@
 
 int listening_socket;
 
+void testEL(void) {
+	ALGORITMO_DISTRIBUCION = EL;
+	Instancia inst1;
+	strcpy(inst1.nombre, "Instancia 1");
+	Instancia inst2;
+	strcpy(inst2.nombre, "Instancia 2");
+	Instancia inst3;
+	strcpy(inst3.nombre, "Instancia 3");
+
+	agregar_instancia(&instancias, inst1, cantidad_instancias + 1);
+	cantidad_instancias++;
+	agregar_instancia(&instancias, inst2, cantidad_instancias + 1);
+	cantidad_instancias++;
+
+	Instancia nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	agregar_instancia(&instancias, inst3, cantidad_instancias + 1);
+	cantidad_instancias++;
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	loggear("asd");
+
+	exit(0);
+}
+
 int main(int argc, char** argv) {
 	iniciar(argv);
+
+	testEL();
 
 	coordinar();
 
@@ -43,7 +85,14 @@ void iniciar(char** argv) {
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
 	cantidad_instancias = 0;
+	pointer = 1;
 	instancia_id = 0;
+
+}
+
+void iniciar_hilos(void) {
+	pthread_mutex_init(&sem_socket_operaciones_coordi, NULL);
+	pthread_mutex_init(&sem_instancias, NULL);
 }
 
 void startSigHandlers(void) {
@@ -623,10 +672,6 @@ bool estaAsignada(char* clave) {
 Instancia getInstanciaSet(char* clave) {
 	Instancia ret_inst;
 
-	if (estaAsignada(clave)) {
-		return elQueLaTiene(clave);
-	}
-
 	switch (ALGORITMO_DISTRIBUCION) {
 	case EL:
 		ret_inst = equitativeLoad();
@@ -647,31 +692,31 @@ Instancia getInstanciaSet(char* clave) {
 }
 
 void avanzar_puntero(void) {
-	Instancia inst = headInstancias(instancias);
-	eliminar_instancia(&instancias, inst);
-	agregar_instancia(&instancias, inst);
+	pointer++;
+
+	pthread_mutex_lock(&sem_instancias);
+	if (pointer > cantidad_instancias) {
+		pointer = 1;
+	}
+	pthread_mutex_unlock(&sem_instancias);
 }
 
 Instancia equitativeLoad(void) {
 	if (instancias.head == NULL) {
 		log_warning(logger,
 				"No hay ninguna instancia disponible para poder despachar el pedido.");
-	}
-
-	if (instanciasDisponibles() == 0) {
-		log_warning(logger,
-				"No hay ninguna instancia disponible para poder despachar el pedido.");
 		return inst_error;
 	}
 
-	Instancia ret_inst = headInstancias(instancias);
-	if (!ping(ret_inst)) {
-		log_debug(logger, "Instancia actual: %s", ret_inst.nombre);
-		desconectar(ret_inst);
-		avanzar_puntero();
-		Instancia next_inst = headInstancias(instancias);
-		log_debug(logger, "Proxima instancia: %s", next_inst.nombre);
-		equitativeLoad();
+	Instancia ret_inst;
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (puntero->index == pointer) {
+			ret_inst = puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
 	}
 
 	avanzar_puntero();
@@ -1355,7 +1400,12 @@ void levantar_instancia(char* name, int sockfd) {
 	strcpy(instancia.nombre, name);
 
 	loggear("Instancia agregada correctamente");
-	agregar_instancia(&instancias, instancia);
+
+	pthread_mutex_lock(&sem_instancias);
+	agregar_instancia(&instancias, instancia, cantidad_instancias + 1);
+
+	cantidad_instancias++;
+	pthread_mutex_unlock(&sem_instancias);
 
 	redistribuir_claves();
 

@@ -77,7 +77,7 @@ void destruir_nodo_instancia(t_instancia_node* nodo);
 	 * 		t_instancia_node* nodo: el nodo a liberar.
 	 */
 
-void agregar_instancia(t_instancia_list* lista, Instancia instancia);
+void agregar_instancia(t_instancia_list* lista, Instancia instancia, int index);
 	/*
 	 * Descripción: agrega una instancia a la una lista de instancias.
 	 * Argumentos:

@@ -35,7 +35,7 @@ t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 
 t_instancia_list instancias;
-t_instancia_node* pointer;
+int pointer;
 
 t_blocked_list blocked_ESIs;
 
@@ -51,6 +51,8 @@ Instancia inst_error = {
 bool flag_free_asignada;
 
 pthread_mutex_t sem_socket_operaciones_coordi;
+
+pthread_mutex_t sem_instancias;
 
 int cantidad_instancias;
 
