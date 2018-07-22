@@ -41,16 +41,17 @@ aviso_con_ID aviso_desbloqueo = {
 		.aviso = 27
 };
 
-bool consola_planificacion = true;
-bool ejecutando = false;
-
 ESI executing_ESI;
 
 ESI ESI_error = {
 		.id = -2
 };
+
 bool seguir_ejecucion = true;
+bool ejecutando = false;
+bool consola_planificacion = true;
 bool display = true;
+bool show_debug_commands = false;
 
 t_esi_list new_ESIs;
 t_esi_list blocked_ESIs;
@@ -83,7 +84,6 @@ void listarOpciones(void);
 void pausarOContinuar(void);
 void bloquear(int codigo);
 void desbloquear(int codigo);
-void listar(char * clave);
 void kill_esi(int codigo);
 void status(void);
 void deadlock(void);
@@ -98,7 +98,12 @@ void desbloquear_clave(void);
 void weed(void);
 void finishStatus(void);
 void finishListar(void);
-ESI copiarEsi (t_esi_node * lista, ESI esiACopiar);
+void bloquearSegunClave(void);
+void listar_bloqueados(void);
+void matar(void);
+void datos_ESI(void);
+void show_debug(void);
+void show(void);
 
 //Funciones de servidor
 
@@ -441,6 +446,13 @@ void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd);
 	 * 		ESI esi: ESI a bloquear.
 	 * 		char* clave: clave por la cual bloquear al ESI.
 	 * 		int sockfd: socket del coordinador.
+	 */
+
+float response_ratio(ESI esi);
+	/*
+	 * Descripción: devuelve el RR (response ratio) de un ESI.
+	 * Argumentos:
+	 * 		ESI esi
 	 */
 
 #endif /* PLANIFICADOR_H_ */

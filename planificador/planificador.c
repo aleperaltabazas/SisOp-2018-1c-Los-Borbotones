@@ -707,10 +707,7 @@ bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI) {
 }
 
 bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI) {
-	int primer_RR = 1 + wait_time(primer_ESI) / estimated_time(primer_ESI);
-	int segundo_RR = 1 + wait_time(segundo_ESI) / estimated_time(segundo_ESI);
-
-	return segundo_RR > primer_RR;
+	return response_ratio(primer_ESI) > response_ratio(segundo_ESI);
 }
 
 int wait_time(ESI esi) {
@@ -729,15 +726,22 @@ float estimado(ESI esi) {
 	return ((float) esi.rafaga_estimada) * (1 - (ALFA / 100));
 }
 
-/*	=====================
- *	===== CONSOLITA =====
- *	=====================
- */
+float response_ratio(ESI esi) {
+	return 1 + wait_time(esi) / estimated_time(esi);
+}
 
-float recibirCodigo() {
-	int code = 0;
-	scanf("%i", &code);
-	return code;
+ESI findByIDIn(uint32_t id, t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			return puntero->esi;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return ESI_error;
 }
 
 bool existe(uint32_t id) {
@@ -757,196 +761,7 @@ bool existe(uint32_t id) {
 	}
 
 	return false;
-}
 
-void bloquearSegunClave(void) {
-	int id = 0;
-	printf("Ingrese el ID: ");
-	scanf("%i", &id);
-
-	if (!existe(id)) {
-		printf("Ese ESI no se encuentra en el sistema.");
-		return;
-	}
-
-	ESI finished = get_ESI((uint32_t) id, finished_ESIs);
-
-	if (finished.id != ESI_error.id) {
-		printf("El ESI ya terminó.");
-		return;
-	}
-
-	ESI blocked = get_ESI((uint32_t) id, blocked_ESIs);
-
-	if (blocked.id != ESI_error.id) {
-		printf("El ESI ya está bloqueado.");
-		return;
-	}
-
-	ESI esi = get_ESI((uint32_t) id, new_ESIs);
-	pthread_mutex_lock(&sem_ESIs_size);
-	eliminar_ESI(&new_ESIs, esi);
-
-	ESIs_size--;
-	pthread_mutex_unlock(&sem_ESIs_size);
-	agregar_ESI(&blocked_ESIs, esi);
-
-	char clave[40] = "futbol:messi";
-	printf("Ingrese la clave: ");
-	scanf("%s", clave);
-
-	log_warning(logger, "El ESI %i fue bloqueado por la clave %s", id, clave);
-
-	avisarBloqueoESIPorClave(esi, clave, socket_coordinador);
-}
-
-void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd) {
-	aviso_con_ID aviso_bloqueo = { .aviso = 70 };
-
-	enviar_aviso(sockfd, aviso_bloqueo);
-
-	package_int id_package = { .packed = esi.id };
-
-	enviar_packed(id_package, sockfd);
-
-	package_int size_package = { .packed = strlen(clave) + 1 };
-
-	enviar_packed(size_package, sockfd);
-	enviar_cadena(clave, sockfd);
-}
-
-void listar_bloqueados(void) {
-	printf("Ingrese la clave: ");
-	char clave[255] = "futbol:messi";
-
-	scanf("%s", clave);
-
-	aviso_con_ID aviso_bloqueados = { .aviso = 71 };
-
-	enviar_aviso(socket_coordinador, aviso_bloqueados);
-
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = clave_size };
-
-	enviar_packed(size_package, socket_coordinador);
-	enviar_cadena(clave, socket_coordinador);
-
-	pthread_mutex_lock(&sem_console_coordi);
-}
-
-void interpretarYEjecutarCodigo(int comando) {
-	int codigoSubsiguiente;
-	switch (comando) {
-	case 1:
-		pausarOContinuar();
-		break;
-	case 2:
-		bloquearSegunClave();
-		break;
-	case 3:
-		desbloquear_clave();
-		break;
-	case 4:
-		listar_bloqueados();
-		break;
-	case 5:
-		printf("Introduzca el ESI ID: ");
-		scanf("%i", &codigoSubsiguiente);
-		kill_esi(codigoSubsiguiente);
-		break;
-	case 6:
-		status();
-		break;
-	case 7:
-		//deadlock();
-		printf("WIP \n");
-		break;
-	case 8:
-		terminar();
-		break;
-	case 9:
-		mostrame_clock();
-		break;
-	case 10:
-		display_console();
-		break;
-	case 11:
-		dame_datos();
-		break;
-	case 12:
-		bloquear_clave();
-		break;
-	case 13:
-		desalojar();
-		break;
-	case 420:
-		weed();
-		break;
-	default:
-		printf(
-				"Codigo incorrecto, recuerde que se introduce un codigo de tipo float \n");
-		break;
-	};
-}
-
-void desbloquear_clave() {
-	printf("Ingrese la clave a desbloquear: ");
-	char clave[40] = "futbol:messi";
-	scanf("%s", clave);
-
-	int local_socket = socket_coordinador;
-
-	avisar_desbloqueo(local_socket, clave);
-
-	printf("Clave desbloqueada \n");
-
-}
-
-void avisar_desbloqueo(int server_socket, char* clave) {
-	uint32_t size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = size };
-
-	enviar_aviso(server_socket, aviso_desbloqueo);
-
-	pthread_mutex_lock(&sem_socket_coordi);
-
-	enviar_packed(size_package, server_socket);
-	enviar_cadena(clave, server_socket);
-
-	pthread_mutex_lock(&sem_socket_coordi);
-
-	log_trace(logger, "La clave %s fue desbloqueada.", clave);
-
-}
-
-void desbloquear_ESI(uint32_t id) {
-	log_debug(logger, "%i", id);
-
-	ESI desbloqueado = get_ESI(id, blocked_ESIs);
-
-	eliminar_ESI(&blocked_ESIs, desbloqueado);
-
-	pthread_mutex_lock(&sem_clock);
-	desbloqueado.tiempo_arribo = tiempo;
-	pthread_mutex_unlock(&sem_clock);
-
-	pthread_mutex_lock(&sem_new_ESIs);
-	pthread_mutex_lock(&sem_ESIs_size);
-	agregar_ESI(&new_ESIs, desbloqueado);
-
-	ESIs_size++;
-	pthread_mutex_unlock(&sem_new_ESIs);
-	pthread_mutex_unlock(&sem_ESIs_size);
-
-	log_trace(logger, "El ESI número %i fue desbloqueado.", id);
-
-	if (ALGORITMO_PLANIFICACION.desalojo) {
-		desalojar();
-	}
-
-	planificar();
 }
 
 ESI get_ESI(uint32_t id, t_esi_list lista) {
@@ -963,6 +778,254 @@ ESI get_ESI(uint32_t id, t_esi_list lista) {
 	return ESI_error;
 }
 
+void mostrar(t_esi_node* puntero) {
+	while (puntero != NULL) {
+		printf("%i, ", puntero->esi.id);
+		puntero = puntero->sgte;
+	}
+
+	printf("\n");
+}
+
+void cerrar_ESIs() {
+	t_esi_node* puntero = new_ESIs.head;
+
+	while (puntero != NULL) {
+		kill_ESI(puntero->esi);
+
+		sleep(1);
+
+		puntero = puntero->sgte;
+	}
+
+}
+
+/*	=====================
+ *	===== CONSOLITA =====
+ *	=====================
+ */
+
+void* consola(void* nada) {
+	int comando;
+	printf("Bienvenido a la consola interactiva para el planificador \n");
+	while (1) {
+		if (display) {
+			listarOpciones();
+		}
+
+		comando = recibirCodigo();
+		interpretarYEjecutarCodigo(comando);
+
+		if (!seguir_ejecucion) {
+			break;
+		}
+	}
+
+	return NULL;
+}
+
+float recibirCodigo() {
+	int code = 0;
+	if (show_debug_commands) {
+		if (code > 7) {
+			code = -1;
+		}
+	}
+
+	scanf("%i", &code);
+	return code;
+}
+
+void listarOpciones() {
+	if (show_debug_commands) {
+		printf("0: Enciende o apaga las opciones debug \n");
+	}
+	printf("1: Pausar o reactivar la planificación \n");
+	printf("2: Bloquea un ESI detrás de una clave \n");
+	printf("3: Desbloquea una clave \n");
+	printf("4: Lista los procesos esperando un recurso \n");
+	printf("5: Termina un ESI según su ID \n");
+	printf("6: Muestra el estado de una clave \n");
+	printf("7: Lista los ESI en deadlock \n");
+	if (show_debug_commands) {
+		printf("8: Muestra el clock interno del planificador \n");
+		printf("9: Enciende o apaga el display de las opciones de consola \n");
+		printf("10: Muestra datos de un ESI \n");
+		printf("11: Muestra de todos los ESIs \n");
+		printf("12: Bloquea una clave \n");
+		printf("13: Desaloja al ESI actual \n");
+		printf("14: Lista los comandos de consola \n");
+		printf("99: Termina el proceso \n");
+	}
+
+	printf("Introduzca la opcion deseada \n");
+
+}
+
+void interpretarYEjecutarCodigo(int comando) {
+	switch (comando) {
+	case 0:
+		show_debug();
+		break;
+	case 1:
+		pausarOContinuar();
+		break;
+	case 2:
+		bloquearSegunClave();
+		break;
+	case 3:
+		desbloquear_clave();
+		break;
+	case 4:
+		listar_bloqueados();
+		break;
+	case 5:
+		matar();
+		break;
+	case 6:
+		status();
+		break;
+	case 7:
+		//deadlock();
+		printf("WIP \n");
+		break;
+	case 8:
+		mostrame_clock();
+		break;
+	case 9:
+		display_console();
+		break;
+	case 10:
+		datos_ESI();
+		break;
+	case 11:
+		dame_datos();
+		break;
+	case 12:
+		bloquear_clave();
+		break;
+	case 13:
+		desalojar();
+		break;
+	case 14:
+		show();
+		break;
+	case 99:
+		terminar();
+		break;
+	case 420:
+		weed();
+		break;
+	default:
+		printf("Código incorrecto \n");
+		break;
+	};
+}
+
+void show(void) {
+	listarOpciones();
+}
+
+void show_debug(void) {
+	show_debug_commands = !show_debug_commands;
+}
+
+void datos_ESI(void) {
+	int id;
+	printf("Ingrese el ID del ESI: ");
+	scanf("%i", &id);
+	int id_as_uint = (uint32_t) id;
+
+	ESI esi = findByIDIn(id_as_uint, new_ESIs);
+
+	if (esi.id != ESI_error.id) {
+		printf("El ESI %i se encuentra en la cola de listos \n", id);
+		//printf("Su nombre es %s \n", esi.pokeesi);
+		printf("Su última ráfaga estimada es de %f \n", esi.rafaga_estimada);
+		printf("Su última ráfaga real es de %i \n", esi.rafaga_real);
+		printf("La estimación de su próxima ráfaga es de %f \n",
+				estimated_time(esi));
+		printf("Su último tiempo de arribo fue en t = %i \n",
+				esi.tiempo_arribo);
+		printf("Su tiempo de espera es de %i \n", wait_time(esi));
+		printf("Su response ratio es de %f \n", response_ratio(esi));
+
+		if (esi.id == executing_ESI.id) {
+			printf("El ESI %i se encuentra actualmente ejecutando. \n", id);
+		}
+
+		return;
+	}
+
+	esi = findByIDIn(id_as_uint, finished_ESIs);
+
+	if (esi.id != ESI_error.id) {
+		printf("El ESI %i se encuentra en la cola de terminados \n", id);
+		printf("Su última ráfaga estimada fue de %f \n", esi.rafaga_estimada);
+		printf("Su última ráfaga real fue de %i \n", esi.rafaga_real);
+		printf("La estimación de su próxima ráfaga sería de %f \n",
+				estimated_time(esi));
+		printf("Su último tiempo de arribo fue en t = %i \n",
+				esi.tiempo_arribo);
+		printf("Su response ratio sería de %f \n", response_ratio(esi));
+
+	}
+
+	esi = findByIDIn(id_as_uint, blocked_ESIs);
+
+	if (esi.id != ESI_error.id) {
+		printf("El ESI %i se encuentra en la cola de bloqueados \n", id);
+		printf("Su última ráfaga estimada es de %f \n", esi.rafaga_estimada);
+		printf("Su última ráfaga real es de %i \n", esi.rafaga_real);
+		printf("La estimación de su próxima ráfaga es de %f \n",
+				estimated_time(esi));
+		printf("Su último tiempo de arribo fue en t = %i \n",
+				esi.tiempo_arribo);
+		printf("Su response ratio es de %f \n", response_ratio(esi));
+	}
+
+	printf("No se encontró ningún ESI en el sistema con ese ID \n");
+}
+
+void matar(void) {
+	int id;
+	printf("Introduzca el ESI ID: ");
+	scanf("%i", &id);
+	kill_esi((uint32_t) id);
+}
+
+void status(void) {
+	//WIP
+}
+
+void listar_bloqueados(void) {
+	//WIP
+}
+
+void bloquearSegunClave(void) {
+	//WIP
+}
+void desbloquear_clave() {
+	printf("Ingrese la clave a desbloquear: ");
+	char clave[40] = "futbol:messi";
+	scanf("%s", clave);
+
+	int local_socket = socket_coordinador;
+
+	avisar_desbloqueo(local_socket, clave);
+
+	printf("La clave %s fue desbloqueada \n", clave);
+
+}
+
+void avisar_desbloqueo(int server_socket, char* clave) {
+	//WIP
+}
+
+void desbloquear_ESI(uint32_t id) {
+	//WIP
+}
+
 void bloquear_clave() {
 	printf("Ingrese la clave a bloquear: ");
 	char clave[40] = "futbol:messi";
@@ -976,20 +1039,7 @@ void bloquear_clave() {
 }
 
 void avisar_bloqueo(int server_socket, char* clave) {
-	uint32_t size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = size };
-
-	enviar_aviso(server_socket, aviso_bloqueo);
-	pthread_mutex_lock(&sem_socket_coordi);
-
-	enviar_packed(size_package, server_socket);
-	enviar_cadena(clave, server_socket);
-
-	pthread_mutex_lock(&sem_socket_coordi);
-
-	log_trace(logger, "La clave %s fue bloqueada.", clave);
-
+	//WIP
 }
 
 void dame_datos() {
@@ -1006,15 +1056,6 @@ void dame_datos() {
 	puntero = finished_ESIs.head;
 	printf("ESIs terminados: ");
 	mostrar(puntero);
-}
-
-void mostrar(t_esi_node* puntero) {
-	while (puntero != NULL) {
-		printf("%i, ", puntero->esi.id);
-		puntero = puntero->sgte;
-	}
-
-	printf("\n");
 }
 
 void display_console() {
@@ -1036,56 +1077,6 @@ void terminar(void) {
 	exit(42);
 }
 
-void cerrar_ESIs() {
-	t_esi_node* puntero = new_ESIs.head;
-
-	while (puntero != NULL) {
-		kill_ESI(puntero->esi);
-
-		sleep(1);
-
-		puntero = puntero->sgte;
-	}
-
-}
-
-void listarOpciones() {
-	printf("1: Pausar o reactivar la planificación \n");
-	printf("2: Bloquea un ESI detrás de una clave \n");
-	printf("3: Desbloquea una clave \n");
-	printf("4: Lista los procesos esperando un recurso \n");
-	printf("5: Mata al ESI elegido \n");
-	printf("6: Brinda el estado del ESI elegido \n");
-	printf("7: Lista los ESI en deadlock \n");
-	printf("8: Termina el proceso \n");
-	printf("9: Muestra el clock interno del planificador \n");
-	printf("10: Enciende o apaga el display de las opciones de consola \n");
-	printf(
-			"11: Muestra datos de la ejecución (ESI ejecutando, ESIs listos, bloqueados y terminados \n");
-	printf("12: Bloquea una clave \n");
-	printf("13: Desaloja al ESI actual \n");
-	printf("Introduzca la opcion deseada \n");
-
-}
-
-void* consola(void* nada) {
-	int comando;
-	printf("Bienvenido a la consola interactiva para el planificador \n");
-	while (1) {
-		if (display) {
-			listarOpciones();
-		}
-
-		comando = recibirCodigo();
-		interpretarYEjecutarCodigo(comando);
-
-		if (!seguir_ejecucion) {
-			break;
-		}
-	}
-
-	return NULL;
-}
 void pausarOContinuar(void) {
 	if (consola_planificacion) {
 		printf("Pausando planificación...\n");
@@ -1110,28 +1101,6 @@ void pausarOContinuar(void) {
 
 	}
 
-}
-void bloquear(int codigo) {
-	printf("Eligio bloquear el ESI \n");
-}
-void desbloquear(int codigo) {
-}
-void listar(char* clave) { //Comunicarse con el coordi para que busque al ESI
-
-}
-
-ESI findByIDIn(uint32_t id, t_esi_list lista) {
-	t_esi_node* puntero = lista.head;
-
-	while (puntero != NULL) {
-		if (puntero->esi.id == id) {
-			return puntero->esi;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return ESI_error;
 }
 
 void kill_esi(int id) {
@@ -1167,28 +1136,6 @@ void kill_esi(int id) {
 			id);
 }
 
-void status(void) {
-	char recurso[255] = "futbol:messi";
-	printf("Introduzca el recurso: ");
-	scanf("%s", recurso);
-
-	cerrar_cadena(recurso);
-
-	aviso_con_ID aviso_status = { .aviso = 60 };
-
-	enviar_aviso(socket_coordinador, aviso_status);
-
-	uint32_t size = strlen(recurso) + 1;
-	package_int size_package = { .packed = size };
-
-	enviar_packed(size_package, socket_coordinador);
-	enviar_cadena(recurso, socket_coordinador);
-
-	pthread_mutex_lock(&sem_console_coordi);
-	loggear("Hice wait");
-	return;
-}
-
 void deadlock(void) {
 	package_int paquete;
 	char * ids;
@@ -1199,56 +1146,6 @@ void deadlock(void) {
 	printf("%s", ids);
 }
 
-void listarESI(t_esi_node lista) {
-	/*printf("Los ESI esperando la clave pedida son: \n");
-	 while (lista.sgte != NULL){
-	 printf("%i", lista.esi.id);
-	 printf("\n");
-	 lista = lista.sgte;
-	 }*/
-}
-ESI copiarEsi(t_esi_node * lista, ESI esiACopiar) {
-	while (lista->sgte != NULL) {
-		if (lista->esi.id == esiACopiar.id) {
-			esiACopiar.ejecutando = lista->esi.ejecutando;
-			esiACopiar.rafaga_estimada = lista->esi.rafaga_estimada;
-			esiACopiar.rafaga_real = lista->esi.rafaga_real;
-			esiACopiar.socket = lista->esi.socket;
-			esiACopiar.tiempo_arribo = lista->esi.tiempo_arribo;
-			return esiACopiar;
-		}
-		lista = lista->sgte;
-	}
-	return esiACopiar;
-}
-
 void weed() {
-	/*
-	 printf(WEED "                     .                          ", 48);
-	 printf(WEED "                     M                          ", 48);
-	 printf(WEED "                    dM                          ", 48);
-	 printf(WEED "                    MMr                         ", 48);
-	 printf(WEED "                   4MMML                  .     ", 48);
-	 printf(WEED "                   MMMMM.                xf     ", 48);
-	 printf(WEED "   .              \"MMMMM               .MM-     ", 48);
-	 printf(WEED "    Mh..          +MMMMMM            .MMMM      ", 48);
-	 printf(WEED "    .MMM.         .MMMMML.          MMMMMh      ", 48);
-	 printf(WEED "     )MMMh.        MMMMMM         MMMMMMM       ", 48);
-	 printf(WEED "      3MMMMx.     'MMMMMMf      xnMMMMMM\"       ", 48);
-	 printf(WEED "      '*MMMMM      MMMMMM.     nMMMMMMP\"        ", 48);
-	 printf(WEED "        *MMMMMx    \"MMMMM\    .MMMMMMM=         ", 48);
-	 printf(WEED "         *MMMMMh   \"MMMMM\"   JMMMMMMP           ", 48);
-	 printf(WEED "           MMMMMM   3MMMM.  dMMMMMM            .", 48);
-	 printf(WEED "            MMMMMM  \"MMMM  .MMMMM(        .nnMP\"", 48);
-	 printf(WEED "=..          *MMMMx  MMM\"  dMMMM\"    .nnMMMMM*  ", 48);
-	 printf(WEED "  \"MMn...     'MMMMr 'MM   MMM\"   .nMMMMMMM*\"   ", 48);
-	 printf(WEED "   \"4MMMMnn..   *MMM  MM  MMP\"  .dMMMMMMM\"\"     ", 48);
-	 printf(WEED "     ^MMMMMMMMx.  *ML \"M .M*  .MMMMMM**\"        ", 48);
-	 printf(WEED "        *PMMMMMMhn. *x > M  .MMMM**\"\"           ", 48);
-	 printf(WEED "           " "**MMMMhx/.h/ .=*\"                  ", 48);
-	 printf(WEED "                    .3P\"%....                   ", 48);
-	 printf(WEED "                  nP" "*MMnx                ", 48);
-	 */
-
 	printf(WEED "S M O K E   W E E D   E V E R Y D A Y \n");
 }
