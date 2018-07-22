@@ -606,6 +606,15 @@ Instancia menorEspacio(t_instancia_list lista);
 	 * 		t_instancia_list lista
 	 */
 
+bool tieneMenosEspacio(Instancia unaInstancia, Instancia otraInstancia);
+	/*
+	 * Descripción: devuelve si el atributo espacio_usado de unaInstancia es menor que otraInstancia.
+	 * Argumentos:
+	 * 		Instancia unaInstancia
+	 * 		Instancia otraInstancia.
+	 */
+
+
 t_blocked_list listaAuxiliar;
 
 char* getValor(char* recurso);

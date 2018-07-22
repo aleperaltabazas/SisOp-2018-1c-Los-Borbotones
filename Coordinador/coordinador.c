@@ -9,16 +9,16 @@
 
 int listening_socket;
 
-void testKE(void) {
-	ALGORITMO_DISTRIBUCION = KE;
+void testLSU(void) {
+	ALGORITMO_DISTRIBUCION = LSU;
 
-	Instancia inst1 = { .disponible = true };
+	Instancia inst1 = { .espacio_usado = 10, .disponible = true };
 	strcpy(inst1.nombre, "Instancia 1");
-	Instancia inst2 = { .disponible = true };
+	Instancia inst2 = { .espacio_usado = 30, .disponible = true };
 	strcpy(inst2.nombre, "Instancia 2");
-	Instancia inst3 = { .disponible = true };
+	Instancia inst3 = { .espacio_usado = 10, .disponible = true };
 	strcpy(inst3.nombre, "Instancia 3");
-	Instancia inst4 = { .disponible = false };
+	Instancia inst4 = { .espacio_usado = 1, .disponible = false };
 	strcpy(inst4.nombre, "Instancia 4");
 
 	agregar_instancia(&instancias, inst1, cantidad_instancias + 1);
@@ -52,17 +52,63 @@ void testKE(void) {
 	log_debug(logger, "Instancia para opera:laBoheme: %s", nextInst.nombre);
 
 	exit(0);
+}
 
+void testKE(void) {
+	ALGORITMO_DISTRIBUCION = KE;
+
+	Instancia inst1 = { .disponible = true };
+	strcpy(inst1.nombre, "Instancia 1");
+	Instancia inst2 = { .disponible = true };
+	strcpy(inst2.nombre, "Instancia 2");
+	Instancia inst3 = { .disponible = true };
+	strcpy(inst3.nombre, "Instancia 3");
+	Instancia inst4 = { .disponible = false };
+	strcpy(inst4.nombre, "Instancia 4");
+
+	agregar_instancia(&instancias, inst1, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	agregar_instancia(&instancias, inst2, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	Instancia nextInst = getInstanciaSet("futbol:messi");
+	log_debug(logger, "Instancia para futbol:messi: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("pokemon:ralts");
+	log_debug(logger, "Instancia para pokemon:ralts: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("tutor:lean");
+	log_debug(logger, "Instancia para tutor:lean: %s", nextInst.nombre);
+
+	agregar_instancia(&instancias, inst3, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	nextInst = getInstanciaSet("zelda:link");
+	log_debug(logger, "Instancia para zelda:link: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("comic:flash");
+	log_debug(logger, "Instancia para comic:flash: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("opera:laBoheme");
+	log_debug(logger, "Instancia para opera:laBoheme: %s", nextInst.nombre);
+
+	exit(0);
 }
 
 void testEL(void) {
 	ALGORITMO_DISTRIBUCION = EL;
-	Instancia inst1;
+	Instancia inst1 = { .disponible = true };
 	strcpy(inst1.nombre, "Instancia 1");
-	Instancia inst2;
+	Instancia inst2 = { .disponible = true };
 	strcpy(inst2.nombre, "Instancia 2");
-	Instancia inst3;
+	Instancia inst3 = { .disponible = false };
 	strcpy(inst3.nombre, "Instancia 3");
+	Instancia inst4 = { .disponible = true };
+	strcpy(inst4.nombre, "Instancia 4");
 
 	agregar_instancia(&instancias, inst1, cantidad_instancias + 1);
 	cantidad_instancias++;
@@ -90,6 +136,16 @@ void testEL(void) {
 	nextInst = getInstanciaSet("asd");
 	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
 
+	agregar_instancia(&instancias, inst4, cantidad_instancias + 1);
+	cantidad_instancias++;
+	redistribuir_claves();
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
+	nextInst = getInstanciaSet("asd");
+	log_debug(logger, "Próxima instancia: %s", nextInst.nombre);
+
 	loggear("asd");
 
 	exit(0);
@@ -98,7 +154,7 @@ void testEL(void) {
 int main(int argc, char** argv) {
 	iniciar(argv);
 
-	testKE();
+	testEL();
 
 	coordinar();
 
@@ -759,7 +815,13 @@ Instancia equitativeLoad(void) {
 
 	while (puntero != NULL) {
 		if (puntero->index == pointer) {
-			ret_inst = puntero->instancia;
+			if (puntero->instancia.disponible) {
+				ret_inst = puntero->instancia;
+			} else {
+				puntero = instancias.head;
+				avanzar_puntero();
+				return equitativeLoad();
+			}
 		}
 
 		puntero = puntero->sgte;
@@ -770,7 +832,19 @@ Instancia equitativeLoad(void) {
 }
 
 Instancia leastSpaceUsed(void) {
-	return menorEspacio(instancias);
+	t_instancia_node* puntero = instancias.head;
+	Instancia instancia = headInstancias(instancias);
+
+	while (puntero != NULL) {
+		if (tieneMenosEspacio(puntero->instancia, instancia)
+				&& puntero->instancia.disponible) {
+			instancia = puntero->instancia;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return instancia;
 }
 
 Instancia keyExplicit(char* clave) {
@@ -1119,21 +1193,6 @@ bool tieneMenosEspacio(Instancia unaInstancia, Instancia otraInstancia) {
 	return unaInstancia.espacio_usado < otraInstancia.espacio_usado;
 }
 
-Instancia menorEspacio(t_instancia_list lista) {
-	t_instancia_node* puntero = lista.head;
-	Instancia instancia = headInstancias(lista);
-
-	while (puntero != NULL) {
-		if (tieneMenosEspacio(puntero->instancia, instancia)) {
-			instancia = puntero->instancia;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return instancia;
-}
-
 char* getNombrePotencial(char* recurso) {
 	Instancia ret_inst;
 	switch (ALGORITMO_DISTRIBUCION) {
@@ -1144,7 +1203,7 @@ char* getNombrePotencial(char* recurso) {
 		ret_inst = correspondiente(instancias, recurso);
 		break;
 	case LSU:
-		ret_inst = menorEspacio(instancias);
+		ret_inst = leastSpaceUsed();
 		break;
 	default:
 		ret_inst = inst_error;
