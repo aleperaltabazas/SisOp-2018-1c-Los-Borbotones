@@ -82,7 +82,7 @@ t_instancia_node* crear_nodo_instancia(Instancia instancia) {
 	nodo->instancia.sockfd = instancia.sockfd;
 	strcpy(nodo->instancia.nombre, instancia.nombre);
 	nodo->instancia.disponible = instancia.disponible;
-	nodo->instancia.espacio_usado = instancia.disponible;
+	nodo->instancia.espacio_usado = instancia.espacio_usado;
 	nodo->instancia.veces_llamado = instancia.veces_llamado;
 	nodo->instancia.claves = instancia.claves;
 	nodo->sgte = NULL;
@@ -108,7 +108,6 @@ void agregar_instancia(t_instancia_list* lista, Instancia instancia, int index) 
 
 		puntero->sgte = nodo;
 	}
-
 
 }
 
