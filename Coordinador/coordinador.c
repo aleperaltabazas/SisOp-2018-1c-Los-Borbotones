@@ -42,6 +42,7 @@ void iniciar(char** argv) {
 
 	log_info(log_operaciones, "Logger iniciado correctamente.");
 
+	cantidad_instancias = 0;
 	instancia_id = 0;
 }
 
@@ -347,7 +348,8 @@ int dame_response(char* clave, uint32_t id) {
 		bloquear(clave, id);
 		loggear("Get exitoso.");
 
-		operacion op = { .op_type = op_GET, .clave = clave, .id = id };
+		operacion op = { .op_type = op_GET, .id = id };
+		strcpy(op.clave, clave);
 
 		log_op(op);
 
@@ -358,8 +360,8 @@ int dame_response(char* clave, uint32_t id) {
 		bloquear(clave, id);
 		loggear("Get exitoso.");
 
-		operacion op = { .op_type = op_GET, .clave = clave, .id = id };
-
+		operacion op = { .op_type = op_GET, .id = id };
+		strcpy(op.clave, clave);
 		log_op(op);
 
 		return 20;
@@ -447,7 +449,8 @@ int store(int socket_cliente, uint32_t id) {
 
 		}
 
-		operacion op = { .op_type = op_STORE, .clave = clave, .id = id };
+		operacion op = { .op_type = op_STORE, .id = id };
+		strcpy(op.clave, clave);
 
 		log_op(op);
 
@@ -482,8 +485,9 @@ int settear(char* valor, char* clave, uint32_t id) {
 				return -3;
 			}
 
-			operacion op = { .op_type = op_SET, .clave = clave, .valor = valor,
-					.id = id };
+			operacion op = { .op_type = op_SET, .id = id };
+			strcpy(op.clave, clave);
+			strcpy(op.valor, valor);
 
 			log_op(op);
 
@@ -509,7 +513,7 @@ void actualizarClave(char* clave, char* valor) {
 		log_debug(logger, "Clave en la lista: %s", puntero->clave);
 		log_debug(logger, "Mi clave: %s", clave);
 		if (mismoString(puntero->clave, clave)) {
-			puntero->valor = valor;
+			strcpy(puntero->valor, valor);
 
 			return;
 		}
@@ -860,7 +864,8 @@ void desconectar(Instancia instancia) {
 }
 
 void bloquear_ESI(char* clave, uint32_t id) {
-	blocked bloqueado = { .clave = clave, .id = id };
+	blocked bloqueado = { .id = id };
+	strcpy(bloqueado.clave, clave);
 
 	log_debug(logger, "Clave: %s", clave);
 	log_debug(logger, "ID: %i", id);
@@ -1067,7 +1072,7 @@ char* getNombrePotencial(char* recurso) {
 		salir_con_error("Falló la asignación potencial de clave", 0);
 	}
 
-	return ret_inst.nombre;
+	return strdup(ret_inst.nombre);
 }
 
 char* getInstancia(char* recurso) {
@@ -1091,7 +1096,7 @@ char* getInstancia(char* recurso) {
 	}
 
 	Instancia asignada = elQueLaTiene(recurso);
-	return asignada.nombre;
+	return strdup(asignada.nombre);
 }
 
 char* getBloqueados(char* recurso) {
@@ -1345,8 +1350,9 @@ void levantar_instancia(char* name, int sockfd) {
 		return;
 	}
 
-	Instancia instancia = { .nombre = name, .sockfd = sockfd, .disponible =
+	Instancia instancia = { .sockfd = sockfd, .disponible =
 	true, .veces_llamado = 0, .espacio_usado = 0, .id = instancia_id };
+	strcpy(instancia.nombre, name);
 
 	loggear("Instancia agregada correctamente");
 	agregar_instancia(&instancias, instancia);
@@ -1796,7 +1802,8 @@ t_blocked_list tienenAlgoRetenido(t_blocked_list lista) {
 
 	while (puntero != NULL) {
 		if (tieneAlgoRetenido(puntero->id)) {
-			blocked newBlocked = { .id = puntero->id, .clave = puntero->clave };
+			blocked newBlocked = { .id = puntero->id };
+			strcpy(newBlocked.clave, puntero->clave);
 
 			agregar_blocked(&retenientes, newBlocked);
 		}
@@ -1823,7 +1830,9 @@ t_blocked_list estanEnDL(t_blocked_list lista) {
 
 	while (puntero != NULL) {
 		if (puedeLlegarA(puntero)) {
-			blocked newBlocked = { .id = puntero->id, .clave = puntero->clave };
+			blocked newBlocked = { .id = puntero->id };
+			strcpy(newBlocked.clave, puntero->clave);
+
 			agregar_blocked(deadlock, newBlocked);
 
 		}

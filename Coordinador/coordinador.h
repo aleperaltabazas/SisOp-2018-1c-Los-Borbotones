@@ -52,6 +52,8 @@ bool flag_free_asignada;
 
 pthread_mutex_t sem_socket_operaciones_coordi;
 
+int cantidad_instancias;
+
 //Hilos
 
 pthread_t hilo_ESI;

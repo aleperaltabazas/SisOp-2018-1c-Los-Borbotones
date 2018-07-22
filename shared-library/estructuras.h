@@ -34,7 +34,7 @@ typedef struct entrada {
 } entrada;
 
 typedef struct blocked {
-	char* clave;
+	char clave[40];
 	uint32_t id;
 } blocked;
 
@@ -42,8 +42,8 @@ typedef struct operacion {
 	enum {
 		op_GET, op_SET, op_STORE
 	} op_type;
-	char* clave;
-	char* valor;
+	char clave[40];
+	char valor[40];
 	uint32_t id;
 } operacion;
 
@@ -129,8 +129,8 @@ typedef struct t_parsed_list {
 } t_parsed_list;
 
 typedef struct t_clave_node {
-	char* clave;
-	char* valor;
+	char clave[40];
+	char valor[40];
 	uint32_t block_id;
 	struct t_clave_node* sgte;
 } t_clave_node;
@@ -140,7 +140,7 @@ typedef struct t_clave_list {
 } t_clave_list;
 
 typedef struct t_blocked_node {
-	char* clave;
+	char clave[40];
 	uint32_t id;
 	struct t_blocked_node* sgte;
 } t_blocked_node;
@@ -164,7 +164,7 @@ typedef struct Instancia {
 	int espacio_usado;
 	int id;
 	bool disponible;
-	char* nombre;
+	char nombre[40];
 	char keyMin;
 	char keyMax;
 	t_clave_list claves;
@@ -172,6 +172,7 @@ typedef struct Instancia {
 
 typedef struct t_instancia_node {
 	Instancia instancia;
+	int index;
 	struct t_instancia_node* sgte;
 } t_instancia_node;
 

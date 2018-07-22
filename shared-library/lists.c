@@ -80,7 +80,7 @@ t_instancia_node* crear_nodo_instancia(Instancia instancia) {
 	t_instancia_node* nodo = (t_instancia_node*) malloc(
 			sizeof(t_instancia_node));
 	nodo->instancia.sockfd = instancia.sockfd;
-	nodo->instancia.nombre = instancia.nombre;
+	strcpy(nodo->instancia.nombre, instancia.nombre);
 	nodo->instancia.disponible = instancia.disponible;
 	nodo->instancia.espacio_usado = instancia.disponible;
 	nodo->instancia.veces_llamado = instancia.veces_llamado;
@@ -149,9 +149,8 @@ Instancia headInstancias(t_instancia_list lista) {
 
 t_clave_node* crear_nodo_clave(char* clave, uint32_t id) {
 	t_clave_node* nodo = (t_clave_node*) malloc(
-			strlen(clave) + 1 + sizeof(uint32_t) + sizeof(t_clave_node));
-	nodo->clave = clave;
-	nodo->valor = NULL;
+			sizeof(uint32_t) + sizeof(t_clave_node));
+	strcpy(nodo->clave, clave);
 	nodo->block_id = id;
 	nodo->sgte = NULL;
 
@@ -267,9 +266,8 @@ char* headClaves(t_clave_list lista) {
  */
 
 t_blocked_node* crear_nodo_blocked(blocked bloqueado) {
-	t_blocked_node* nodo = (t_blocked_node*) malloc(
-			sizeof(t_blocked_node) + strlen(bloqueado.clave) + 1);
-	nodo->clave = bloqueado.clave;
+	t_blocked_node* nodo = (t_blocked_node*) malloc(sizeof(t_blocked_node));
+	strcpy(nodo->clave, bloqueado.clave);
 	nodo->id = bloqueado.id;
 
 	return nodo;
