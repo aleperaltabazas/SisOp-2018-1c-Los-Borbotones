@@ -48,9 +48,10 @@ void iniciar(char** argv) {
 
 }
 
-void iniciar_hilos(void) {
+void iniciar_semaforos(void) {
 	pthread_mutex_init(&sem_socket_operaciones_coordi, NULL);
 	pthread_mutex_init(&sem_instancias, NULL);
+	pthread_mutex_init(&sem_listening_socket, NULL);
 }
 
 void startSigHandlers(void) {
@@ -137,7 +138,7 @@ int manejar_cliente(int server_socket, int socketCliente, package_int id) {
 	socklen_t addrlen = sizeof(addr);
 
 	socketCliente = accept(server_socket, (struct sockaddr *) &addr, &addrlen);
-
+	pthread_mutex_lock(&sem_listening_socket);
 	log_info(logger, "Cliente conectado.");
 
 	loggear("Esperando mensaje del cliente.");
@@ -152,6 +153,7 @@ int manejar_cliente(int server_socket, int socketCliente, package_int id) {
 	loggear("Enviando id al cliente.");
 
 	send_packed_no_exit(id, socketCliente);
+	pthread_mutex_unlock(&sem_listening_socket);
 
 	log_info(logger, "Handshake realizado correctamente.");
 
@@ -198,16 +200,8 @@ void* atender_ESI(void* un_socket) {
 	uint32_t id = decimeID(socket_cliente);
 
 	if (id == -1) {
-		abortar_ESI(socket_cliente);
-		return NULL;
+		status = 0;
 	}
-
-	if (id <= 0) {
-		close(socket_cliente);
-		log_error(logger, "ESI con id inválido (0).");
-	}
-
-	send_OK(socket_cliente);
 
 	while (status) {
 
@@ -219,26 +213,34 @@ void* atender_ESI(void* un_socket) {
 	return NULL;
 }
 
-void send_OK(int sockfd) {
-	package_int package_ok = { .packed = 42 };
-
-	send_packed_no_exit(package_ok, sockfd);
-}
-
 uint32_t decimeID(int sockfd) {
+	pthread_mutex_lock(&sem_listening_socket);
 	aviso_con_ID aviso_id = recv_aviso_no_exit(sockfd);
+	pthread_mutex_unlock(&sem_listening_socket);
 
 	log_debug(logger, "Aviso: %i", aviso_id.aviso);
 	log_debug(logger, "ID: %i", aviso_id.id);
 
-	if (aviso_id.aviso != 2 || aviso_id.aviso == aviso_recv_error.aviso) {
-		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
+	if (aviso_id.aviso != 2) {
+		abortar_ESI(sockfd);
 		return -1;
 	}
 
-	log_debug(logger, "ID recibido: %i", aviso_id.id);
+	if (aviso_id.id <= 0) {
+		log_error(logger, "ESI con error inválido (0 o menos).");
+		abortar_ESI(sockfd);
+		return -1;
+	}
+
+	send_OK(sockfd);
 
 	return aviso_id.id;
+}
+
+void send_OK(int sockfd) {
+	package_int package_ok = { .packed = 42 };
+
+	send_packed_no_exit(package_ok, sockfd);
 }
 
 void liberar_claves(uint32_t id) {
@@ -336,15 +338,9 @@ int get(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response GET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(1);
+	sleep(3);
 
 	return (int) response.packed;
-}
-
-uint32_t doGet(GET_Op get) {
-	//WIP
-
-	return 20;
 }
 
 int set(int socket_cliente, uint32_t id) {
@@ -359,12 +355,6 @@ int set(int socket_cliente, uint32_t id) {
 	return (int) response.packed;
 }
 
-uint32_t doSet(SET_Op set) {
-	//WIP
-
-	return 20;
-}
-
 int store(int socket_cliente, uint32_t id) {
 	STORE_Op store = recv_store(socket_cliente);
 	store.id = id;
@@ -377,10 +367,145 @@ int store(int socket_cliente, uint32_t id) {
 	return (int) response.packed;
 }
 
+uint32_t doGet(GET_Op get) {
+	revisar_existencia(get.clave);
+	uint32_t blocker_id = getBlockerID(get.clave);
+
+	if (blocker_id == desbloqueada_ID) {
+		gettearClave(get);
+		return 20;
+	}
+
+	else {
+		bloquear_ESI(get.clave, get.id);
+
+		log_warning(logger,
+				"El ESI %i fue bloqueado tratando de adquirir la clave %s, en posesión de %i.",
+				get.id, get.clave, blocker_id);
+
+		return 5;
+	}
+
+}
+
+uint32_t doSet(SET_Op set) {
+	uint32_t blocker_id = getBlockerID(set.clave);
+
+	if (blocker_id == set.id) {
+		Instancia instanciaSet = getInstanciaSet(set.clave);
+		return settearClave(set, instanciaSet);
+	}
+
+	else {
+		log_warning(logger,
+				"El ESI %i trató de hacer SET sobre la clave %s, que no tenía adquirida, en posesión de %i",
+				set.id, set.clave, blocker_id);
+		return -1;
+	}
+}
+
 uint32_t doStore(STORE_Op store) {
 	//WIP
 
 	return 20;
+}
+
+void revisar_existencia(char* clave) {
+	if (!existe(clave)) {
+		crear(clave);
+	}
+}
+
+uint32_t getBlockerID(char* clave) {
+	uint32_t blockerID = findBlockerIn(clave, claves_bloqueadas);
+
+	if (blockerID != id_not_found) {
+		return blockerID;
+	}
+
+	blockerID = findBlockerIn(clave, claves_disponibles);
+
+	if (blockerID != id_not_found) {
+		return blockerID;
+	}
+
+	return id_not_found;
+}
+
+uint32_t findBlockerIn(char* clave, t_clave_list lista) {
+	t_clave_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, clave)) {
+			return puntero->block_id;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return id_not_found;
+}
+
+void log_get(GET_Op get) {
+	operacion get_op = { .op_type = op_GET, .id = get.id };
+	strcpy(get_op.clave, get.clave);
+
+	log_op(get_op);
+}
+
+void log_set(SET_Op set) {
+	operacion set_op = { .op_type = op_SET, .id = set.id };
+	strcpy(set_op.clave, set.clave);
+	strcpy(set_op.valor, set.valor);
+
+	log_op(set_op);
+}
+
+void log_store(STORE_Op store) {
+	operacion store_op = { .op_type = op_STORE, .id = store.id };
+	strcpy(store_op.clave, store.clave);
+
+	log_op(store_op);
+}
+
+void gettearClave(GET_Op get) {
+	bloquear(get.clave, get.id);
+	log_info(logger, "El ESI %i adquirió la clave %s de forma exitosa.", get.id,
+			get.clave);
+
+	log_get(get);
+
+}
+
+uint32_t settearClave(SET_Op set, Instancia instancia) {
+	if (estaCaida(instancia)) {
+		return -1;
+	}
+
+	//Falta hacer la parte de enviar a la instancia la clave y el valor y esta
+
+	return 20;
+}
+
+bool estaCaida(Instancia unaInstancia) {
+	if (mismoString(unaInstancia.nombre, inst_error.nombre)) {
+		return true;
+	}
+
+	ping(unaInstancia);
+	return waitPing(unaInstancia) == 100;
+}
+
+uint32_t waitPing(Instancia unaInstancia) {
+	package_int ping = recv_packed_no_exit(unaInstancia.sockfd);
+	log_debug(logger, "Ping recibido: %i", ping.packed);
+
+	if (ping.packed != 100) {
+		log_warning(logger, "%s se encuentra caída", unaInstancia.nombre);
+		desconectar(unaInstancia);
+	}
+
+	return ping.packed;
 }
 
 int settear(char* valor, char* clave, uint32_t id) {
@@ -562,16 +687,6 @@ Instancia getInstanciaSet(char* clave) {
 	return ret_inst;
 }
 
-void avanzar_puntero(void) {
-	pointer++;
-
-	pthread_mutex_lock(&sem_instancias);
-	if (pointer > cantidad_instancias) {
-		pointer = 1;
-	}
-	pthread_mutex_unlock(&sem_instancias);
-}
-
 Instancia equitativeLoad(void) {
 	if (instancias.head == NULL) {
 		log_warning(logger,
@@ -601,6 +716,12 @@ Instancia equitativeLoad(void) {
 }
 
 Instancia leastSpaceUsed(void) {
+	if (instancias.head == NULL) {
+		log_warning(logger,
+				"No hay ninguna instancia disponible para poder despachar el pedido.");
+		return inst_error;
+	}
+
 	t_instancia_node* puntero = instancias.head;
 	Instancia instancia = headInstancias(instancias);
 
@@ -617,6 +738,12 @@ Instancia leastSpaceUsed(void) {
 }
 
 Instancia keyExplicit(char* clave) {
+	if (instancias.head == NULL) {
+		log_warning(logger,
+				"No hay ninguna instancia disponible para poder despachar el pedido.");
+		return inst_error;
+	}
+
 	if (!isalnum(clave[0])) {
 		return inst_error;
 	}
@@ -636,6 +763,16 @@ Instancia keyExplicit(char* clave) {
 	return inst_error;
 }
 
+void avanzar_puntero(void) {
+	pointer++;
+
+	pthread_mutex_lock(&sem_instancias);
+	if (pointer > cantidad_instancias) {
+		pointer = 1;
+	}
+	pthread_mutex_unlock(&sem_instancias);
+}
+
 bool leCorresponde(Instancia instancia, char caracter) {
 	return instancia.keyMin <= caracter && instancia.keyMax >= caracter;
 }
@@ -651,7 +788,7 @@ int get_packed(char* clave, uint32_t id) {
 		log_trace(logger, "Blocker %i", blocker);
 		log_trace(logger, "Solicitante %i", id);
 
-		if (blocker == -1) {
+		if (blocker == desbloqueada_ID) {
 			log_warning(logger, "Abortando ESI %i.", id);
 			return -3;
 		}
@@ -730,7 +867,7 @@ int hacer_store(char* clave) {
 		return -1;
 	}
 
-	if (!ping(instancia)) {
+	if (estaCaida(instancia)) {
 		log_warning(logger,
 				"La instancia que posee la clave se encuentra desconectada.");
 		desconectar(instancia);
@@ -853,6 +990,7 @@ void* atender_Planificador(void* un_socket) {
 
 	while (1) {
 		aviso_plani = recibir_aviso(socket_planificador);
+		pthread_mutex_lock(&sem_listening_socket);
 
 		log_debug(logger, "%i", aviso_plani.aviso);
 
@@ -893,6 +1031,8 @@ void* atender_Planificador(void* un_socket) {
 			close(socket_planificador);
 			break;
 		}
+
+		pthread_mutex_unlock(&sem_listening_socket);
 	}
 
 	seguir_ejecucion = 0;
@@ -1236,7 +1376,7 @@ bool existe(char* clave) {
 }
 
 void crear(char* clave) {
-	agregar_clave(&claves_disponibles, clave, -1);
+	agregar_clave(&claves_disponibles, clave, desbloqueada_ID);
 }
 
 void* atender_instancia(void* un_socket) {
@@ -1359,7 +1499,7 @@ bool murio(char* name, int sockfd) {
 	while (puntero != NULL) {
 		if (mismoString(name, puntero->instancia.nombre)) {
 			if (puntero->instancia.disponible) {
-				if (!ping(puntero->instancia)) {
+				if (estaCaida(puntero->instancia)) {
 					log_warning(logger,
 							"Esta instancia se encontraba en el sistema pero se cayó. Reincorporando");
 					return true;
@@ -1383,9 +1523,7 @@ bool murio(char* name, int sockfd) {
 	return false;
 }
 
-bool ping(Instancia instancia) {
-	pthread_mutex_lock(&sem_socket_operaciones_coordi);
-
+void ping(Instancia instancia) {
 	orden_del_coordinador orden;
 	orden.codigo_operacion = 100;
 	orden.tamanio_a_enviar = 0;
@@ -1400,37 +1538,14 @@ bool ping(Instancia instancia) {
 
 	int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
 
-	log_debug(logger, "%i", envio);
+	log_debug(logger, "Bytes enviados: %i", envio);
 
 	if (envio < 0) {
-		log_warning(logger, "Ping fallido. Instancia no disponible: %s",
-				strerror(errno));
-		instancia.disponible = false;
-		free(buffer);
-
-		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-
-		return false;
+		log_warning(logger, "Falló el envío de ping.");
+		return;
 	}
 
-	if (!recv_ping(instancia.sockfd)) {
-		log_warning(logger,
-				"Falló el recibo del ping. Instancia no disponible: %s",
-				strerror(errno));
-		instancia.disponible = false;
-		free(buffer);
-
-		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-
-		return false;
-	}
-
-	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-
-	loggear("Ping ok, la instancia sigue en pie.");
-	free(buffer);
-
-	return true;
+	loggear("Ping enviado.");
 }
 
 bool recv_ping(int sockfd) {

@@ -53,9 +53,13 @@ bool flag_free_asignada;
 pthread_mutex_t sem_socket_operaciones_coordi;
 
 pthread_mutex_t sem_instancias;
+pthread_mutex_t sem_listening_socket;
+
+uint32_t desbloqueada_ID = -1;
 
 int cantidad_instancias;
 
+uint32_t id_not_found = -3;
 //Hilos
 
 pthread_t hilo_ESI;
@@ -131,6 +135,13 @@ void iniciar(char** argv);
 	 * Descripción: carga las configuraciones iniciales del proceso.
 	 * Argumentos:
 	 * 		char** argv: array que contiene el archivo de configuración.
+	 */
+
+void iniciar_semaforos(void);
+	/*
+	 * Descripción: llama a pthread_mutex_init() para todos los semáforos.
+	 * Argumentos:
+	 * 		void
 	 */
 
 void cargar_configuracion(char** argv);
@@ -401,19 +412,26 @@ void enviar_claves(t_clave_list claves, int sockfd);
 	 * 		int sockfd: socket por el cual comunicar.
 	 */
 
-bool ping(Instancia instancia);
+bool estaCaida(Instancia unaInstancia);
+	/*
+	 * Descripción: pingea a unaInstancia para ver si esta caída.
+	 * Argumentos:
+	 * 		Instancia unaInstancia
+	 */
+
+void ping(Instancia unaInstancia);
 	/*
 	 * Descripción: pingea a una instancia. En caso que falle el pingeo, marca el flag de disponibilidad
 	 * 		de la instancia como false.
 	 * Argumentos:
-	 * 		Instancia instancia: la instancia a pingear.
+	 * 		Instancia unaInstancia
 	 */
 
-bool recv_ping(int sockfd);
+uint32_t waitPing(Instancia unaInstancia);
 	/*
-	 * Descripción: recibe la confirmación del ping realizado a otro proceso.
+	 * Descripción: devuelve el resultado de ping enviado por unaInstancia.
 	 * Argumentos:
-	 * 		int sockfd: socket para comunicar.
+	 * 		Instancia unaInstancia
 	 */
 
 Instancia getInstanciaStore(char* clave);
@@ -637,6 +655,82 @@ uint32_t doStore(STORE_Op store);
 	 * 		STORE_Op get: estructura que contiene el ID de quien desea hacer la operación
 	 * 			y la clave sobre cual hacer dicha operación.
 	 */
+
+uint32_t getBlockerID(char* clave);
+	/*
+	 * Descripción: devuelve el ID del ESI que bloqueó la clave.
+	 * Argumentos:
+	 * 		char* clave
+	 */
+
+void revisar_existencia(char* clave);
+	/*
+	 * Descripción: crea la clave en caso de que no exista. Si ya existe, no hace nada.
+	 * Argumentos:
+	 * 		char* clave
+	 */
+
+uint32_t findBlockerIn(char* clave, t_clave_list lista);
+	/*
+	 * Descripción: devuelve el del ESI que bloqueó el ID, si se encuentra en la lista. Si no
+	 * 		lo encuentra, devuelve id_not_found.
+	 * Argumentos:
+	 * 		char* clave
+	 * 		t_clave_list lista
+	 */
+
+void log_get(GET_Op get);
+	/*
+	 * Descripción: loguea en el log de operaciones una operación GET con los datos de la
+	 * 		estructura get.
+	 * Argumentos:
+	 * 		GET_Op get
+	 */
+
+void log_set(SET_Op set);
+	/*
+	 * Descripción: loguea en el log de operaciones una operación SET con los datos de la
+	 * 		estructura set.
+	 * Argumentos:
+	 * 		SET_Op set
+	 */
+
+void log_store(STORE_Op store);
+	/*
+	 * Descripción: loguea en el log de operaciones una operación STORE con los datos de la
+	 * 		estructura store.
+	 * Argumentos:
+	 * 		STORE_Op store
+	 */
+
+void gettearClave(GET_Op get);
+	/*
+	 * Descripción: bloquea la clave por el ID contenidos en get y loguea en el log de operaciones.
+	 * Argumentos
+	 * 		GET_Op get
+	 */
+
+uint32_t settearClave(SET_Op set, Instancia instancia);
+	/*
+	 * Descripción: envía a la instancia la clave y su valor para que le haga SET. Si la instancia
+	 * 		se encuentra caída, devuelve -1.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 * 		char* clave
+	 * 		char* valor
+	 */
+
+uint32_t storearClave(STORE_Op store, Instancia instancia);
+
+	/*
+	 * Descripción: envía a la instancia la clave de store para guardar. Si la instancia se encuentra caída
+	 * 		devuelve -1.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 * 		char* clave
+	 */
+
+
 
 t_blocked_list listaAuxiliar;
 

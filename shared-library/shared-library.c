@@ -217,6 +217,8 @@ int send_package_int(package_int package, int sockfd) {
 
 	int envio = send(sockfd, message, packageSize, MSG_NOSIGNAL);
 
+	log_debug(logger, "Bytes enviados: %i", envio);
+
 	free(message);
 
 	return envio;
@@ -232,6 +234,8 @@ int send_aviso_con_ID(aviso_con_ID aviso, int sockfd) {
 
 	int envio = send(sockfd, message, packageSize, 0);
 
+	log_debug(logger, "Bytes enviados: %i", envio);
+
 	free(message);
 
 	return envio;
@@ -242,6 +246,8 @@ int send_string(char* string, int sockfd) {
 	int cadena_size = strlen(string) + 1;
 
 	int envio = send(sockfd, string, cadena_size, 0);
+
+	log_debug(logger, "Bytes enviados: %i", envio);
 
 	return envio;
 }
