@@ -18,20 +18,6 @@ STORE_Op recv_store(int sockfd) {
 	return store;
 }
 
-void send_store(STORE_Op store, int sockfd) {
-	aviso_con_ID aviso_store = { .aviso = 13, .id = store.id };
-
-	enviar_aviso(sockfd, aviso_store);
-
-	uint32_t size = (uint32_t) strlen(store.clave) + 1;
-	package_int size_package = { .packed = size };
-
-	sleep(0.5);
-
-	enviar_packed(size_package, sockfd);
-	enviar_cadena(store.clave, sockfd);
-}
-
 SET_Op recv_set(int sockfd) {
 	SET_Op set;
 
@@ -46,6 +32,31 @@ SET_Op recv_set(int sockfd) {
 	strcpy(set.valor, valor);
 
 	return set;
+}
+
+GET_Op recv_get(int sockfd) {
+	GET_Op get;
+
+	package_int size_package = recv_packed_no_exit(sockfd);
+	char* clave = recv_string_no_exit(sockfd, size_package.packed);
+
+	strcpy(get.clave, clave);
+
+	return get;
+}
+
+void send_store(STORE_Op store, int sockfd) {
+	aviso_con_ID aviso_store = { .aviso = 13, .id = store.id };
+
+	enviar_aviso(sockfd, aviso_store);
+
+	uint32_t size = (uint32_t) strlen(store.clave) + 1;
+	package_int size_package = { .packed = size };
+
+	sleep(0.5);
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(store.clave, sockfd);
 }
 
 void send_set(SET_Op set, int sockfd) {
@@ -66,17 +77,6 @@ void send_set(SET_Op set, int sockfd) {
 
 	enviar_packed(valor_size_package, sockfd);
 	enviar_cadena(set.valor, sockfd);
-}
-
-GET_Op recv_get(int sockfd) {
-	GET_Op get;
-
-	package_int size_package = recv_packed_no_exit(sockfd);
-	char* clave = recv_string_no_exit(sockfd, size_package.packed);
-
-	strcpy(get.clave, clave);
-
-	return get;
 }
 
 void send_get(GET_Op get, int sockfd) {

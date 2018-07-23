@@ -236,7 +236,9 @@ void iniciar(char** argv) {
 
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
 		parsed = parsear(line);
-		agregar_parseo(&parsed_ops, parsed);
+		if (parsed.valido) {
+			agregar_parseo(&parsed_ops, parsed);
+		}
 	}
 
 	if (line)
@@ -286,14 +288,19 @@ t_esi_operacion parsear(char* line) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
+			loggear("Parseado correctamente.");
 			break;
 		case SET:
+			loggear("Parseado correctamente.");
 			break;
 		case STORE:
+			loggear("Parseado correctamente.");
 			break;
 		default:
-			log_error(logger, "No se pudo interpretar la linea.");
-			exit(EXIT_FAILURE);
+			log_warning(logger, "No se pudo interpretar la linea.");
+			log_debug(logger, "Line: %s", line);
+			parsed.valido = false;
+			break;
 		}
 
 	} else {
