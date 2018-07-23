@@ -7,6 +7,92 @@
 
 #include "shared-library.h"
 
+STORE_Op recv_store(int sockfd) {
+	STORE_Op store;
+
+	package_int size_package = recv_packed_no_exit(sockfd);
+	char* clave = recv_string_no_exit(sockfd, size_package.packed);
+
+	strcpy(store.clave, clave);
+
+	return store;
+}
+
+void send_store(STORE_Op store, int sockfd) {
+	aviso_con_ID aviso_store = { .aviso = 13, .id = store.id };
+
+	enviar_aviso(sockfd, aviso_store);
+
+	uint32_t size = (uint32_t) strlen(store.clave) + 1;
+	package_int size_package = { .packed = size };
+
+	sleep(0.5);
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(store.clave, sockfd);
+}
+
+SET_Op recv_set(int sockfd) {
+	SET_Op set;
+
+	package_int clave_size_package = recv_packed_no_exit(sockfd);
+	char* clave = recv_string_no_exit(sockfd, clave_size_package.packed);
+
+	strcpy(set.clave, clave);
+
+	package_int valor_size_package = recv_packed_no_exit(sockfd);
+	char* valor = recv_string_no_exit(sockfd, valor_size_package.packed);
+
+	strcpy(set.valor, valor);
+
+	return set;
+}
+
+void send_set(SET_Op set, int sockfd) {
+	aviso_con_ID aviso_set = { .aviso = 12, .id = set.id };
+
+	enviar_aviso(sockfd, aviso_set);
+
+	uint32_t clave_size = (uint32_t) strlen(set.clave) + 1;
+	package_int clave_size_package = { .packed = clave_size };
+
+	sleep(0.5);
+
+	enviar_packed(clave_size_package, sockfd);
+	enviar_cadena(set.clave, sockfd);
+
+	uint32_t valor_size = (uint32_t) strlen(set.valor) + 1;
+	package_int valor_size_package = { .packed = valor_size };
+
+	enviar_packed(valor_size_package, sockfd);
+	enviar_cadena(set.valor, sockfd);
+}
+
+GET_Op recv_get(int sockfd) {
+	GET_Op get;
+
+	package_int size_package = recv_packed_no_exit(sockfd);
+	char* clave = recv_string_no_exit(sockfd, size_package.packed);
+
+	strcpy(get.clave, clave);
+
+	return get;
+}
+
+void send_get(GET_Op get, int sockfd) {
+	aviso_con_ID aviso_get = { .aviso = 11, .id = get.id };
+
+	enviar_aviso(sockfd, aviso_get);
+
+	uint32_t size = (uint32_t) strlen(get.clave) + 1;
+	package_int size_package = { .packed = size };
+
+	sleep(0.5);
+
+	enviar_packed(size_package, sockfd);
+	enviar_cadena(get.clave, sockfd);
+}
+
 char* recv_string_no_exit(int sockfd, uint32_t size) {
 	char* ret_string = malloc(size);
 

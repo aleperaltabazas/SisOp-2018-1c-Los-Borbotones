@@ -8,6 +8,8 @@
 #ifndef TESTCOORDINADOR_H_
 #define TESTCOORDINADOR_H_
 
+#include "../Coordinador/coordinador.h"
+
 void testEL(void);
 void testKE(void);
 void testLSU(void);

@@ -17,6 +17,22 @@
 
 //	Misc
 
+typedef struct GET_Op {
+	char clave[80];
+	uint32_t id;
+} GET_Op;
+
+typedef struct SET_Op {
+	char clave[80];
+	char valor[80];
+	uint32_t id;
+} SET_Op;
+
+typedef struct STORE_Op {
+	char clave[80];
+	uint32_t id;
+} STORE_Op;
+
 typedef struct ESI {
 	uint32_t id;
 	int socket;

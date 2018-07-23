@@ -51,8 +51,6 @@ package_int packed_recv_error = { .packed = -20 };
 
 aviso_con_ID aviso_recv_error = { .aviso = -20 };
 
-
-
 char* string_recv_error = "RECV ERROR";
 
 //Funciones servidor
@@ -332,4 +330,51 @@ char* recv_string_no_exit(int sockfd, uint32_t size);
  * 		uint32_t size: tamaño de la cadena a recibir.
  */
 
+void send_get(GET_Op get, int sockfd);
+/*
+ * Descripción: envía una operación de GET a través de sockfd.
+ * Argumentos:
+ * 		GET_Op get: estructura que contiene la clave e ID de la operación y
+ * 			del ESI, respectivamente.
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
+
+void send_set(SET_Op set, int sockfd);
+/*
+ * Descripción: envía una operación de SET a través de sockfd.
+ * Argumentos:
+ * 		SET_Op set: estructura que contiene la clave, valor e ID de la operación y
+ * 			del ESI, respectivamente.
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
+
+void send_store(STORE_Op store, int sockfd);
+/*
+ * Descripción: envía una operación de STORE a través de sockfd.
+ * Argumentos:
+ * 		STORE_Op store: estructura que contiene la clave e ID de la operación y
+ * 			del ESI, respectivamente.
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
+
+GET_Op recv_get(int sockfd);
+/*
+ * Descripción: recibe una clave y la devuelve en una estructura GET_Op.
+ * Argumentos:
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
+
+SET_Op recv_set(int sockfd);
+/*
+ * Descripción: recibe una clave y un valor y la devuelve en una estructura SET_Op.
+ * Argumentos:
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
+
+STORE_Op recv_store(int sockfd);
+/*
+ * Descripción: recibe una clave y la devuleve en una estructura STORE_Op.
+ * Argumentos:
+ * 		int sockfd: file descriptor de socket para comunicar.
+ */
 #endif /* SHARED_LIBRARY_H_ */
