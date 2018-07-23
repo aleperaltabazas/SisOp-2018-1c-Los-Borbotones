@@ -333,135 +333,52 @@ int get(int socket_cliente, uint32_t id) {
 
 	op_response response = { .packed = doGet(get) };
 
-	log_debug(logger, "Response: %i", response.packed);
+	log_debug(logger, "Response GET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(20);
+	sleep(1);
 
-	return 20;
+	return (int) response.packed;
 }
 
 uint32_t doGet(GET_Op get) {
+	//WIP
 
 	return 20;
 }
 
-int dame_response(char* clave, uint32_t id) {
-	if (!existe(clave)) {
-		bloquear(clave, id);
-		loggear("Get exitoso.");
+int set(int socket_cliente, uint32_t id) {
+	SET_Op set = recv_set(socket_cliente);
+	set.id = id;
 
-		operacion op = { .op_type = op_GET, .id = id };
-		strcpy(op.clave, clave);
+	op_response response = { .packed = doSet(set) };
 
-		log_op(op);
+	log_debug(logger, "Response SET: %i", response.packed);
+	send_packed_no_exit(response, socket_cliente);
 
-		return 20;
-	}
-
-	else if (existe(clave) && !esta_bloqueada(clave)) {
-		bloquear(clave, id);
-		loggear("Get exitoso.");
-
-		operacion op = { .op_type = op_GET, .id = id };
-		strcpy(op.clave, clave);
-		log_op(op);
-
-		return 20;
-	}
-
-	else {
-		log_warning(logger, "Bloqueando ESI %i.", id);
-		bloquear_ESI(clave, id);
-		return 5;
-	}
+	return (int) response.packed;
 }
 
-int set(int socket_cliente, uint32_t id) {
-	aviso_con_ID aviso_ok = { .aviso = 10 };
-
-	sleep(RETARDO);
-
-	send_aviso_no_exit(aviso_ok, socket_cliente);
-
-	package_int clave_size_packed = recv_packed_no_exit(socket_cliente);
-	uint32_t clave_size = clave_size_packed.packed;
-	char* clave = recv_string_no_exit(socket_cliente, clave_size);
-
-	package_int valor_size_packed = recv_packed_no_exit(socket_cliente);
-	uint32_t valor_size = valor_size_packed.packed;
-	char* valor = recv_string_no_exit(socket_cliente, valor_size);
-
-	package_int response;
-
-	response.packed = settear(valor, clave, id);
-
-	if (response.packed == -3) {
-		return -5;
-	}
-
-	log_debug(logger, "%i", response.packed);
-
-	send_packed_no_exit(response, socket_cliente);
+uint32_t doSet(SET_Op set) {
+	//WIP
 
 	return 20;
 }
 
 int store(int socket_cliente, uint32_t id) {
-	aviso_con_ID aviso_ok = { .aviso = 10 };
+	STORE_Op store = recv_store(socket_cliente);
+	store.id = id;
 
-	sleep(RETARDO);
+	op_response response = { .packed = doStore(store) };
 
-	send_aviso_no_exit(aviso_ok, socket_cliente);
-
-	package_int size_packed = recv_packed_no_exit(socket_cliente);
-	uint32_t clave_size = size_packed.packed;
-
-	char* clave = recv_string_no_exit(socket_cliente, clave_size);
-
-	package_int response;
-	response.packed = get_packed(clave, id);
-
+	log_debug(logger, "Response STORE: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	if (response.packed == -3) {
-		return -5;
-	}
+	return (int) response.packed;
+}
 
-	if (response.packed != 5) {
-		int status = hacer_store(clave);
-
-		if (status == -1) {
-			return -5;
-		}
-
-		if (status == 5) {
-			abortar_ESI(socket_cliente);
-		}
-
-		if (status == -7) {
-			abortar_ESI(socket_cliente);
-			//desconectar instancia?
-		}
-
-		if (!emptyBlocked(&blocked_ESIs)) {
-			aviso_con_ID unlock = { .aviso = 28, .id = dame_desbloqueado(clave,
-					blocked_ESIs) };
-			liberar_ESI(&blocked_ESIs, unlock.id);
-			enviar_aviso(socket_planificador, unlock);
-
-		}
-
-		operacion op = { .op_type = op_STORE, .id = id };
-		strcpy(op.clave, clave);
-
-		log_op(op);
-
-	}
-
-	sleep(2);
-
-	log_debug(logger, "%i", response.packed);
+uint32_t doStore(STORE_Op store) {
+	//WIP
 
 	return 20;
 }

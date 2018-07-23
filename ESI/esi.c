@@ -124,14 +124,10 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		log_info(logger, "Orden de terminación.");
 		enviar_aviso(socket_coordinador, aviso_fin);
 
-		clear(&parsed_ops);
-
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear("Orden de ejecucion recibida.");
 	} else {
-		clear(&parsed_ops);
-		enviar_aviso(socket_coordinador, aviso_fin);
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 
@@ -187,6 +183,12 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 
 }
 
+op_response recibir_respuesta(int sockfd) {
+	op_response response = recibir_packed(sockfd);
+
+	return response;
+}
+
 uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
 	GET_Op get = { .id = this_id };
 	strcpy(get.clave, parsed.argumentos.GET.clave);
@@ -197,59 +199,22 @@ uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
 	return response.packed;
 }
 
-op_response recibir_respuesta(int sockfd) {
-	op_response response = recibir_packed(sockfd);
-
-	return response;
-}
-
 uint32_t set(t_esi_operacion parsed, int socket_coordinador) {
-	enviar_aviso(socket_coordinador, aviso_set);
+	SET_Op set = { .id = this_id };
+	strcpy(set.clave, parsed.argumentos.SET.clave);
+	strcpy(set.valor, parsed.argumentos.SET.valor);
 
-	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
-
-	if (aviso_coordi.aviso != 10) {
-		clear(&parsed_ops);
-		salir_con_error("Aviso desconocido", socket_coordinador);
-	}
-
-	char* clave = parsed.argumentos.SET.clave;
-	char* valor = parsed.argumentos.SET.valor;
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-	uint32_t valor_size = (uint32_t) strlen(valor) + 1;
-
-	package_int clave_size_package = { .packed = clave_size };
-
-	package_int valor_size_package = { .packed = valor_size };
-
-	enviar_packed(clave_size_package, socket_coordinador);
-	enviar_cadena(clave, socket_coordinador);
-	enviar_packed(valor_size_package, socket_coordinador);
-	enviar_cadena(valor, socket_coordinador);
-
-	package_int response = recibir_packed(socket_coordinador);
-
+	send_set(set, socket_coordinador);
+	op_response response = recibir_respuesta(socket_coordinador);
 	return response.packed;
 }
 
 uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
-	enviar_aviso(socket_coordinador, aviso_store);
+	STORE_Op store = { .id = this_id };
+	strcpy(store.clave, parsed.argumentos.STORE.clave);
 
-	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
-
-	if (aviso_coordi.aviso != 10) {
-		salir_con_error("Aviso desconocido", socket_coordinador);
-	}
-
-	char* clave = parsed.argumentos.STORE.clave;
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = clave_size };
-
-	enviar_packed(size_package, socket_coordinador);
-	enviar_cadena(clave, socket_coordinador);
-
-	package_int response = recibir_packed(socket_coordinador);
+	send_store(store, socket_coordinador);
+	op_response response = recibir_respuesta(socket_coordinador);
 
 	return response.packed;
 }
