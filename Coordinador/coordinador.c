@@ -396,10 +396,18 @@ uint32_t doSet(SET_Op set) {
 		return settearClave(set, instanciaSet);
 	}
 
+	else if (blocker_id == id_not_found) {
+		operacion error = { .id = set.id, .op_type = op_ERROR };
+		log_op(error);
+
+		return -1;
+	}
+
 	else {
 		log_warning(logger,
 				"El ESI %i trató de hacer SET sobre la clave %s, que no tenía adquirida, en posesión de %i",
 				set.id, set.clave, blocker_id);
+
 		return -1;
 	}
 }
@@ -408,6 +416,60 @@ uint32_t doStore(STORE_Op store) {
 	//WIP
 
 	return 20;
+}
+
+void gettearClave(GET_Op get) {
+	bloquear(get.clave, get.id);
+	log_info(logger, "El ESI %i adquirió la clave %s de forma exitosa.", get.id,
+			get.clave);
+
+	log_get(get);
+
+}
+
+uint32_t settearClave(SET_Op set, Instancia instancia) {
+	if (estaCaida(instancia)) {
+		desconectar(instancia);
+		return -1;
+	}
+
+	if (mismoString(instancia.nombre, inst_error.nombre)) {
+		log_warning(logger, "Hubo un error asignando la instancia.");
+		return -1;
+	}
+
+	enviar_set(set, instancia);
+	op_response resultado = recibir_set(instancia);
+
+	if (resultado.packed == 20) {
+		actualizarClave(set.clave, set.valor);
+		return 20;
+	} else {
+		log_warning(logger, "Falló la operación de SET del ESI %i.", set.id);
+		return -1;
+	}
+}
+
+uint32_t storearClave(STORE_Op store, Instancia instancia) {
+	if (estaCaida(instancia)) {
+		return -1;
+	}
+
+	return 20;
+}
+
+void enviar_set(SET_Op set, Instancia instancia) {
+	//Mati: acá necesito que hagas que le mande a la instancia el SET y su valor, nada más.
+}
+
+op_response recibir_set(Instancia instancia) {
+	//Mati: acá necesito que recibas el resultado del set, si se necesita compactar creo que también
+	//se podría hacer acá. Por último, que reciba la cantidad de entradas ocupadas que tiene la instancia.
+	//y devolver la respuesta de acuerdo a como salió el SET.
+
+	op_response response = { .packed = 20 };
+
+	return response;
 }
 
 void revisar_existencia(char* clave) {
@@ -468,32 +530,17 @@ void log_store(STORE_Op store) {
 	log_op(store_op);
 }
 
-void gettearClave(GET_Op get) {
-	bloquear(get.clave, get.id);
-	log_info(logger, "El ESI %i adquirió la clave %s de forma exitosa.", get.id,
-			get.clave);
-
-	log_get(get);
-
-}
-
-uint32_t settearClave(SET_Op set, Instancia instancia) {
-	if (estaCaida(instancia)) {
-		return -1;
+bool estaCaida(Instancia unaInstancia) {
+	if (!unaInstancia.disponible) {
+		return true;
 	}
 
-	//Falta hacer la parte de enviar a la instancia la clave y el valor y esta
-
-	return 20;
-}
-
-bool estaCaida(Instancia unaInstancia) {
 	if (mismoString(unaInstancia.nombre, inst_error.nombre)) {
 		return true;
 	}
 
 	ping(unaInstancia);
-	return waitPing(unaInstancia) == 100;
+	return waitPing(unaInstancia) != 100;
 }
 
 uint32_t waitPing(Instancia unaInstancia) {
@@ -667,6 +714,10 @@ bool estaAsignada(char* clave) {
 
 Instancia getInstanciaSet(char* clave) {
 	Instancia ret_inst;
+
+	if (estaAsignada(clave)) {
+		return elQueLaTiene(clave);
+	}
 
 	switch (ALGORITMO_DISTRIBUCION) {
 	case EL:
@@ -1680,6 +1731,9 @@ void log_op(operacion op) {
 	case op_STORE:
 		log_info(log_operaciones, "ESI %i STORE %s", op.id, op.clave);
 		break;
+	case op_ERROR:
+		log_error(log_operaciones, "Error de clave no identificada.");
+		break;
 	default:
 		log_warning(logger, "Operación inválida.");
 		break;
@@ -1709,11 +1763,11 @@ void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 
 	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
 
-	//log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
+//log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
 
 	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
 
-	//Serializacion de la orden
+//Serializacion de la orden
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 

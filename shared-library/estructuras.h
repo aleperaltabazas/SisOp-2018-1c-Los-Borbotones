@@ -56,7 +56,7 @@ typedef struct blocked {
 
 typedef struct operacion {
 	enum {
-		op_GET, op_SET, op_STORE
+		op_GET, op_SET, op_STORE, op_ERROR
 	} op_type;
 	char clave[40];
 	char valor[40];

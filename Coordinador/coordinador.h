@@ -730,7 +730,21 @@ uint32_t storearClave(STORE_Op store, Instancia instancia);
 	 * 		char* clave
 	 */
 
+void enviar_set(SET_Op set, Instancia instancia);
+	/*
+	 * Descripción: envía la operación de SET a la instancia.
+	 * Argumentos:
+	 * 		SET_Op set
+	 * 		Instancia instancia
+	 */
 
+op_response recibir_set(Instancia instancia);
+	/*
+	 * Descripción: devuelve un op_response conteniendo la respuesta enviada por la instancia respecto al set.
+	 * 		Además, si no hay error, actualiza las entradas ocupadas por la instancia.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 */
 
 t_blocked_list listaAuxiliar;
 
