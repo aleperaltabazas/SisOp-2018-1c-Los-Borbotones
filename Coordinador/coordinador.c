@@ -344,6 +344,7 @@ int get(int socket_cliente, uint32_t id) {
 }
 
 int set(int socket_cliente, uint32_t id) {
+
 	SET_Op set = recv_set(socket_cliente);
 	set.id = id;
 
@@ -499,6 +500,37 @@ void enviar_set(SET_Op set, Instancia instancia) {
 	 * Mati: acá necesito que hagas que le mande a la instancia el SET, que tiene la clave
 	 * y su valor, nada más.
 	 */
+	int tamanio_parametros_set = obtener_tamanio_parametros_set(set);
+
+	//Lock semaforo
+	enviar_orden_instancia(tamanio_parametros_set,(void*) instancia.sockfd, 11);
+
+	asignar_parametros_set(set);
+
+	enviar_valores_set(tamanio_parametros_set, (void*) instancia.sockfd);
+	//Unlock semaforo
+}
+
+int obtener_tamanio_parametros_set(SET_Op set){
+
+	int tamanio_clave = strlen(set.clave) + 1;
+	int tamanio_valor = strlen(set.valor) + 1;
+	int tamanio_enteros = 2 * sizeof(uint32_t);
+
+	return tamanio_clave + tamanio_valor + tamanio_enteros;
+}
+
+void asignar_parametros_set(SET_Op set){
+
+	int tamanio_clave = strlen(set.clave) + 1;
+	int tamanio_valor = strlen(set.valor) + 1;
+
+	//Variable global
+	valor_set.clave = set.clave;
+	valor_set.valor = set.valor;
+	valor_set.tamanio_clave = tamanio_clave;
+	valor_set.tamanio_valor = tamanio_valor;
+
 }
 
 uint32_t recibir_set(Instancia instancia) {
@@ -510,14 +542,42 @@ uint32_t recibir_set(Instancia instancia) {
 	 * pareció semánticamente correcto.
 	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
 	 */
+	int resultado_set = esperar_confirmacion_de_exito(instancia.sockfd);
+
+	//Lo dejo asi para que probemos bien que no haya race condition y reciba cualquier orden
+	if(resultado_set != 101 && resultado_set != 111){
+
+		log_error(logger, "Fallo en la ejecucion del set, resultado recibido: %i");
+		return -1;
+
+	}
+
+	loggear("SET completo en la instancia");
+	package_int entradas_ocupadas = recibir_packed(instancia.sockfd);
+	//Actualizar la instancia con este valor
+
+	if(resultado_set == 101){
+		//Esto quedo medio feo, porque la instancia compacta sola y despues se le avisa a todas las demas
+		loggear("Tengo que mandar las instancias a compactar");
+		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
+		enviar_instancias_a_compactar();
+	}
 
 	return 20;
+
 }
 
 void enviar_store(STORE_Op store, Instancia instancia) {
 	/*
 	 * Mati: acá necesito que hagas que le mande a la instancia el STORE. La estructura tiene la clave.
 	 */
+	int tamanio_clave = strlen(store.clave) + 1;
+
+	//lock
+	enviar_orden_instancia(tamanio_clave, (void*)instancia.sockfd, 12);
+
+	enviar_cadena(store.clave, instancia.sockfd);
+	//unlock?? creo que seria despues de que ya reciba el store, aunque van a quedar muy distantes
 }
 
 uint32_t recibir_store(Instancia instancia) {
@@ -526,6 +586,20 @@ uint32_t recibir_store(Instancia instancia) {
 	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
 	 */
 
+	int resultado_store = esperar_confirmacion_de_exito(instancia.sockfd);
+
+	if(resultado_store == 666){
+		loggear("Tengo que abortar el ESI");
+		//No se si te da lo mismo este caso Ale
+		return -1;
+	}
+
+	if(resultado_store != 112){
+		log_trace(logger, "Error en el STORE, codigo de operacion recibido: %i", resultado_store);
+		return -1;
+	}
+
+	loggear("STORE finalizado con exito!");
 	return 20;
 }
 
@@ -1637,7 +1711,7 @@ bool murio(char* name, int sockfd) {
 }
 
 void ping(Instancia instancia) {
-	orden_del_coordinador orden;
+	/*orden_del_coordinador orden;
 	orden.codigo_operacion = 100;
 	orden.tamanio_a_enviar = 0;
 
@@ -1645,20 +1719,35 @@ void ping(Instancia instancia) {
 
 	orden_del_coordinador* buffer = malloc(packageSize);
 
-	memcpy(buffer, &orden, packageSize);
+	memcpy(buffer, &orden, packageSize);*/
+
+	//LOCK
+
+	enviar_orden_instancia(0, (void*) instancia.sockfd, 100);
 
 	log_trace(logger, "Pingeando instancia... SOCKET: %i", instancia.sockfd);
 
-	int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
+	/*int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
 
 	log_debug(logger, "Bytes enviados: %i", envio);
 
 	if (envio < 0) {
 		log_warning(logger, "Falló el envío de ping.");
 		return;
+	}*/
+
+	int resultado_ping = esperar_confirmacion_de_exito(instancia.sockfd);
+
+	if(resultado_ping != 100){
+		log_error(logger, "Error en el ping, resultado recibido: %i", resultado_ping);
+		//desconectar?
+		return;
 	}
 
+	//UNLOCK
+
 	loggear("Ping enviado.");
+
 }
 
 bool recv_ping(int sockfd) {
@@ -1724,6 +1813,7 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			return;
 		}
 	}
+
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	esperar_confirmacion_de_exito(sockfd);
@@ -1816,33 +1906,29 @@ void asignar_entradas(int sockfd) {
 
 }
 
-void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
-		int codigo_de_operacion) {
+void enviar_orden_instancia(int tamanio_parametros, void* un_socket, int codigo_de_operacion) {
 
 	orden_del_coordinador orden;
 	orden.codigo_operacion = codigo_de_operacion;
-	orden.tamanio_a_enviar = tamanio_parametros_set;
+	orden.tamanio_a_enviar = tamanio_parametros;
 
-	uint32_t tamanio_orden = sizeof(orden_del_coordinador);
-
-//log_trace(logger, "tamanio a enviar: %d, codigo operacion: %d", orden.tamanio_a_enviar, orden.codigo_operacion);
+	int tamanio_orden = sizeof(orden_del_coordinador);
 
 	orden_del_coordinador * buffer_orden = malloc(tamanio_orden);
-
-//Serializacion de la orden
 
 	memcpy(buffer_orden, &orden, tamanio_orden);
 
 	loggear("Enviando orden a la instancia...");
 
-	if (send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden,
-	MSG_NOSIGNAL) < 0) {
-		log_warning(logger, "Error en el envio de la orden: %s",
-				strerror(errno));
+	int res = send((intptr_t) un_socket, (void*) buffer_orden, tamanio_orden, MSG_NOSIGNAL);
+
+	if (res < 0) {
+		log_warning(logger, "Error en el envio de la orden: %s, codigo de operacion que falla: %i",
+				strerror(errno), codigo_de_operacion);
 		return;
 	}
 
-	loggear("Orden enviada!");
+	log_trace(logger, "Orden enviada!, bytes enviados: %i", res);
 
 	free(buffer_orden);
 
@@ -1853,34 +1939,50 @@ int esperar_confirmacion_de_exito(int un_socket) {
 	package_int confirmacion = recv_packed_no_exit(un_socket);
 
 	if (confirmacion.packed == 100) {
+
 		loggear("Comprobacion de PING finalizada con exito");
 		return 0;
+
 	} else if (confirmacion.packed == 101) {
-		loggear("Pedido de compactacion recibido, mandando a compactar...");
-		enviar_instancias_a_compactar();
-		esperar_confirmacion_de_exito(un_socket);
-		return 0;
+
+		loggear("Pedido de compactacion recibido");
+		return 101;
+
 	} else if (confirmacion.packed == 110) {
+
 		loggear("Operacion Inicial finalizada con exito");
 		return 0;
+
 	} else if (confirmacion.packed == 111) {
+
 		loggear("Operacion SET finalizada con exito");
-		return 0;
+		return 111;
+
 	} else if (confirmacion.packed == 112) {
+
 		loggear("Operacion STORE finalizada con exito");
-		return 0;
+		return 112;
+
 	} else if (confirmacion.packed == 115) {
+
 		loggear("Operacion Lectura finalizada con exito");
 		return 0;
+
 	} else if (confirmacion.packed == 140) {
+
 		loggear("Nombre asignado con exito");
 		return 0;
+
 	} else if (confirmacion.packed == 666) {
+
 		log_error(logger, "Tengo que abortar el ESI");
 		return -5;
+
 	} else {
+
 		log_error(logger, "La instancia no pudo finalizar la operacion");
 		return -7;
+
 	}
 
 	return -10;
@@ -1890,12 +1992,19 @@ void enviar_instancias_a_compactar() {
 	t_instancia_node * nodo_aux = instancias.head;
 
 	while (nodo_aux != NULL) {
-		log_debug(logger, "Enviando instancia a compactar...");
+
+		log_debug(logger, "Enviando instancia %s a compactar...", nodo_aux->instancia.nombre);
+
 		pthread_mutex_lock(&sem_socket_operaciones_coordi);
-		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd,
-				14);
+
+		enviar_orden_instancia(0, (void*) (intptr_t) nodo_aux->instancia.sockfd, 14);
+
+		esperar_confirmacion_de_exito(nodo_aux->instancia.sockfd);
+
 		pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+
 		nodo_aux = nodo_aux->sgte;
+
 	}
 }
 
@@ -1910,15 +2019,17 @@ void send_orden_no_exit(int op_code, int sockfd) {
 
 }
 
-void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
+void enviar_valores_set(int tamanio_parametros_set, void * un_socket){
 
-	buffer_parametros = serializar_valores_set(tamanio_parametros_set,
-			&(valor_set));
+	buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
 
 	loggear("Enviando parametros a la instancia");
 
-	int res = send((intptr_t) un_socket, buffer_parametros,
-			tamanio_parametros_set, 0);
+	int res = send((intptr_t) un_socket, buffer_parametros, tamanio_parametros_set, 0);
+
+	if(res < 0){
+		loggear("Error en el envio de los valores SET");
+	}
 
 	log_trace(logger, "Enviado: %i", res);
 
@@ -1944,6 +2055,7 @@ int instanciasDisponibles() {
 char * darLosDeadlock(void) {
 	return pasarACadena(estanEnDL(tienenAlgoRetenido(blocked_ESIs)));
 }
+
 t_blocked_list tienenAlgoRetenido(t_blocked_list lista) {
 	t_blocked_node* puntero = blocked_ESIs.head;
 	t_blocked_list retenientes;
@@ -1961,6 +2073,7 @@ t_blocked_list tienenAlgoRetenido(t_blocked_list lista) {
 
 	return retenientes;
 }
+
 bool tieneAlgoRetenido(uint32_t id) {
 	t_clave_node * puntero = claves_bloqueadas.head;
 
@@ -2010,6 +2123,7 @@ bool puedeLlegarA(t_blocked_node * puntero) {
 	liberar(&listaAuxiliar);
 	return false;
 }
+
 t_clave_node * duenioDe(char * claveBuscada) {
 	t_clave_node * puntero = claves_bloqueadas.head;
 
@@ -2021,6 +2135,7 @@ t_clave_node * duenioDe(char * claveBuscada) {
 	}
 	return NULL;
 }
+
 void liberar(t_blocked_list * lista) {
 	while (lista->head != NULL) {
 		eliminar_blockeados(lista);
@@ -2036,6 +2151,7 @@ bool estaEn(t_blocked_list lista, uint32_t id) {
 	}
 	return false;
 }
+
 void agregar(t_blocked_list lista, t_blocked_node nodo) {
 	t_blocked_node * puntero = lista.head;
 	while (puntero != NULL) {
@@ -2045,6 +2161,7 @@ void agregar(t_blocked_list lista, t_blocked_node nodo) {
 	strcpy(puntero->clave, nodo.clave);
 	puntero->sgte = NULL;
 }
+
 char * pasarACadena(t_blocked_list lista) {
 	t_blocked_node * puntero = lista.head;
 	char * cadena = malloc(sizeof(char*));

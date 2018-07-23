@@ -781,6 +781,8 @@ void enviar_valores_set(int tamanio_parametros_set, void* un_socket);
 void enviar_ordenes_de_prueba(void* un_socket);
 void enviar_ordenes_de_prueba_compactacion(void* un_socket);
 void asignar_entradas(int sockfd);
+int obtener_tamanio_parametros_set(SET_Op set);
+void asignar_parametros_set(SET_Op set);
 
 int instancia_id;
 Instancia equitativeLoad(void); //Devuelve el socket que corresponde
