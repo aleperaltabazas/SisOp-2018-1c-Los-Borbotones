@@ -320,7 +320,7 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 		return 0;
 	}
 
-	if (status == -5) {
+	if (status == -1) {
 		abortar_ESI(socket_cliente);
 		liberar_claves(id);
 		return 0;
@@ -338,7 +338,7 @@ int get(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response GET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(3);
+	sleep(2);
 
 	return (int) response.packed;
 }
@@ -352,6 +352,8 @@ int set(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response SET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
+	sleep(2);
+
 	return (int) response.packed;
 }
 
@@ -363,6 +365,8 @@ int store(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "Response STORE: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
+
+	sleep(2);
 
 	return (int) response.packed;
 }
@@ -405,7 +409,7 @@ uint32_t doSet(SET_Op set) {
 
 	else {
 		log_warning(logger,
-				"El ESI %i trató de hacer SET sobre la clave %s, que no tenía adquirida, en posesión de %i",
+				"El ESI %i trató de hacer SET sobre la clave %s, que en posesión de %i",
 				set.id, set.clave, blocker_id);
 
 		return -1;
@@ -413,7 +417,25 @@ uint32_t doSet(SET_Op set) {
 }
 
 uint32_t doStore(STORE_Op store) {
-	//WIP
+	uint32_t blocker_id = getBlockerID(store.clave);
+
+	if (blocker_id == store.id) {
+		Instancia instanciaStore = getInstanciaStore(store.clave);
+		return storearClave(store, instanciaStore);
+	}
+
+	else if (blocker_id == id_not_found) {
+		operacion error = { .id = store.id, .op_type = op_ERROR };
+		log_op(error);
+
+		return -1;
+	}
+
+	else {
+		log_warning(logger,
+				"El ESI %i trató de hacer STORE sobre la clave %s, que estaba en posesión de %i",
+				store.id, store.clave, blocker_id);
+	}
 
 	return 20;
 }
@@ -439,9 +461,9 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 	}
 
 	enviar_set(set, instancia);
-	op_response resultado = recibir_set(instancia);
+	uint32_t resultado = recibir_set(instancia);
 
-	if (resultado.packed == 20) {
+	if (resultado == 20) {
 		actualizarClave(set.clave, set.valor);
 		return 20;
 	} else {
@@ -455,21 +477,60 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 		return -1;
 	}
 
-	return 20;
+	if (mismoString(instancia.nombre, inst_error.nombre)) {
+		log_warning(logger, "Hubo un error asignando la instancia.");
+		return -1;
+	}
+
+	enviar_store(store, instancia);
+	uint32_t resultado = recibir_store(instancia);
+
+	//Sea por el sí o por el no, el ESI muere o hace store, así que la clave se libera. Si falla,
+	//devuelve -1, así que en el hilo de atender_ESI libera todas las claves restantes.
+
+	desbloquear(store.clave);
+	avisarDesbloqueo(store.clave);
+
+	return resultado;
 }
 
 void enviar_set(SET_Op set, Instancia instancia) {
-	//Mati: acá necesito que hagas que le mande a la instancia el SET y su valor, nada más.
+	/*
+	 * Mati: acá necesito que hagas que le mande a la instancia el SET, que tiene la clave
+	 * y su valor, nada más.
+	 */
 }
 
-op_response recibir_set(Instancia instancia) {
-	//Mati: acá necesito que recibas el resultado del set, si se necesita compactar creo que también
-	//se podría hacer acá. Por último, que reciba la cantidad de entradas ocupadas que tiene la instancia.
-	//y devolver la respuesta de acuerdo a como salió el SET.
+uint32_t recibir_set(Instancia instancia) {
+	/*
+	 * Mati: acá necesito que recibas el resultado del set, si se necesita compactar creo que también
+	 * se podría hacer acá. Por último, que reciba la cantidad de entradas ocupadas que tiene la instancia.
+	 * y devolver la respuesta de acuerdo a como salió el SET.
+	 * Podés cambiar la firma para que devuelva lo que mejor te parezca, metí un op_response porque me
+	 * pareció semánticamente correcto.
+	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
+	 */
 
-	op_response response = { .packed = 20 };
+	return 20;
+}
 
-	return response;
+void enviar_store(STORE_Op store, Instancia instancia) {
+	/*
+	 * Mati: acá necesito que hagas que le mande a la instancia el STORE. La estructura tiene la clave.
+	 */
+}
+
+uint32_t recibir_store(Instancia instancia) {
+	/*
+	 * Mati: acá necesito que recibas el resultado de store.
+	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
+	 */
+
+	return 20;
+}
+
+void avisarDesbloqueo(char* clave) {
+
 }
 
 void revisar_existencia(char* clave) {
@@ -1337,6 +1398,7 @@ void desbloquear(char* clave) {
 	char* dup_clave = strdup(clave);
 	if (!existe(dup_clave)) {
 		crear(dup_clave);
+		free(dup_clave);
 		desbloquear(dup_clave);
 	}
 

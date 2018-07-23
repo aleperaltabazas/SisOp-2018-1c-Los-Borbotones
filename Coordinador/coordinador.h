@@ -738,12 +738,34 @@ void enviar_set(SET_Op set, Instancia instancia);
 	 * 		Instancia instancia
 	 */
 
-op_response recibir_set(Instancia instancia);
+uint32_t recibir_set(Instancia instancia);
 	/*
-	 * Descripción: devuelve un op_response conteniendo la respuesta enviada por la instancia respecto al set.
+	 * Descripción: devuelve la respuesta enviada por la instancia respecto al set.
 	 * 		Además, si no hay error, actualiza las entradas ocupadas por la instancia.
 	 * Argumentos:
 	 * 		Instancia instancia
+	 */
+
+void enviar_store(STORE_Op store, Instancia instancia);
+	/*
+	 * Descripción: envía la operacion de STORE a la instancia.
+	 * Argumentos:
+	 * 		STORE_Op store
+	 * 		Instancia instancia
+	 */
+
+uint32_t recibir_store(Instancia instancia);
+	/*
+	 * Descripción: devuelve la respuesta enviada por la instancia respecto al store.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 */
+
+void avisarDesbloqueo(char* clave);
+	/*
+	 * Descripción: avisa al planificador que ESI desbloquear respecto a una clave.
+	 * Argumentos:
+	 * 		char* clave
 	 */
 
 t_blocked_list listaAuxiliar;
