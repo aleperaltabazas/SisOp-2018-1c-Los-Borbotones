@@ -973,6 +973,13 @@ void* atender_Planificador(void* un_socket) {
 		else if (aviso_plani.aviso == 71) {
 			conseguirBloqueados(socket_planificador);
 		}
+
+		else {
+			log_warning(logger,
+					"Error de mensaje con el planificador. Cierro el socket.");
+			close(socket_planificador);
+			break;
+		}
 	}
 
 	seguir_ejecucion = 0;

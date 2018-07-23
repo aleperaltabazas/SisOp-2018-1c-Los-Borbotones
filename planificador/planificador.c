@@ -44,7 +44,7 @@ void iniciar(char** argv) {
 
 	cargar_configuracion(argv);
 	iniciar_semaforos();
-	iniciar_hilos();
+	//iniciar_hilos();
 	startSigHandlers();
 }
 
@@ -536,13 +536,13 @@ bool esta(t_esi_list lista, ESI esi) {
 }
 
 void desalojar(void) {
+
 	if (executing_ESI.id != esi_vacio.id) {
+
 		pthread_mutex_lock(&sem_new_ESIs);
 		eliminar_ESI(&new_ESIs, executing_ESI);
 
 		ESI new_ESI = executing_ESI;
-
-		log_debug(logger, "Alfa: %f", ALFA);
 
 		log_debug(logger, "Rafaga real: %i", new_ESI.rafaga_real);
 		log_debug(logger, "Rafaga estimada anterior: %f",
@@ -552,11 +552,12 @@ void desalojar(void) {
 
 		new_ESI.rafaga_estimada = estimated_time(new_ESI);
 
-		log_debug(logger, "Rafaga real: %i", new_ESI.rafaga_real);
-		log_debug(logger, "Rafaga estimada anterior: %f",
-				new_ESI.rafaga_estimada);
-		log_debug(logger, "Estimación de la próxima ráfaga: %f",
-				estimated_time(new_ESI));
+		pthread_mutex_lock(&sem_clock);
+		new_ESI.tiempo_arribo = tiempo;
+		pthread_mutex_unlock(&sem_clock);
+
+		log_debug(logger, "Nuevo tiempo de arribo: %i", new_ESI.tiempo_arribo);
+		log_debug(logger, "RR: %f", response_ratio(new_ESI));
 
 		agregar_ESI(&new_ESIs, new_ESI);
 
@@ -667,6 +668,7 @@ ESI dame_proximo_ESI() {
 
 	}
 
+	next_esi.rafaga_real = 0;
 	return next_esi;
 }
 
@@ -692,6 +694,21 @@ ESI highest_RR(t_esi_list lista) {
 	ESI esi = headESIs(lista);
 
 	while (puntero != NULL) {
+		log_debug(logger, "ESI actual: %i", esi.id);
+		log_debug(logger, "Puntero: %i", puntero->esi.id);
+
+		log_debug(logger, "Estimada anterior del actual: %f",
+				esi.rafaga_estimada);
+		log_debug(logger, "Estimada anterior del puntero: %f",
+				puntero->esi.rafaga_estimada);
+
+		log_debug(logger, "Tiempo de espera del actual: %i", wait_time(esi));
+		log_debug(logger, "Tiempo de espera del puntero: %i",
+				wait_time(puntero->esi));
+
+		log_debug(logger, "RR del actual: %f", response_ratio(esi));
+		log_debug(logger, "RR del puntero: %f", response_ratio(puntero->esi));
+
 		if (tiene_mas_RR(esi, puntero->esi)) {
 			esi = puntero->esi;
 		}
@@ -707,7 +724,7 @@ bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI) {
 }
 
 bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI) {
-	return response_ratio(primer_ESI) > response_ratio(segundo_ESI);
+	return response_ratio(primer_ESI) < response_ratio(segundo_ESI);
 }
 
 int wait_time(ESI esi) {
@@ -727,7 +744,7 @@ float estimado(ESI esi) {
 }
 
 float response_ratio(ESI esi) {
-	return 1 + wait_time(esi) / estimated_time(esi);
+	return 1 + wait_time(esi) / esi.rafaga_estimada;
 }
 
 ESI findByIDIn(uint32_t id, t_esi_list lista) {
@@ -995,15 +1012,15 @@ void matar(void) {
 }
 
 void status(void) {
-	//WIP
+//WIP
 }
 
 void listar_bloqueados(void) {
-	//WIP
+//WIP
 }
 
 void bloquearSegunClave(void) {
-	//WIP
+//WIP
 }
 void desbloquear_clave() {
 	printf("Ingrese la clave a desbloquear: ");
@@ -1019,11 +1036,11 @@ void desbloquear_clave() {
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
-	//WIP
+//WIP
 }
 
 void desbloquear_ESI(uint32_t id) {
-	//WIP
+//WIP
 }
 
 void bloquear_clave() {
@@ -1039,7 +1056,7 @@ void bloquear_clave() {
 }
 
 void avisar_bloqueo(int server_socket, char* clave) {
-	//WIP
+//WIP
 }
 
 void dame_datos() {

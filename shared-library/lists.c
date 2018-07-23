@@ -52,8 +52,17 @@ void eliminar_ESI(t_esi_list* lista, ESI esi) {
 		} else {
 			t_esi_node* puntero = lista->head;
 
-			while (puntero->esi.id != esi.id) {
+			while (puntero->sgte->esi.id != esi.id) {
+				if (puntero->esi.id == esi.id) {
+					break;
+				}
+
 				puntero = puntero->sgte;
+			}
+
+			if (puntero == NULL) {
+				log_warning(logger, "No se encontró el elemento en la lista.");
+				return;
 			}
 
 			t_esi_node* eliminado = puntero->sgte;

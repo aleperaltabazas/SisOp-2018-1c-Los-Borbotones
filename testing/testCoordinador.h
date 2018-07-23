@@ -8,6 +8,8 @@
 #ifndef TESTCOORDINADOR_H_
 #define TESTCOORDINADOR_H_
 
-#include <shared-library.h>
+void testEL(void);
+void testKE(void);
+void testLSU(void);
 
 #endif /* TESTCOORDINADOR_H_ */
