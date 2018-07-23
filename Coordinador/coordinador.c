@@ -328,24 +328,20 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 }
 
 int get(int socket_cliente, uint32_t id) {
-	aviso_con_ID aviso_ok = { .aviso = 10 };
+	GET_Op get = recv_get(socket_cliente);
+	get.id = id;
 
-	sleep(RETARDO);
+	op_response response = { .packed = doGet(get) };
 
-	send_aviso_no_exit(aviso_ok, socket_cliente);
-
-	package_int size_packed = recv_packed_no_exit(socket_cliente);
-	uint32_t clave_size = size_packed.packed;
-
-	char* clave = recv_string_no_exit(socket_cliente, clave_size);
-
-	package_int response;
-
-	response.packed = dame_response(clave, id);
-
-	log_debug(logger, "%i", response.packed);
-
+	log_debug(logger, "Response: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
+
+	sleep(20);
+
+	return 20;
+}
+
+uint32_t doGet(GET_Op get) {
 
 	return 20;
 }

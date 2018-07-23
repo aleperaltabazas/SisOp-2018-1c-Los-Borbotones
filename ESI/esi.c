@@ -46,7 +46,6 @@ void avisar_ID(int sockfd) {
 	package_int packed = recibir_packed(sockfd);
 
 	if (packed.packed != 42) {
-		log_error(logger, "%s", strerror(errno));
 		salir_con_error("Falló el aviso OK del coordinador.", sockfd);
 	}
 }
@@ -189,26 +188,19 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 }
 
 uint32_t get(t_esi_operacion parsed, int socket_coordinador) {
-	enviar_aviso(socket_coordinador, aviso_get);
+	GET_Op get = { .id = this_id };
+	strcpy(get.clave, parsed.argumentos.GET.clave);
 
-	aviso_con_ID aviso_coordi = recibir_aviso(socket_coordinador);
-
-	if (aviso_coordi.aviso != 10) {
-		clear(&parsed_ops);
-		salir_con_error("Aviso desconocido", socket_coordinador);
-	}
-
-	char* clave = parsed.argumentos.GET.clave;
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-
-	package_int size_package = { .packed = clave_size };
-
-	enviar_packed(size_package, socket_coordinador);
-	enviar_cadena(clave, socket_coordinador);
-
-	package_int response = recibir_packed(socket_coordinador);
+	send_get(get, socket_coordinador);
+	op_response response = recibir_respuesta(socket_coordinador);
 
 	return response.packed;
+}
+
+op_response recibir_respuesta(int sockfd) {
+	op_response response = recibir_packed(sockfd);
+
+	return response;
 }
 
 uint32_t set(t_esi_operacion parsed, int socket_coordinador) {

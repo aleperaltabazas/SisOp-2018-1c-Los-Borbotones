@@ -614,6 +614,29 @@ bool tieneMenosEspacio(Instancia unaInstancia, Instancia otraInstancia);
 	 * 		Instancia otraInstancia.
 	 */
 
+uint32_t doGet(GET_Op get);
+	/*
+	 * Descripción: devuelve un valor respecto a un intento de GET.
+	 * Argumentos:
+	 * 		GET_Op get: estructura que contiene el ID de quien desea hacer la operación
+	 * 			y la clave sobre cual hacer dicha operación.
+	 */
+
+uint32_t doSet(SET_Op set);
+	/*
+ 	 * Descripción: devuelve un valor respecto a un intento de SET.
+ 	 * Argumentos:
+ 	 * 		SET_Op get: estructura que contiene el ID de quien desea hacer la operación,
+ 	 * 			la clave y valor sobre cual hacer dicha operación.
+ 	 */
+
+uint32_t doStore(STORE_Op store);
+	/*
+	 * Descripción: devuelve un valor respecto a un intento de STORE.
+	 * Argumentos:
+	 * 		STORE_Op get: estructura que contiene el ID de quien desea hacer la operación
+	 * 			y la clave sobre cual hacer dicha operación.
+	 */
 
 t_blocked_list listaAuxiliar;
 

@@ -105,6 +105,8 @@ typedef struct clave_valor_package {
 	uint32_t total_size;
 } clave_valor_package;
 
+typedef package_int op_response;
+
 //	Algoritmos
 
 typedef struct algoritmo_planificacion {

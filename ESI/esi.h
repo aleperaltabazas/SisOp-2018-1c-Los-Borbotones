@@ -195,4 +195,11 @@ void avisar_ID(int sockfd);
 	 * 		int sockfd: socket por el cual enviar el mensaje.
 	 */
 
+op_response recibir_respuesta(int sockfd);
+	/*
+	 * Descripción: devuelve un op_response de acuerdo a la respuesta comunicada por el sockfd.
+	 * Argumentos:
+	 * 		int sockfd
+	 */
+
 #endif /* ESI_H_ */

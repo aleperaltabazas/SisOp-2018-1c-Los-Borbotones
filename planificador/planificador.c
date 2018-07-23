@@ -44,7 +44,7 @@ void iniciar(char** argv) {
 
 	cargar_configuracion(argv);
 	iniciar_semaforos();
-	//iniciar_hilos();
+	iniciar_hilos();
 	startSigHandlers();
 }
 
