@@ -53,7 +53,7 @@ bool consola_planificacion = true;
 bool display = true;
 bool show_debug_commands = false;
 
-t_esi_list new_ESIs;
+t_esi_list ready_ESIs;
 t_esi_list blocked_ESIs;
 t_esi_list finished_ESIs;
 
@@ -67,10 +67,9 @@ pthread_mutex_t sem_clock;
 pthread_mutex_t sem_planificacion;
 pthread_mutex_t sem_ejecucion;
 pthread_mutex_t sem_ejecutando;
-pthread_mutex_t sem_new_ESIs;
-pthread_mutex_t sem_socket_coordi;
+pthread_mutex_t sem_ready_ESIs;
 pthread_mutex_t sem_server_socket;
-pthread_mutex_t sem_console_coordi;
+pthread_mutex_t sem_socket_coordinador;
 
 //Hilos
 

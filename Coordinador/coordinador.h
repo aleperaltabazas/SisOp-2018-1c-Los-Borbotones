@@ -55,11 +55,12 @@ pthread_mutex_t sem_socket_operaciones_coordi;
 pthread_mutex_t sem_instancias;
 pthread_mutex_t sem_listening_socket;
 
+uint32_t id_not_found = -3;
 uint32_t desbloqueada_ID = -1;
+uint32_t proximo_desbloqueado;
 
 int cantidad_instancias;
 
-uint32_t id_not_found = -3;
 //Hilos
 
 pthread_t hilo_ESI;
@@ -764,6 +765,20 @@ uint32_t recibir_store(Instancia instancia);
 void avisarDesbloqueo(char* clave);
 	/*
 	 * Descripción: avisa al planificador que ESI desbloquear respecto a una clave.
+	 * Argumentos:
+	 * 		char* clave
+	 */
+
+void enviar_desbloqueado(int sockfd);
+	/*
+	 * Descripción: envía el ID de la variable proximo_desbloqueado a través del sockfd.
+	 * Argumentos:
+	 * 		int sockfd
+	 */
+
+uint32_t getDesbloqueado(char* clave);
+	/*
+	 * Descripción: devuelve el ID del primer ESI bloqueado por la clave. Si no se encuentra, devuelve -1.
 	 * Argumentos:
 	 * 		char* clave
 	 */

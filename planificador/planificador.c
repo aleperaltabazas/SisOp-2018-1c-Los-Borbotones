@@ -126,7 +126,7 @@ void bloqueo_inicial(void) {
 	int i = 0;
 
 	while (CLAVES_BLOQUEADAS[i] != NULL) {
-		aviso_con_ID aviso_bloqueo = { .aviso = 25 };
+		aviso_con_ID aviso_bloqueo = { .aviso = 32 };
 
 		enviar_aviso(socket_coordinador, aviso_bloqueo);
 		aviso_con_ID ok = recibir_aviso(socket_coordinador);
@@ -185,101 +185,11 @@ void* atender_coordinador(void* nada) {
 	socket_coordinador = conectar_a(IP_COORDINADOR, PUERTO_COORDINADOR,
 			id_planificador, 0);
 
-	int local_socket = socket_coordinador;
-
 	bloqueo_inicial();
 
-	int status = 1;
-
-	while (status) {
-		status = recibir_respuesta(local_socket);
-	}
+	loggear("Hilo de coordinador terminado.");
 
 	return NULL;
-}
-
-int recibir_respuesta(int server_socket) {
-
-	aviso_con_ID aviso_coordi = recibir_aviso(server_socket);
-
-	log_debug(logger, "%i", aviso_coordi.aviso);
-
-	if (aviso_coordi.aviso == 25) {
-		pthread_mutex_unlock(&sem_socket_coordi);
-	}
-
-	else if (aviso_coordi.aviso == 26) {
-		pthread_mutex_unlock(&sem_socket_coordi);
-	}
-
-	else if (aviso_coordi.aviso == 27) {
-		pthread_mutex_unlock(&sem_socket_coordi);
-	}
-
-	else if (aviso_coordi.aviso == 28) {
-		pthread_mutex_unlock(&sem_socket_coordi);
-		if (aviso_coordi.id != -5) {
-			desbloquear_ESI(aviso_coordi.id);
-		}
-	}
-
-	else if (aviso_coordi.aviso == 61) {
-		loggear("Finish Status");
-		finishStatus();
-	} else if (aviso_coordi.aviso == 71) {
-		loggear("Finish listar");
-		finishListar();
-	}
-
-	else {
-		avisar_cierre(socket_coordinador);
-		log_error(logger, "%s", strerror(errno));
-		salir_con_error("Mensaje erróneo recibido del coordinador.",
-				server_socket);
-	}
-
-	return 1;
-}
-
-void finishListar(void) {
-	package_int size_package = recibir_packed(socket_coordinador);
-	char* bloqueados = recibir_cadena(socket_coordinador, size_package.packed);
-
-	printf("Los ESIs bloqueados esperando la clave son: %s", bloqueados);
-	pthread_mutex_unlock(&sem_console_coordi);
-}
-
-void finishStatus() {
-	package_int valor_size = recibir_packed(socket_coordinador);
-	char* valor = recibir_cadena(socket_coordinador, valor_size.packed);
-	log_debug(logger, "Valor: %s", valor);
-
-	package_int instancia_size = recibir_packed(socket_coordinador);
-	char* instancia = recibir_cadena(socket_coordinador, instancia_size.packed);
-	log_debug(logger, "Instancia: %s", instancia);
-
-	package_int blockedSize = recibir_packed(socket_coordinador);
-	char* blockeds = recibir_cadena(socket_coordinador, blockedSize.packed);
-	log_debug(logger, "Bloqueados: %s", blockeds);
-
-	if (mismoString(valor, "La clave no existe.")) {
-		printf("La clave no existe \n.");
-		free(valor);
-		free(instancia);
-		free(blockeds);
-		return;
-	}
-
-	printf("Valor: %s \n", valor);
-	printf("Instancia: %s \n", instancia);
-	printf("Bloqueados esperando: %s \n", blockeds);
-
-	free(valor);
-	free(instancia);
-	free(blockeds);
-
-	pthread_mutex_unlock(&sem_console_coordi);
-	loggear("Hice signal");
 }
 
 void iniciar_semaforos() {
@@ -289,14 +199,10 @@ void iniciar_semaforos() {
 	pthread_mutex_init(&sem_clock, NULL);
 	pthread_mutex_init(&sem_planificacion, NULL);
 	pthread_mutex_init(&sem_ejecucion, NULL);
-	pthread_mutex_init(&sem_new_ESIs, NULL);
+	pthread_mutex_init(&sem_ready_ESIs, NULL);
 	pthread_mutex_init(&sem_ESI_ID, NULL);
-	pthread_mutex_init(&sem_socket_coordi, NULL);
 	pthread_mutex_init(&sem_server_socket, NULL);
-	pthread_mutex_init(&sem_console_coordi, NULL);
-
-	pthread_mutex_lock(&sem_socket_coordi);
-	pthread_mutex_lock(&sem_console_coordi);
+	pthread_mutex_init(&sem_socket_coordinador, NULL);
 }
 
 int manejar_cliente(int listening_socket, int socket_cliente,
@@ -305,21 +211,15 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 	log_info(logger, "Esperando cliente...");
 
 	listen(listening_socket, BACKLOG);
-
-	loggear("Esperando...");
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
-
 	socket_cliente = accept(listening_socket, (struct sockaddr *) &addr,
 			&addrlen);
 
 	log_info(logger, "Cliente conectado.");
-
 	loggear("Esperando mensaje del cliente.");
 
-	package_int cliente_packed = { .packed = -1 };
-
-	cliente_packed = recibir_packed(socket_cliente);
+	package_int cliente_packed = recibir_packed(socket_cliente);
 
 	log_debug(logger, "%i", cliente_packed.packed);
 
@@ -342,12 +242,9 @@ void identificar_cliente(package_int id, int socket_cliente) {
 
 	if (id.packed == 2) {
 		loggear(mensajeESI);
-
 		pthread_create(&hilo_ESI, NULL, atender_ESI,
 				(void *) (intptr_t) socket_cliente);
-
 		loggear(mensajeESILista);
-
 		pthread_detach(hilo_ESI);
 	}
 
@@ -400,17 +297,17 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 		agregar_ESI(&finished_ESIs, esi);
 
-		pthread_mutex_lock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ready_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
-		if (!esta(new_ESIs, esi)) {
+		if (!esta(ready_ESIs, esi)) {
 			return 0;
 		}
 
-		eliminar_ESI(&new_ESIs, esi);
+		eliminar_ESI(&ready_ESIs, esi);
 
 		ESIs_size--;
 		pthread_mutex_unlock(&sem_ESIs_size);
-		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_unlock(&sem_ready_ESIs);
 
 		vaciar_ESI();
 
@@ -434,13 +331,13 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		esi.tiempo_arribo = tiempo;
 		pthread_mutex_unlock(&sem_clock);
 
-		pthread_mutex_lock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ready_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
-		agregar_ESI(&new_ESIs, esi);
+		agregar_ESI(&ready_ESIs, esi);
 
 		ESIs_size++;
 		pthread_mutex_unlock(&sem_ESIs_size);
-		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_unlock(&sem_ready_ESIs);
 
 		log_info(logger, "ESI número %i listo para ejecutar añadido a la cola.",
 				id);
@@ -452,12 +349,12 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	}
 
 	else if (aviso.aviso == 5) {
-		pthread_mutex_lock(&sem_new_ESIs);
+		pthread_mutex_lock(&sem_ready_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
-		eliminar_ESI(&new_ESIs, esi);
+		eliminar_ESI(&ready_ESIs, esi);
 
 		ESIs_size--;
-		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_unlock(&sem_ready_ESIs);
 		pthread_mutex_unlock(&sem_ESIs_size);
 
 		pthread_mutex_lock(&sem_ejecutando);
@@ -486,6 +383,8 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 		log_info(logger, "ESI número %i ejecutó correctamente.", id);
 
+		conseguir_desbloqueado();
+
 		pthread_mutex_unlock(&sem_ejecucion);
 	}
 
@@ -493,18 +392,18 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		log_warning(logger, "El ESI %i se cayó o fue abortado.", id);
 		if (executing_ESI.id == (uint32_t) id) {
 
-			pthread_mutex_lock(&sem_new_ESIs);
+			pthread_mutex_lock(&sem_ready_ESIs);
 			pthread_mutex_lock(&sem_ESIs_size);
-			if (!esta(new_ESIs, esi)) {
-				agregar_ESI(&new_ESIs, esi);
+			if (!esta(ready_ESIs, esi)) {
+				agregar_ESI(&ready_ESIs, esi);
 				ESIs_size++;
 			}
 
-			eliminar_ESI(&new_ESIs, esi);
+			eliminar_ESI(&ready_ESIs, esi);
 
 			ESIs_size--;
 			pthread_mutex_unlock(&sem_ESIs_size);
-			pthread_mutex_unlock(&sem_new_ESIs);
+			pthread_mutex_unlock(&sem_ready_ESIs);
 
 			vaciar_ESI();
 
@@ -519,6 +418,32 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	}
 
 	return 1;
+}
+
+void conseguir_desbloqueado(void) {
+	aviso_con_ID aviso_desbloqueado = { .aviso = 15 };
+
+	enviar_aviso(socket_coordinador, aviso_desbloqueado);
+	aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
+
+	if (respuesta_desbloqueado.aviso == 0) {
+		loggear("No hay ningún ESI para desbloquear.");
+		return;
+	}
+
+	else if (respuesta_desbloqueado.aviso == 5) {
+		desbloquear_ESI(respuesta_desbloqueado.id);
+		log_info(logger, "ESI %i fue desbloqueado.", respuesta_desbloqueado.id);
+
+		if (ALGORITMO_PLANIFICACION.desalojo) {
+			desalojar();
+		}
+	}
+
+	else {
+		salir_con_error("Falló la rececpión del desbloqueado",
+				socket_coordinador);
+	}
 }
 
 bool esta(t_esi_list lista, ESI esi) {
@@ -539,8 +464,8 @@ void desalojar(void) {
 
 	if (executing_ESI.id != esi_vacio.id) {
 
-		pthread_mutex_lock(&sem_new_ESIs);
-		eliminar_ESI(&new_ESIs, executing_ESI);
+		pthread_mutex_lock(&sem_ready_ESIs);
+		eliminar_ESI(&ready_ESIs, executing_ESI);
 
 		ESI new_ESI = executing_ESI;
 
@@ -559,9 +484,9 @@ void desalojar(void) {
 		log_debug(logger, "Nuevo tiempo de arribo: %i", new_ESI.tiempo_arribo);
 		log_debug(logger, "RR: %f", response_ratio(new_ESI));
 
-		agregar_ESI(&new_ESIs, new_ESI);
+		agregar_ESI(&ready_ESIs, new_ESI);
 
-		pthread_mutex_unlock(&sem_new_ESIs);
+		pthread_mutex_unlock(&sem_ready_ESIs);
 
 		vaciar_ESI();
 
@@ -654,13 +579,13 @@ ESI dame_proximo_ESI() {
 	ESI next_esi;
 	switch (ALGORITMO_PLANIFICACION.tipo) {
 	case FIFO:
-		next_esi = headESIs(new_ESIs);
+		next_esi = headESIs(ready_ESIs);
 		break;
 	case SJF:
-		next_esi = shortest(new_ESIs);
+		next_esi = shortest(ready_ESIs);
 		break;
 	case HRRN:
-		next_esi = highest_RR(new_ESIs);
+		next_esi = highest_RR(ready_ESIs);
 		break;
 	default:
 		log_error(logger, "FALLO EN EL ALGORITMO.");
@@ -772,7 +697,7 @@ bool existe(uint32_t id) {
 		return true;
 	}
 
-	ESI ready = findByIDIn(id, new_ESIs);
+	ESI ready = findByIDIn(id, ready_ESIs);
 	if (ready.id != ESI_error.id) {
 		return true;
 	}
@@ -805,7 +730,7 @@ void mostrar(t_esi_node* puntero) {
 }
 
 void cerrar_ESIs() {
-	t_esi_node* puntero = new_ESIs.head;
+	t_esi_node* puntero = ready_ESIs.head;
 
 	while (puntero != NULL) {
 		kill_ESI(puntero->esi);
@@ -953,7 +878,7 @@ void datos_ESI(void) {
 	scanf("%i", &id);
 	int id_as_uint = (uint32_t) id;
 
-	ESI esi = findByIDIn(id_as_uint, new_ESIs);
+	ESI esi = findByIDIn(id_as_uint, ready_ESIs);
 
 	if (esi.id != ESI_error.id) {
 		printf("El ESI %i se encuentra en la cola de listos \n", id);
@@ -1033,14 +958,30 @@ void desbloquear_clave() {
 
 	printf("La clave %s fue desbloqueada \n", clave);
 
+	conseguir_desbloqueo();
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
-//WIP
+	aviso_con_ID desbloqueo_clave = { .aviso = 31 };
+	enviar_aviso(server_socket, desbloqueo_clave);
+
+	uint32_t clave_size = strlen(clave) + 1;
+	package_int size_package = { .packed = clave_size };
+	enviar_packed(size_package, server_socket);
+	enviar_cadena(clave, server_socket);
+
+	aviso_con_ID respuesta_desbloqueo = recibir_aviso(server_socket);
+	log_debug(logger, "Respuesta: %i", aviso_desbloqueo.aviso);
 }
 
 void desbloquear_ESI(uint32_t id) {
-//WIP
+	ESI esi = findByIDIn(id, blocked_ESIs);
+	if (esi.id == ESI_error.id) {
+		salir_con_error("El ESI %i no se encuentra en el sistema.", esi.id);
+	}
+
+	eliminar_ESI(&blocked_ESIs, esi);
+	agregar_ESI(&ready_ESIs, esi);
 }
 
 void bloquear_clave() {
@@ -1062,7 +1003,7 @@ void avisar_bloqueo(int server_socket, char* clave) {
 void dame_datos() {
 	printf("ESI ejecutando: %i \n", executing_ESI.id);
 
-	t_esi_node* puntero = new_ESIs.head;
+	t_esi_node* puntero = ready_ESIs.head;
 	printf("ESIs listos para ejecutar: ");
 	mostrar(puntero);
 
@@ -1123,11 +1064,11 @@ void pausarOContinuar(void) {
 void kill_esi(int id) {
 	uint32_t id_as_uint = (uint32_t) id;
 
-	ESI asesina3 = findByIDIn(id_as_uint, new_ESIs);
+	ESI asesina3 = findByIDIn(id_as_uint, ready_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
 		kill_ESI(asesina3);
-		eliminar_ESI(&new_ESIs, asesina3);
+		eliminar_ESI(&ready_ESIs, asesina3);
 		printf("ESI %i abortado. \n", id);
 		return;
 	}
@@ -1143,7 +1084,7 @@ void kill_esi(int id) {
 	asesina3 = findByIDIn(id_as_uint, finished_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
-		kill_ESI(asesina3);
+		;
 		printf("El ESI %i ya terminó, así que no pudo ser abortado. \n", id);
 		return;
 	}

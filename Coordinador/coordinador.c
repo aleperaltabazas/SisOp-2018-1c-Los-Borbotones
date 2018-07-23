@@ -1113,28 +1113,16 @@ void* atender_Planificador(void* un_socket) {
 			break;
 		}
 
-		else if (aviso_plani.aviso == 25) {
-			bloquear_clave(socket_planificador);
+		else if (aviso_plani.aviso == 15) {
+			enviar_desbloqueado(socket_planificador);
 		}
 
-		else if (aviso_plani.aviso == 27) {
+		else if (aviso_plani.aviso == 31) {
 			desbloquear_clave(socket_planificador);
 		}
 
-		else if (aviso_plani.aviso == 60) {
-			status(socket_planificador);
-		}
-
-		else if (aviso_plani.aviso == 62) {
-			comunicarDeadlock(socket_planificador);
-		}
-
-		else if (aviso_plani.aviso == 70) {
-			bloquearSegunClave(socket_planificador);
-		}
-
-		else if (aviso_plani.aviso == 71) {
-			conseguirBloqueados(socket_planificador);
+		else if (aviso_plani.aviso == 32) {
+			bloquear_clave(socket_planificador);
 		}
 
 		else {
@@ -1150,6 +1138,23 @@ void* atender_Planificador(void* un_socket) {
 	seguir_ejecucion = 0;
 
 	return NULL;
+}
+
+void enviar_desbloqueado(int sockfd) {
+	if (proximo_desbloqueado == -1) {
+		loggear("No hay desbloqueado");
+		aviso_con_ID sin_desbloqueado = { .aviso = 0, .id = -1 };
+		enviar_aviso(sockfd, sin_desbloqueado);
+	}
+
+	else {
+		log_trace(logger, "ESI desbloqueado: %i", proximo_desbloqueado);
+		aviso_con_ID aviso_desbloqueado = { .aviso = 15, .id =
+				proximo_desbloqueado };
+		enviar_aviso(sockfd, aviso_desbloqueado);
+
+	}
+
 }
 
 void bloquearSegunClave(int sockfd) {
@@ -1353,27 +1358,13 @@ void status(int sockfd) {
 }
 
 void desbloquear_clave(int socket_cliente) {
-	aviso_con_ID aviso_ok = { .aviso = 27 };
-
-	package_int size_package = { .packed = -1 };
-
-	aviso_con_ID unlock_ok = { .aviso = 28 };
-
-	enviar_aviso(socket_cliente, aviso_ok);
-
-	size_package = recibir_packed(socket_cliente);
+	package_int size_package = recibir_packed(socket_cliente);
 	char* clave = recibir_cadena(socket_cliente, size_package.packed);
 
 	desbloquear(clave);
 
-	unlock_ok.id = dame_desbloqueado(clave, blocked_ESIs);
-
-	if (unlock_ok.id != -5) {
-		liberar_ESI(&blocked_ESIs, unlock_ok.id);
-	}
-
-	enviar_aviso(socket_cliente, unlock_ok);
-
+	aviso_con_ID desbloqueo_ok = { .aviso = 31 };
+	enviar_aviso(socket_cliente, desbloqueo_ok);
 }
 
 uint32_t dame_desbloqueado(char* clave, t_blocked_list lista) {
@@ -1408,9 +1399,26 @@ void desbloquear(char* clave) {
 		agregar_clave(&claves_disponibles, dup_clave, -1);
 
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
+
+		proximo_desbloqueado = getDesbloqueado(clave);
+		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 	}
 
 	free(dup_clave);
+}
+
+uint32_t getDesbloqueado(char* clave) {
+	t_blocked_node* puntero = blocked_ESIs.head;
+
+	while (puntero != NULL) {
+		if (mismoString(clave, puntero->clave)) {
+			return puntero->id;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return -1;
 }
 
 void bloquear_clave(int socket_cliente) {
