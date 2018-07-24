@@ -1152,7 +1152,7 @@ void enviar_desbloqueado(int sockfd) {
 		aviso_con_ID aviso_desbloqueado = { .aviso = 15, .id =
 				proximo_desbloqueado };
 		enviar_aviso(sockfd, aviso_desbloqueado);
-
+		proximo_desbloqueado = -1;
 	}
 
 }

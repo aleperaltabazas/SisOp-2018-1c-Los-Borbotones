@@ -425,13 +425,15 @@ void conseguir_desbloqueado(void) {
 
 	enviar_aviso(socket_coordinador, aviso_desbloqueado);
 	aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
+	log_debug(logger, "Aviso: %i", respuesta_desbloqueado.aviso);
+	log_debug(logger, "ID: %i", respuesta_desbloqueado.id);
 
 	if (respuesta_desbloqueado.aviso == 0) {
 		loggear("No hay ningún ESI para desbloquear.");
 		return;
 	}
 
-	else if (respuesta_desbloqueado.aviso == 5) {
+	else if (respuesta_desbloqueado.aviso == 15) {
 		desbloquear_ESI(respuesta_desbloqueado.id);
 		log_info(logger, "ESI %i fue desbloqueado.", respuesta_desbloqueado.id);
 
@@ -958,7 +960,7 @@ void desbloquear_clave() {
 
 	printf("La clave %s fue desbloqueada \n", clave);
 
-	conseguir_desbloqueo();
+	conseguir_desbloqueado();
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
@@ -971,7 +973,7 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 	enviar_cadena(clave, server_socket);
 
 	aviso_con_ID respuesta_desbloqueo = recibir_aviso(server_socket);
-	log_debug(logger, "Respuesta: %i", aviso_desbloqueo.aviso);
+	log_debug(logger, "Respuesta: %i", respuesta_desbloqueo.aviso);
 }
 
 void desbloquear_ESI(uint32_t id) {
@@ -980,8 +982,16 @@ void desbloquear_ESI(uint32_t id) {
 		salir_con_error("El ESI %i no se encuentra en el sistema.", esi.id);
 	}
 
+	pthread_mutex_lock(&sem_ready_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+
 	eliminar_ESI(&blocked_ESIs, esi);
 	agregar_ESI(&ready_ESIs, esi);
+
+	ESIs_size++;
+
+	pthread_mutex_unlock(&sem_ready_ESIs);
+	pthread_mutex_unlock(&sem_ESIs_size);
 }
 
 void bloquear_clave() {
@@ -997,7 +1007,17 @@ void bloquear_clave() {
 }
 
 void avisar_bloqueo(int server_socket, char* clave) {
-//WIP
+	aviso_con_ID bloqueo_clave = { .aviso = 32 };
+	enviar_aviso(server_socket, bloqueo_clave);
+
+	uint32_t clave_size = strlen(clave) + 1;
+	package_int size_package = { .packed = clave_size };
+	enviar_packed(size_package, server_socket);
+	enviar_cadena(clave, server_socket);
+
+	aviso_con_ID respuesta_bloqueo = recibir_aviso(server_socket);
+	log_debug(logger, "Respuesta: %i", respuesta_bloqueo.aviso);
+
 }
 
 void dame_datos() {
