@@ -33,11 +33,10 @@ package_int bloqueo_ok = {
 
 t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
-
-t_instancia_list instancias;
-int pointer;
-
 t_blocked_list blocked_ESIs;
+t_instancia_list instancias;
+
+int pointer;
 
 parametros_set valor_set;
 char * buffer_parametros;
@@ -141,6 +140,13 @@ void iniciar(char** argv);
 void iniciar_semaforos(void);
 	/*
 	 * Descripción: llama a pthread_mutex_init() para todos los semáforos.
+	 * Argumentos:
+	 * 		void
+	 */
+
+void iniciar_listas(void);
+	/*
+	 * Descripción: inicializa las cabezas de las listas con NULL.
 	 * Argumentos:
 	 * 		void
 	 */

@@ -46,6 +46,14 @@ void iniciar(char** argv) {
 	pointer = 1;
 	instancia_id = 0;
 
+	iniciar_listas();
+}
+
+void iniciar_listas(void) {
+	claves_bloqueadas.head = NULL;
+	claves_disponibles.head = NULL;
+	blocked_ESIs.head = NULL;
+	instancias.head = NULL;
 }
 
 void iniciar_semaforos(void) {
@@ -1041,12 +1049,14 @@ void desconectar(Instancia instancia) {
 
 void bloquear_ESI(char* clave, uint32_t id) {
 	blocked bloqueado = { .id = id };
-	strcpy(bloqueado.clave, clave);
+	char* clave_dup = strdup(clave);
+	strcpy(bloqueado.clave, clave_dup);
 
-	log_debug(logger, "Clave: %s", clave);
+	log_debug(logger, "Clave: %s", clave_dup);
 	log_debug(logger, "ID: %i", id);
 
 	agregar_blocked(&blocked_ESIs, bloqueado);
+	free(clave_dup);
 }
 
 void liberar_ESI(t_blocked_list* lista, uint32_t id) {

@@ -278,6 +278,7 @@ t_blocked_node* crear_nodo_blocked(blocked bloqueado) {
 	t_blocked_node* nodo = (t_blocked_node*) malloc(sizeof(t_blocked_node));
 	strcpy(nodo->clave, bloqueado.clave);
 	nodo->id = bloqueado.id;
+	nodo->sgte = NULL;
 
 	return nodo;
 }
