@@ -191,6 +191,8 @@ void store(uint32_t tamanio_a_recibir, int socket_coordinador) {
 
 	free(valor);
 
+	free(clave);
+
 	confirmar_resultado_de_operacion(112);
 
 }
@@ -220,8 +222,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -387,6 +389,9 @@ void cargar_configuracion(char** argv) {
 	DUMP = config_get_int_value(config, "DUMP");
 	log_info(logger, "Intervalo de dump: %i", DUMP);
 
+	free(config->path);
+	free(config);
+
 	loggear("Configuración cargada.");
 }
 
@@ -404,7 +409,7 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 		entradas_disponibles[i] = 0;
 	}
 
-	nodo_auxiliar = (entradas_node*) malloc(sizeof(entradas_node));
+	//nodo_auxiliar = (entradas_node*) malloc(sizeof(entradas_node));
 
 	entradas_asignadas.head = NULL;
 

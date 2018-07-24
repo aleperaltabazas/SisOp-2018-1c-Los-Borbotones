@@ -107,6 +107,9 @@ void cargar_configuracion(char** argv) {
 			"PUERTO_PLANIFICADOR");
 	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
 
+	free(config->path);
+	free(config);
+
 	loggear("Configuración cargada.");
 }
 
@@ -1304,6 +1307,9 @@ void bloquear_clave(int socket_cliente) {
 	bloquear(clave, 0);
 
 	aviso_con_ID bloqueo_ok = { .aviso = 32 };
+
+	free(clave);
+
 	enviar_aviso(socket_cliente, bloqueo_ok);
 
 }
@@ -1386,6 +1392,8 @@ void* atender_instancia(void* un_socket) {
 	levantar_instancia(name, sockfd);
 
 	log_warning(logger, "Hilo de instancia %s terminado.", name);
+
+	free(name);
 
 	return NULL;
 }
@@ -1834,6 +1842,8 @@ void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 	}
 
 	log_trace(logger, "Enviado: %i", res);
+
+	free(buffer_parametros);
 
 	loggear("Parametros enviados!");
 

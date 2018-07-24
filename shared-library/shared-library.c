@@ -15,6 +15,8 @@ STORE_Op recv_store(int sockfd) {
 
 	strcpy(store.clave, clave);
 
+	free(clave);
+
 	return store;
 }
 
@@ -26,10 +28,14 @@ SET_Op recv_set(int sockfd) {
 
 	strcpy(set.clave, clave);
 
+	free(clave);
+
 	package_int valor_size_package = recv_packed_no_exit(sockfd);
 	char* valor = recv_string_no_exit(sockfd, valor_size_package.packed);
 
 	strcpy(set.valor, valor);
+
+	free(valor);
 
 	return set;
 }
@@ -41,6 +47,8 @@ GET_Op recv_get(int sockfd) {
 	char* clave = recv_string_no_exit(sockfd, size_package.packed);
 
 	strcpy(get.clave, clave);
+
+	free(clave);
 
 	return get;
 }
