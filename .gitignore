@@ -37,7 +37,12 @@ shared-library/.gitignore
 Instancias/.gitignore
 ESI/.gitignore
 planificador/.gitignore
+
 ESI/Debug/.gitignore
+Coordinador/Debug/.gitignore
+shared-library/Debug/.gitignore
+planificador/Debug/.gitignore
+Instancias/Debug/.gitignore
 
 # Executables
 *.exe
