@@ -349,6 +349,8 @@ void terminar_conexion(int sockfd, bool retry) {
 
 	int envio = send(sockfd, package, packageSize, 0);
 
+	free(package);
+
 	if (envio < 0) {
 		if (retry) {
 			log_warning(logger,
