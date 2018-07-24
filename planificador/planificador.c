@@ -961,6 +961,7 @@ void desbloquear_clave() {
 	printf("La clave %s fue desbloqueada \n", clave);
 
 	conseguir_desbloqueado();
+	planificar();
 }
 
 void avisar_desbloqueo(int server_socket, char* clave) {
