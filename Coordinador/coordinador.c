@@ -262,6 +262,8 @@ void liberar_claves(uint32_t id) {
 	}
 
 	t_clave_node* puntero = claves_bloqueadas.head;
+	//auxiliar se guarda el siguiente del puntero por si tengo que borrar el puntero
+	t_clave_node* auxiliar_puntero = claves_bloqueadas.head -> sgte;
 
 	while (puntero != NULL) {
 		log_debug(logger, "Blocker: %i", puntero->block_id);
@@ -269,9 +271,15 @@ void liberar_claves(uint32_t id) {
 
 		if (puntero->block_id == id) {
 			desbloquear(puntero->clave);
+			puntero = auxiliar_puntero;
+			if(puntero != NULL){
+				auxiliar_puntero = auxiliar_puntero -> sgte;
+			}
 		}
-
-		puntero = puntero->sgte;
+		else{
+			puntero = puntero -> sgte;
+			auxiliar_puntero = puntero -> sgte;
+		}
 	}
 }
 
@@ -1447,21 +1455,19 @@ bool murio(char* name, int sockfd) {
 
 	while (puntero != NULL) {
 		if (mismoString(name, puntero->instancia.nombre)) {
-			if (puntero->instancia.disponible) {
-				if (estaCaida(puntero->instancia)) {
-					log_warning(logger,
-							"Esta instancia se encontraba en el sistema pero se cayó. Reincorporando");
-					return true;
-				}
 
-				else {
-					log_warning(logger,
-							"Esta instancia todavía se encuentra en el sistema. Abortando conexión.");
-					terminar_conexion(sockfd, false);
-					close(sockfd);
-					return false;
-				}
+			log_warning(logger, "Esta instancia se encontraba en el sistema pero probablemente se cayó.");
+			return true;
+
+			/*
+			else {
+				log_warning(logger,
+						"Esta instancia todavía se encuentra en el sistema. Abortando conexión.");
+				terminar_conexion(sockfd, false);
+				close(sockfd);
+				return false;
 			}
+			*/
 
 		}
 
@@ -1533,6 +1539,8 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 50);
 
+	package_int entradas_ocupadas;
+
 	while (puntero != NULL) {
 		int size = strlen(puntero->clave) + 1;
 		package_int size_package = { .packed = size };
@@ -1542,9 +1550,10 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 		send_packed_no_exit(size_package, sockfd);
 		send_string_no_exit(puntero->clave, sockfd);
 
-		package_int ok = recv_packed_no_exit(sockfd);
-
-		esperar_confirmacion_de_exito(sockfd);
+		int ok_clave_recibida = esperar_confirmacion_de_exito(sockfd);
+		int ok_set_completado = esperar_confirmacion_de_exito(sockfd);
+		//Habria que utilizar esto para actualizar el struct cuando sale del while
+		entradas_ocupadas = recibir_packed(sockfd);
 
 		puntero = puntero->sgte;
 
@@ -1556,8 +1565,16 @@ void enviar_claves(t_clave_list claves, int sockfd) {
 			send_packed_no_exit(size_package, sockfd);
 		}
 
-		if (ok.packed != 51) {
+		if (ok_clave_recibida != 151) {
 			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
+					strerror(errno));
+			close(sockfd);
+			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+			return;
+		}
+
+		if (ok_set_completado != 111) {
+			log_warning(logger, "ERROR EN EL SET DE LA INSTANCIA: %s",
 					strerror(errno));
 			close(sockfd);
 			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
@@ -1679,6 +1696,7 @@ void enviar_orden_instancia(int tamanio_parametros, void* un_socket,
 		log_warning(logger,
 				"Error en el envio de la orden: %s, codigo de operacion que falla: %i",
 				strerror(errno), codigo_de_operacion);
+		free(buffer_orden);
 		return;
 	}
 
@@ -1726,6 +1744,11 @@ int esperar_confirmacion_de_exito(int un_socket) {
 
 		loggear("Nombre asignado con exito");
 		return 0;
+
+	} else if (confirmacion.packed == 151) {
+
+		loggear("Clave restaurada con exito");
+		return 151;
 
 	} else if (confirmacion.packed == 666) {
 

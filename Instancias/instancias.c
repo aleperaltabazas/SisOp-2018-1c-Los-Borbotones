@@ -93,14 +93,15 @@ void revivir(int sockfd) {
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
 		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
-				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave)
+				strlen(valor) + 1, .clave = clave, .tamanio_clave = strlen(clave)
 				+ 1 };
 		generar_entrada(unos_parametros);
 		free(linea_parseada);
+		free(clave);
 		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
 
-	loggear("Resurreccion exitosa");
+	confirmar_resultado_de_operacion(150);
 	leer_valores_almacenados();
 }
 
@@ -108,7 +109,7 @@ char * recibir_clave(int sockfd) {
 	package_int tamanio_clave = recibir_packed(sockfd);
 	char *buffer_clave = recibir_cadena(sockfd, tamanio_clave.packed);
 	log_trace(logger, "Clave recibida!: %s", buffer_clave);
-	confirmar_resultado_de_operacion(51);
+	confirmar_resultado_de_operacion(151);
 	return buffer_clave;
 }
 
@@ -225,8 +226,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -264,6 +265,7 @@ FILE* open_file(char* file_name, char* mode, char* directory) {
 void write_file(char* file_name, char* text, char* directory) {
 	FILE* fd = open_file(file_name, "w", directory);
 
+	log_trace(logger,"text: %s", text);
 	cerrar_cadena(text);
 	int res = fputs(text, fd);
 
@@ -313,9 +315,7 @@ void* dump(void* buffer) {
 
 			//log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
-			if (auxiliar) {
-				free(auxiliar);
-			}
+
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
 
@@ -1155,10 +1155,9 @@ char * leer_clave_valor(entradas_node * puntero) {
 	int posicion = puntero->una_entrada.pos_valor;
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
-	int tamanio_total = tamanio_de_la_clave_a_leer + 1
-			+ tamanio_del_valor_a_leer + 1;
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer;
 
-	auxiliar = malloc(tamanio_total);
+	auxiliar = malloc(tamanio_total + 1);
 
 	memcpy(auxiliar, puntero->una_entrada.clave, tamanio_de_la_clave_a_leer);
 
@@ -1180,7 +1179,7 @@ char * leer_valor(int posicion_entrada, int tamanio_valor) {
 
 	memcpy(auxiliar,
 			almacenamiento_de_valores + posicion_entrada * tamanio_entrada,
-			tamanio_valor - 1);
+			tamanio_valor);
 
 	auxiliar[tamanio_valor] = '\0';
 
@@ -1238,6 +1237,8 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 		loggear("CONFIRMO NOMBRE ENVIADO");
 		/*} else if (codigo_exito_operacion == 114) {
 		 loggear("COMPACTACION FINALIZADA");*/
+	} else if (codigo_exito_operacion == 150) {
+		loggear("RESURRECCION COMPLETA");
 	} else if (codigo_exito_operacion == 666) {
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}
