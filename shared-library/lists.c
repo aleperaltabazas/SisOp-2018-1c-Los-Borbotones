@@ -274,7 +274,7 @@ void eliminar_blocked(t_blocked_list* lista, uint32_t id) {
 		} else {
 			t_blocked_node* puntero = lista->head;
 
-			while (puntero->id != id) {
+			while (puntero->sgte->id != id) {
 				puntero = puntero->sgte;
 			}
 

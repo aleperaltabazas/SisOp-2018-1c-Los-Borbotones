@@ -118,6 +118,11 @@ void cargar_configuracion(char** argv) {
 	log_info(logger, "Alfa: %f", ALFA);
 
 	CLAVES_BLOQUEADAS = config_get_array_value(config, "CLAVES_BLOQUEADAS");
+	int i = 0;
+	while (CLAVES_BLOQUEADAS[i] != NULL) {
+		log_info(logger, "Clave bloqueada: %s", CLAVES_BLOQUEADAS[i]);
+		i++;
+	}
 
 	loggear("Configuración cargada.");
 }
@@ -126,30 +131,11 @@ void bloqueo_inicial(void) {
 	int i = 0;
 
 	while (CLAVES_BLOQUEADAS[i] != NULL) {
-		aviso_con_ID aviso_bloqueo = { .aviso = 32 };
+		log_trace(logger, "Enviando aviso de bloqueo de la clave %s.",
+				CLAVES_BLOQUEADAS[i]);
+		avisar_bloqueo(socket_coordinador, CLAVES_BLOQUEADAS[i]);
 
-		enviar_aviso(socket_coordinador, aviso_bloqueo);
-		aviso_con_ID ok = recibir_aviso(socket_coordinador);
-
-		if (ok.aviso != 25) {
-			salir_con_error("Falló el ok", socket_coordinador);
-		}
-
-		uint32_t size = (uint32_t) strlen(CLAVES_BLOQUEADAS[i]) + 1;
-		package_int size_package = { .packed = size };
-
-		log_debug(logger, "%s", CLAVES_BLOQUEADAS[i]);
-
-		enviar_packed(size_package, socket_coordinador);
-		sleep(1);
-		enviar_cadena(CLAVES_BLOQUEADAS[i], socket_coordinador);
-
-		package_int response = recibir_packed(socket_coordinador);
-
-		if (response.packed != 26) {
-			salir_con_error("Falló el bloqueo", socket_coordinador);
-		}
-
+		log_trace(logger, "Clave bloqueada con éxito.");
 		i++;
 	}
 
@@ -421,6 +407,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 }
 
 void conseguir_desbloqueado(void) {
+	log_info(logger, "Preguntando al coordinador que ESI desbloquear.");
 	aviso_con_ID aviso_desbloqueado = { .aviso = 15 };
 
 	enviar_aviso(socket_coordinador, aviso_desbloqueado);
@@ -428,8 +415,8 @@ void conseguir_desbloqueado(void) {
 	log_debug(logger, "Aviso: %i", respuesta_desbloqueado.aviso);
 	log_debug(logger, "ID: %i", respuesta_desbloqueado.id);
 
-	if (respuesta_desbloqueado.aviso == 0) {
-		loggear("No hay ningún ESI para desbloquear.");
+	if (respuesta_desbloqueado.aviso == 0 || respuesta_desbloqueado.id == 0) {
+		log_info(logger, "No hay ningún ESI para desbloquear.");
 		return;
 	}
 
@@ -980,7 +967,8 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 void desbloquear_ESI(uint32_t id) {
 	ESI esi = findByIDIn(id, blocked_ESIs);
 	if (esi.id == ESI_error.id) {
-		salir_con_error("El ESI %i no se encuentra en el sistema.", esi.id);
+		log_warning(logger, "El ESI %i no se encuentra en el sistema.", id);
+		return;
 	}
 
 	pthread_mutex_lock(&sem_ready_ESIs);
@@ -1117,7 +1105,7 @@ void kill_esi(int id) {
 
 void deadlock(void) {
 	package_int paquete;
-	char * ids;
+	char * ids = NULL;
 	paquete.packed = 62;
 	enviar_packed(paquete, socket_coordinador);
 	paquete.packed = recibir_packed(socket_coordinador).packed;

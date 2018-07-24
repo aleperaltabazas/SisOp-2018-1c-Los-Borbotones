@@ -259,26 +259,10 @@ void liberar_claves(uint32_t id) {
 	}
 
 	t_clave_node* puntero = claves_bloqueadas.head;
-	t_clave_node* aux = puntero->sgte;
 
 	while (puntero != NULL) {
 		log_debug(logger, "Blocker: %i", puntero->block_id);
 		log_debug(logger, "ESI: %i", id);
-		/*if (puntero->block_id == id) {
-		 log_debug(logger, "Bloqueando...");
-		 desbloquear(puntero->clave);
-		 puntero = aux;
-		 if (puntero != NULL) {
-		 aux = puntero->sgte;
-		 }
-		 } else {
-		 puntero = puntero->sgte;
-		 if (puntero != NULL) {
-		 aux = puntero->sgte;
-		 } else {
-		 aux = NULL;
-		 }
-		 }*/
 
 		if (puntero->block_id == id) {
 			desbloquear(puntero->clave);
@@ -1027,40 +1011,6 @@ bool leCorresponde(Instancia instancia, char caracter) {
 	return instancia.keyMin <= caracter && instancia.keyMax >= caracter;
 }
 
-int get_packed(char* clave, uint32_t id) {
-	if (!existe(clave)) {
-		log_warning(logger, "Abortando ESI %i.", id);
-		return -3;
-	}
-
-	else {
-		uint32_t blocker = get_clave_id(clave);
-		log_trace(logger, "Blocker %i", blocker);
-		log_trace(logger, "Solicitante %i", id);
-
-		if (blocker == desbloqueada_ID) {
-			log_warning(logger, "Abortando ESI %i.", id);
-			return -3;
-		}
-
-		if (blocker != id) {
-			log_warning(logger, "Abortando ESI %i.", id);
-			return -3;
-		}
-
-		else if (!esta_bloqueada(clave)) {
-			log_warning(logger, "Abortando ESI %i.", id);
-			return -3;
-		}
-
-		else {
-			desbloquear(clave);
-			log_info(logger, "STORE %s.", clave);
-			return 20;
-		}
-	}
-}
-
 void mostrar_listas() {
 	t_clave_node * puntero_bloqueadas = claves_bloqueadas.head;
 	loggear("Bloqueadas:");
@@ -1190,7 +1140,7 @@ void bloquear_ESI(char* clave, uint32_t id) {
 }
 
 void liberar_ESI(t_blocked_list* lista, uint32_t id) {
-	if (id != -5) {
+	if (estaEn(*lista, id)) {
 		eliminar_blocked(lista, id);
 	}
 }
@@ -1207,30 +1157,6 @@ uint32_t get_clave_id(char* clave) {
 	}
 
 	return -1;
-}
-
-void conseguirBloqueados(int sockfd) {
-	package_int size_package = recibir_packed(sockfd);
-	char* clave = recibir_cadena(sockfd, size_package.packed);
-
-	char* bloqueados = getBloqueados(clave);
-	loggear(bloqueados);
-
-	char* dup_bloqueados = strdup(bloqueados);
-
-	aviso_con_ID aviso_bloqueados = { .aviso = 71 };
-
-	enviar_aviso(sockfd, aviso_bloqueados);
-
-	enviar_packed(size_package, sockfd);
-	enviar_cadena(dup_bloqueados, sockfd);
-
-	free(dup_bloqueados);
-
-	if (flag_free_asignada) {
-		free(bloqueados);
-		flag_free_asignada = false;
-	}
 }
 
 void* atender_Planificador(void* un_socket) {
@@ -1281,6 +1207,8 @@ void* atender_Planificador(void* un_socket) {
 }
 
 void enviar_desbloqueado(int sockfd) {
+	log_info(logger, "Enviando al planificador el ESI a desbloquear.");
+
 	if (proximo_desbloqueado == -1) {
 		loggear("No hay desbloqueado");
 		aviso_con_ID sin_desbloqueado = { .aviso = 0, .id = -1 };
@@ -1297,18 +1225,6 @@ void enviar_desbloqueado(int sockfd) {
 
 }
 
-void bloquearSegunClave(int sockfd) {
-	package_int id_package = recibir_packed(sockfd);
-
-	package_int size_package = recibir_packed(sockfd);
-	char* string = recibir_cadena(sockfd, size_package.packed);
-
-	bloquear_ESI(string, id_package.packed);
-
-	log_warning(logger, "El ESI %i fue bloqueado tras la clave %s",
-			id_package.packed, string);
-}
-
 bool esta(char* clave, t_clave_list claves) {
 	t_clave_node* puntero = claves.head;
 
@@ -1323,178 +1239,8 @@ bool esta(char* clave, t_clave_list claves) {
 	return false;
 }
 
-char* getValor(char* recurso) {
-	if (!existe(recurso)) {
-		return "La clave no existe.";
-	}
-
-	t_clave_node* puntero = claves_bloqueadas.head;
-
-	while (puntero != NULL) {
-		log_debug(logger, "Clave: %s", puntero->clave);
-		log_debug(logger, "Valor: %s", puntero->valor);
-
-		if (mismoString(puntero->clave, recurso)) {
-			if (puntero->valor == NULL) {
-				return "No tiene valor.";
-			}
-
-			return puntero->valor;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return "No tiene valor asignado.";
-}
-
-Instancia correspondiente(t_instancia_list lista, char* clave) {
-	t_instancia_node* puntero = lista.head;
-
-	while (puntero != NULL) {
-		if (leCorresponde(puntero->instancia, clave[0])) {
-			return puntero->instancia;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return inst_error;
-}
-
 bool tieneMenosEspacio(Instancia unaInstancia, Instancia otraInstancia) {
 	return unaInstancia.espacio_usado < otraInstancia.espacio_usado;
-}
-
-char* getNombrePotencial(char* recurso) {
-	Instancia ret_inst;
-	switch (ALGORITMO_DISTRIBUCION) {
-	case EL:
-		ret_inst = headInstancias(instancias);
-		break;
-	case KE:
-		ret_inst = correspondiente(instancias, recurso);
-		break;
-	case LSU:
-		ret_inst = leastSpaceUsed();
-		break;
-	default:
-		ret_inst = inst_error;
-		salir_con_error("Fallo en el algoritmo.", 0);
-		break;
-	}
-
-	if (mismoString(ret_inst.nombre, inst_error.nombre)) {
-		salir_con_error("Falló la asignación potencial de clave", 0);
-	}
-
-	return strdup(ret_inst.nombre);
-}
-
-char* getInstancia(char* recurso) {
-	char posible[255] = "(posible asignada en la proxima) ";
-
-	if (!existe(recurso)) {
-		return "La clave no existe.";
-	}
-
-	if (!estaAsignada(recurso)) {
-		loggear("No está asignada.");
-		char* nombre = getNombrePotencial(recurso);
-
-		strcat(posible, nombre);
-
-		char* ret_string = strdup(posible);
-		//Esto hace malloc y hay que hacerle free después
-
-		flag_free_asignada = true;
-		return ret_string;
-	}
-
-	Instancia asignada = elQueLaTiene(recurso);
-	return strdup(asignada.nombre);
-}
-
-char* getBloqueados(char* recurso) {
-	char* dup_recurso = strdup(recurso);
-
-	if (!existe(dup_recurso)) {
-		return "La clave no existe.";
-		free(dup_recurso);
-
-	}
-
-	t_blocked_node* puntero = blocked_ESIs.head;
-
-	char bloqueados[255] = "";
-	int i = 0;
-
-	while (puntero != NULL) {
-		if (mismoString(puntero->clave, dup_recurso)) {
-			char* num = string_itoa(puntero->id);
-			bloqueados[i] = num[0];
-			i++;
-			bloqueados[i] = ',';
-			i++;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	char* dup = strdup(bloqueados);
-	flag_free_asignada = true;
-	free(dup_recurso);
-	return dup;
-}
-
-void status(int sockfd) {
-	package_int string_size = recibir_packed(sockfd);
-	char* recurso = recibir_cadena(sockfd, string_size.packed);
-
-	char* valor = getValor(recurso);
-	char* instancia = getInstancia(recurso);
-	char* bloqueados = getBloqueados(recurso);
-
-	char* dup_valor = strdup(valor);
-	char* dup_instancia = strdup(instancia);
-	char* dup_bloqueados = strdup(bloqueados);
-
-	log_debug(logger, "Valor: %s", dup_valor);
-	log_debug(logger, "Instancia: %s", dup_instancia);
-	log_debug(logger, "Bloqueados: %s", dup_bloqueados);
-
-	uint32_t valor_length = (uint32_t) strlen(dup_valor) + 1;
-	uint32_t instancia_length = (uint32_t) strlen(dup_instancia) + 1;
-	uint32_t bloqueados_length = (uint32_t) strlen(dup_bloqueados) + 1;
-
-	package_int valor_size = { .packed = valor_length };
-
-	package_int instancia_size = { .packed = instancia_length };
-
-	package_int bloqueados_size = { .packed = bloqueados_length };
-
-	aviso_con_ID aviso_status = { .aviso = 61 };
-
-	enviar_aviso(sockfd, aviso_status);
-
-	enviar_packed(valor_size, sockfd);
-	enviar_cadena(dup_valor, sockfd);
-
-	sleep(1);
-	enviar_packed(instancia_size, sockfd);
-	enviar_cadena(dup_instancia, sockfd);
-
-	sleep(1);
-	enviar_packed(bloqueados_size, sockfd);
-	enviar_cadena(dup_bloqueados, sockfd);
-
-	free(dup_valor);
-	free(dup_instancia);
-	free(dup_bloqueados);
-	if (flag_free_asignada) {
-		free(instancia);
-		flag_free_asignada = false;
-	}
 }
 
 void desbloquear_clave(int socket_cliente) {
@@ -1505,24 +1251,6 @@ void desbloquear_clave(int socket_cliente) {
 
 	aviso_con_ID desbloqueo_ok = { .aviso = 31 };
 	enviar_aviso(socket_cliente, desbloqueo_ok);
-}
-
-uint32_t dame_desbloqueado(char* clave, t_blocked_list lista) {
-	char* dup_clave = strdup(clave);
-	t_blocked_node* puntero = lista.head;
-
-	while (puntero != NULL) {
-		if (strcmp(dup_clave, puntero->clave) == 0) {
-			free(dup_clave);
-			return puntero->id;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	free(dup_clave);
-
-	return -5;
 }
 
 void desbloquear(char* clave) {
@@ -1542,6 +1270,10 @@ void desbloquear(char* clave) {
 
 		proximo_desbloqueado = getDesbloqueado(clave);
 		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
+
+		if (proximo_desbloqueado != -1) {
+			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
+		}
 	}
 
 	free(dup_clave);
@@ -1566,23 +1298,13 @@ uint32_t getDesbloqueado(char* clave) {
 }
 
 void bloquear_clave(int socket_cliente) {
-	aviso_con_ID aviso_ok = { .aviso = 25 };
-
-	package_int block_ok = { .packed = 26 };
-
-	package_int size_package = { .packed = -1 };
-
-	enviar_aviso(socket_cliente, aviso_ok);
-
-	size_package = recibir_packed(socket_cliente);
-	log_debug(logger, "%i", size_package.packed);
+	package_int size_package = recibir_packed(socket_cliente);
 	char* clave = recibir_cadena(socket_cliente, size_package.packed);
-
-	log_debug(logger, "%s", clave);
 
 	bloquear(clave, 0);
 
-	enviar_packed(block_ok, socket_cliente);
+	aviso_con_ID bloqueo_ok = { .aviso = 32 };
+	enviar_aviso(socket_cliente, bloqueo_ok);
 
 }
 
@@ -2227,6 +1949,7 @@ bool estaEn(t_blocked_list lista, uint32_t id) {
 	while (puntero != NULL) {
 		if (puntero->id == id)
 			return true;
+
 		puntero = puntero->sgte;
 	}
 	return false;
@@ -2268,244 +1991,3 @@ void comunicarDeadlock(int socket) {
 	send_package_int(paquete, socket_planificador);
 	enviar_cadena(cadena, socket_planificador);
 }
-
-/*
- //PARA 3 Entradas de tamanio 8
- void enviar_ordenes_de_prueba(void* un_socket) {
-
- asignar_parametros_a_enviar_de_prueba();
-
- int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
- + valor_set.tamanio_valor;
-
- int i;
-
- for (i = 0; i < 3; i++) {
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- }
-
- valor_set.clave = "OtraClave";
- valor_set.tamanio_clave = 9;
- valor_set.valor = "PALABRAGRANDE";
- valor_set.tamanio_valor = 13;
-
- tamanio_parametros_set = 9 + 13 + 2 * 4;
-
- for (i = 0; i < 4; i++) {
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- }
-
- valor_set.clave = "OtraClaveDe21Letras00";
- valor_set.tamanio_clave = 21;
- valor_set.valor = "NAPARECE";
- valor_set.tamanio_valor = 8;
-
- tamanio_parametros_set = 21 + 8 + 2 * 4;
-
- enviar_orden_instancia(0, un_socket, 15);
-
- for (i = 0; i < 2; i++) {
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- }
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras01";
- valor_set.tamanio_clave = 21;
- valor_set.valor = "VALOR01";
- valor_set.tamanio_valor = 7;
-
- tamanio_parametros_set = 21 + 7 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras02";
- valor_set.valor = "VALOR02";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras03";
- valor_set.valor = "APARECEGrande";
- valor_set.tamanio_valor = 13;
-
- tamanio_parametros_set = 21 + 13 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 14);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras04";
- valor_set.valor = "VALOR04";
- valor_set.tamanio_valor = 7;
-
- tamanio_parametros_set = 21 + 7 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 14);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras05";
- valor_set.valor = "VALOR05";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- enviar_orden_instancia(0, un_socket, 14);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras06";
- valor_set.valor = "VALOR06";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- valor_set.clave = "OtraClaveDe21Letras07";
- valor_set.valor = "VALOR07";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- }
-
- void asignar_parametros_a_enviar_de_prueba() {
-
- valor_set.clave = "Clave";
- valor_set.tamanio_clave = strlen(valor_set.clave);
- valor_set.valor = "UnValor";
- valor_set.tamanio_valor = strlen(valor_set.valor);
-
- }
-
- //PARA 17 Entradas de tamanio 8 y BSU
- void enviar_ordenes_de_prueba_compactacion(void* un_socket) {
-
- int tamanio_parametros_set;
-
- valor_set.clave = "Clave00";
- valor_set.tamanio_clave = 7;
- valor_set.valor = "Valor00";
- valor_set.tamanio_valor = 7;
-
- tamanio_parametros_set = 7 + 7 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave01";
- valor_set.valor = "Valor01";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave02";
- valor_set.valor = "Valor02888888888888888888888888";
- valor_set.tamanio_valor = 7 + 8 * 3;
-
- tamanio_parametros_set += 24;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave03";
- valor_set.valor = "Valor03";
- valor_set.tamanio_valor = 7;
-
- tamanio_parametros_set = 7 + 7 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave04";
- valor_set.valor = "Valor028888888888888888";
- valor_set.tamanio_valor = 7 + 8 * 2;
-
- tamanio_parametros_set += 16;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave05";
- valor_set.valor = "Valor05";
- valor_set.tamanio_valor = 7;
-
- tamanio_parametros_set = 7 + 7 + 2 * 4;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave06";
- valor_set.valor = "Valor068888888888888888";
- valor_set.tamanio_valor = 7 + 8 * 2;
-
- tamanio_parametros_set += 16;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- valor_set.clave = "Clave07";
- valor_set.valor = "Valor078888888888888888";
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- enviar_orden_instancia(0, un_socket, 14);
-
- valor_set.clave = "Clave08";
- valor_set.valor = "Valor088888888888888888888888888888888888888888";
- valor_set.tamanio_valor = 7 + 8 * 5;
-
- tamanio_parametros_set += 24;
-
- enviar_orden_instancia(tamanio_parametros_set, un_socket, 11);
-
- enviar_valores_set(tamanio_parametros_set, un_socket);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- enviar_orden_instancia(0, un_socket, 14);
-
- enviar_orden_instancia(0, un_socket, 15);
-
- }
-
- */
