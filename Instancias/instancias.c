@@ -93,7 +93,7 @@ void revivir(int sockfd) {
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
 		fclose(archivo_a_leer);
 		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
-				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave)};
+				strlen(valor), .clave = clave, .tamanio_clave = strlen(clave) + 1};
 		generar_entrada(unos_parametros);
 		free(linea_parseada);
 		hay_mas_claves = recibir_packed(sockfd).packed;
