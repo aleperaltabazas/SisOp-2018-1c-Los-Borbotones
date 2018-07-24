@@ -52,9 +52,14 @@ Instancias/Debug/.gitignore
 *.x86_64
 *.hex
 Coordinador
+coordinador
 Instancia
+Instancias
+instancia
 planificador
+Planificador
 ESI
+
 
 # Configs
 Instancias/Debug/alesaurio.config
