@@ -85,7 +85,9 @@ int main(int argc, char** argv) {
 
 void revivir(int sockfd) {
 	int hay_mas_claves = 61;
+
 	while (hay_mas_claves == 61) {
+
 		char * clave = recibir_clave(sockfd);
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 		char * valor = leer_valor_de_archivo(archivo_a_leer);
@@ -96,6 +98,7 @@ void revivir(int sockfd) {
 		free(linea_parseada);
 		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
+
 	loggear("Resurreccion exitosa");
 	leer_valores_almacenados();
 }
@@ -150,21 +153,15 @@ void recibir_orden_inicial(int socket_coordinador) {
 			cantidad_entradas, tamanio_entrada);
 }
 
-void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
+void store(uint32_t tamanio_a_recibir, int socket_coordinador) {
 
-	package_int clave_size = recibir_packed(socket_coordinador);
-
-	log_warning(logger, "Tamanio clave %i", clave_size);
-
-	char* clave = recibir_cadena(socket_coordinador, clave_size.packed);
+	char* clave = recibir_cadena(socket_coordinador, tamanio_a_recibir);
 
 	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
 
-	int posicion_de_entrada = posicion_de_entrada_con_clave(clave,
-			clave_size.packed);
+	int posicion_de_entrada = posicion_de_entrada_con_clave(clave, tamanio_a_recibir);
 
-	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(
-			posicion_de_entrada);
+	entradas_node * entrada_seleccionada = buscar_entrada_en_posicion(posicion_de_entrada);
 
 	if (entrada_seleccionada == NULL) {
 		log_warning(logger, "La clave para STORE no se encuentra disponible");
@@ -172,8 +169,7 @@ void store(uint32_t tamanio_a_enviar, int socket_coordinador) {
 		return;
 	}
 
-	entrada_seleccionada->una_entrada.tiempo_sin_ser_referenciado =
-			reloj_interno;
+	entrada_seleccionada->una_entrada.tiempo_sin_ser_referenciado = reloj_interno;
 
 	reloj_interno++;
 
@@ -224,8 +220,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -420,13 +416,13 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	orden_del_coordinador orden;
-	orden_del_coordinador * buffer_orden = malloc(
-			sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(sizeof(orden_del_coordinador));
 
 	loggear("Esperando orden del coordinador...");
 
-	if (recv(socket_coordinador, buffer_orden, sizeof(orden_del_coordinador), 0)
-			< 0) {
+	int res = recv(socket_coordinador, buffer_orden, sizeof(orden_del_coordinador), 0);
+
+	if (res < 0) {
 		loggear("Fallo en la recepcion de la orden");
 		orden.codigo_operacion = 13;
 		orden.tamanio_a_enviar = 0;
@@ -434,7 +430,7 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 		return orden;
 	}
 
-	loggear("Orden recibida!");
+	log_trace(logger, "Orden recibida!, bytes recibidos: %i", res);
 
 	log_trace(logger, "cod. op: %d, tamanio: %d",
 			buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
