@@ -389,7 +389,7 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 	int offset = 0;
 	int size_to_send;
 
-	size_to_send = sizeof(valor_set->tamanio_clave);
+	size_to_send = sizeof(uint32_t);
 
 	memcpy(buffer_parametros + offset, &(valor_set->tamanio_clave),
 			size_to_send);
@@ -399,7 +399,7 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 	memcpy(buffer_parametros + offset, valor_set->clave, size_to_send);
 	offset += size_to_send;
 
-	size_to_send = sizeof(valor_set->tamanio_valor);
+	size_to_send = sizeof(uint32_t);
 
 	memcpy(buffer_parametros + offset, &(valor_set->tamanio_valor),
 			size_to_send);

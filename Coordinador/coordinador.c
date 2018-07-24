@@ -359,6 +359,7 @@ int set(int socket_cliente, uint32_t id) {
 }
 
 int store(int socket_cliente, uint32_t id) {
+
 	STORE_Op store = recv_store(socket_cliente);
 	store.id = id;
 
@@ -451,6 +452,7 @@ void gettearClave(GET_Op get) {
 }
 
 uint32_t settearClave(SET_Op set, Instancia instancia) {
+
 	if (estaCaida(instancia)) {
 		desconectar(instancia);
 		return -1;
@@ -474,7 +476,9 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 }
 
 uint32_t storearClave(STORE_Op store, Instancia instancia) {
+
 	if (estaCaida(instancia)) {
+		log_warning(logger, "La instancia esta caida");
 		return -1;
 	}
 
@@ -483,6 +487,7 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 		return -1;
 	}
 
+	log_trace(logger, "Storeando...");
 	enviar_store(store, instancia);
 	uint32_t resultado = recibir_store(instancia);
 
@@ -508,6 +513,9 @@ void enviar_set(SET_Op set, Instancia instancia) {
 	asignar_parametros_set(set);
 
 	enviar_valores_set(tamanio_parametros_set, (void*) instancia.sockfd);
+
+	free(valor_set.clave);
+	free(valor_set.valor);
 	//Unlock semaforo
 }
 
@@ -526,10 +534,13 @@ void asignar_parametros_set(SET_Op set){
 	int tamanio_valor = strlen(set.valor) + 1;
 
 	//Variable global
-	valor_set.clave = set.clave;
-	valor_set.valor = set.valor;
 	valor_set.tamanio_clave = tamanio_clave;
+	valor_set.clave = malloc(tamanio_clave);
+	memcpy(valor_set.clave, set.clave, tamanio_clave);
+
 	valor_set.tamanio_valor = tamanio_valor;
+	valor_set.valor = malloc(tamanio_valor);
+	memcpy(valor_set.valor, set.valor, tamanio_valor);
 
 }
 
@@ -667,10 +678,12 @@ void log_store(STORE_Op store) {
 
 bool estaCaida(Instancia unaInstancia) {
 	if (!unaInstancia.disponible) {
+		log_warning(logger, "La instancia fue marcada como no disponible");
 		return true;
 	}
 
 	if (mismoString(unaInstancia.nombre, inst_error.nombre)) {
+		log_warning(logger, "La instancia fue marcada como instancia erronea");
 		return true;
 	}
 
@@ -679,15 +692,19 @@ bool estaCaida(Instancia unaInstancia) {
 }
 
 uint32_t waitPing(Instancia unaInstancia) {
-	package_int ping = recv_packed_no_exit(unaInstancia.sockfd);
-	log_debug(logger, "Ping recibido: %i", ping.packed);
+	int resultado_ping = esperar_confirmacion_de_exito(unaInstancia.sockfd);
+	log_debug(logger, "Ping recibido: %i", resultado_ping);
 
-	if (ping.packed != 100) {
+	//UNLOCK
+
+	if (resultado_ping != 100) {
+		log_error(logger, "Error en el ping, resultado recibido: %i", resultado_ping);
 		log_warning(logger, "%s se encuentra caída", unaInstancia.nombre);
 		desconectar(unaInstancia);
 	}
 
-	return ping.packed;
+	return (uint32_t) resultado_ping;
+
 }
 
 int settear(char* valor, char* clave, uint32_t id) {
@@ -737,8 +754,8 @@ void actualizarClave(char* clave, char* valor) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	while (puntero != NULL) {
-		log_debug(logger, "Clave en la lista: %s", puntero->clave);
-		log_debug(logger, "Mi clave: %s", clave);
+		//log_debug(logger, "Clave en la lista: %s", puntero->clave);
+		//log_debug(logger, "Mi clave: %s", clave);
 		if (mismoString(puntero->clave, clave)) {
 			strcpy(puntero->valor, valor);
 
@@ -822,7 +839,12 @@ void actualizarInstancia(Instancia instancia, char* clave) {
 Instancia elQueLaTiene(char* clave) {
 	t_instancia_node* puntero = instancias.head;
 
+	log_debug(logger, "Buscando instancia con la clave %s", clave);
+
 	while (puntero != NULL) {
+
+		log_debug(logger, "Instancia: %s", puntero->instancia.nombre);
+
 		if (tieneLaClave(puntero->instancia, clave)) {
 			return puntero->instancia;
 		}
@@ -1017,7 +1039,14 @@ bool tieneLaClave(Instancia unaInstancia, char* clave) {
 	t_clave_list claves = unaInstancia.claves;
 	t_clave_node* puntero = claves.head;
 
+	if(claves.head == NULL){
+		loggear("La instancia no tiene claves asignadas");
+	}
+
 	while (puntero != NULL) {
+
+		log_debug(logger, "puntero clave: %s, clave: %s", puntero->clave, clave);
+
 		if (mismoString(puntero->clave, clave)) {
 			return true;
 		}
@@ -1029,19 +1058,11 @@ bool tieneLaClave(Instancia unaInstancia, char* clave) {
 }
 
 Instancia getInstanciaStore(char* clave) {
-	t_instancia_node* puntero = instancias.head;
 
-	while (puntero != NULL) {
-		if (tieneLaClave(puntero->instancia, clave)) {
-			log_debug(logger, "%s tiene la clave %s", puntero->instancia.nombre,
-					clave);
-			return puntero->instancia;
-		}
+	Instancia instancia = elQueLaTiene(clave);
+	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+	return instancia;
 
-		puntero = puntero->sgte;
-	}
-
-	return inst_error;
 }
 
 int hacer_store(char* clave) {
@@ -1106,7 +1127,7 @@ void desconectar(Instancia instancia) {
 	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
 			puntero->instancia.disponible = false;
-			log_trace(logger, "%s desconectada.", instancia.nombre);
+			log_error(logger, "%s desconectada.", instancia.nombre);
 		}
 		puntero = puntero->sgte;
 	}
@@ -1477,7 +1498,7 @@ void desbloquear(char* clave) {
 	}
 
 	else if (existe(dup_clave) && esta_bloqueada(dup_clave)) {
-		mostrar_listas();
+		//mostrar_listas();
 		eliminar_clave(&claves_bloqueadas, dup_clave);
 		agregar_clave(&claves_disponibles, dup_clave, -1);
 
@@ -1736,18 +1757,7 @@ void ping(Instancia instancia) {
 		return;
 	}*/
 
-	int resultado_ping = esperar_confirmacion_de_exito(instancia.sockfd);
-
-	if(resultado_ping != 100){
-		log_error(logger, "Error en el ping, resultado recibido: %i", resultado_ping);
-		//desconectar?
-		return;
-	}
-
-	//UNLOCK
-
 	loggear("Ping enviado.");
-
 }
 
 bool recv_ping(int sockfd) {
@@ -1941,7 +1951,7 @@ int esperar_confirmacion_de_exito(int un_socket) {
 	if (confirmacion.packed == 100) {
 
 		loggear("Comprobacion de PING finalizada con exito");
-		return 0;
+		return 100;
 
 	} else if (confirmacion.packed == 101) {
 
@@ -2020,6 +2030,12 @@ void send_orden_no_exit(int op_code, int sockfd) {
 }
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket){
+
+	log_debug(logger, "Tamanio parametros set: %i", tamanio_parametros_set);
+
+	log_debug(logger,
+			"Valor_set, tamanio_valor: %i valor: %s tamanio_clave %i clave %s",
+			valor_set.tamanio_valor, valor_set.valor, valor_set.tamanio_clave, valor_set.clave);
 
 	buffer_parametros = serializar_valores_set(tamanio_parametros_set, &(valor_set));
 
