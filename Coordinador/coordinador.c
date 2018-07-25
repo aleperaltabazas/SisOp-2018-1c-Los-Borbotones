@@ -272,13 +272,9 @@ void liberar_claves(uint32_t id) {
 
 		if (puntero->block_id == id) {
 			desbloquear(puntero->clave);
-			puntero = auxiliar_puntero;
-			if (puntero != NULL) {
-				auxiliar_puntero = auxiliar_puntero->sgte;
-			}
+			puntero = claves_bloqueadas.head;
 		} else {
 			puntero = puntero->sgte;
-			auxiliar_puntero = puntero->sgte;
 		}
 	}
 }

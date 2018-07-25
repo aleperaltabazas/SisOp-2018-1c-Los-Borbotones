@@ -25,7 +25,7 @@ endif
 all: ESI
 
 dependents:
-	-cd /home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
+	-cd /home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) clean all
 
 # Tool invocations
 ESI: $(OBJS) $(USER_OBJS) /home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
