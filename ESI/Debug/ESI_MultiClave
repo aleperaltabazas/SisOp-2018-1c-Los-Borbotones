@@ -1,39 +1,28 @@
-GET losBorbotones:nacho
-SET losBorbotones:nacho consolita
-GET losBorbotones:juancho
-SET losBorbotones:juancho mate
-GET losBorbotones:mati
-SET losBorbotones:mati instancia
-GET losBorbotones:ale 
-SET losBorbotones:ale planificador
-GET losBorbotones:paula
-SET losBorbotones:paula fantasma
-GET tutor:lean
-SET tutor:lean call
-GET tutor:tom
-SET tutor:tom anteojos
-GET clima:buenosAires
-GET clima:santaFe
-GET clima:cordoba
-GET clima:conurbano
-GET clima:burzaco
-SET clima:buenosAires 10
-SET clima:buenosAires frio
-SET clima:buenosAires humedo
-SET clima:cordoba templado
-SET clima:cordoba samuraiCordobes
-SET clima:santaFe soleado
-SET clima:conurbano TeRoban
-SET clima:burzaco alf
-STORE losBorbotones:nacho
-STORE losBorbotones:juancho
-STORE losBorbotones:mati
-STORE losBorbotones:ale
-STORE losBorbotones:paula
-STORE tutor:lean
-STORE tutor:tom
-STORE clima:buenosAires
-STORE clima:santaFe
-STORE clima:cordoba
-STORE clima:conurbano
-STORE clima:burzaco
+GET sony:consola:ps1
+GET sony:consola:ps2
+GET sony:consola:ps3
+GET sony:consola:ps4
+GET microsoft:consola:xbox
+GET microsoft:consola:xbox360
+GET microsoft:consola:xboxone
+GET nintendo:consola:nes
+GET nintendo:consola:snes
+GET nintendo:consola:nintendo64
+GET nintendo:consola:gamecube
+GET nintendo:consola:wii
+GET nintendo:consola:wiiu
+GET nintendo:consola:switch
+SET nintendo:consola:nes Mario
+SET nintendo:consola:snes SuperMario
+SET nintendo:consola:nintendo64 Mario64
+SET nintendo:consola:gamecube Mario
+SET nintendo:consola:wii MarioGalaxy
+SET nintendo:consola:wiiu RIP
+SET nintendo:consola:switch MarioOddysey
+SET sony:consola:ps1 FinalFantasy
+SET sony:consola:ps2 GodOfWar
+SET sony:consola:ps3 TLOU
+SET sony:consola:ps4 Bloodborne
+SET microsoft:consola:xbox Halo
+SET microsoft:consola:xbox360 Halo
+SET microsoft:consola:xboxone Halo

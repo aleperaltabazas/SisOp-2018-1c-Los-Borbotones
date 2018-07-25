@@ -167,7 +167,8 @@ t_clave_node* crear_nodo_clave(char* clave, uint32_t id) {
 }
 
 void destruir_nodo_clave(t_clave_node* nodo) {
-	free(nodo);
+	if (nodo != NULL)
+		free(nodo);
 }
 
 void agregar_clave(t_clave_list* lista, char* clave, uint32_t id) {
@@ -212,7 +213,11 @@ void eliminar_clave(t_clave_list* lista, char* clave) {
 		} else {
 			t_clave_node* puntero = lista->head;
 
-			while (!mismoString(puntero->sgte->clave, clave)) {
+			while (puntero->sgte != NULL) {
+				if (mismoString(puntero->sgte->clave, clave)) {
+					break;
+				}
+
 				puntero = puntero->sgte;
 			}
 

@@ -480,6 +480,13 @@ void actualizarInstancia(Instancia instancia, char* clave);
 	 * 		char* clave: la clave a agregar a la lista.
 	 */
 
+void conectar(Instancia instancia);
+	/*
+	 * Descripción: marca el flag de disponibilidad de una instancia como true.
+	 * Argumentos:
+	 * 		Instancia instancia: la instancia a conectar.
+	 */
+
 void desconectar(Instancia instancia);
 	/*
 	 * Descripción: marca el flag de disponibilidad de una instancia como false.
@@ -787,6 +794,12 @@ uint32_t getDesbloqueado(char* clave);
 	 * Descripción: devuelve el ID del primer ESI bloqueado por la clave. Si no se encuentra, devuelve -1.
 	 * Argumentos:
 	 * 		char* clave
+	 */
+
+void pingAll(void);
+	/*
+	 * Descripción: envía mensaje de ping a todas las instancias para verificar cuáles siguen disponibles
+	 * 		para la distribución de claves en base a las nuevas instancias.
 	 */
 
 t_blocked_list listaAuxiliar;

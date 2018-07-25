@@ -1,23 +1,20 @@
-GET futbol:messi
-SET futbol:messi TraemeLaCopa
-STORE futbol:messi
-GET basquet:ginobilli
-SET basquet:ginobilli losSpurs
-STORE basquet:ginobilli
-GET digimon:agumon
-SET digimon:agumon Evoluciona
-STORE digimon:agumon
-GET materia:sisop
-SET materia:sisop DaleQueSeAprueba
-SET materia:sisop Ahre
-STORE materia:sisop
-GET pc:hp
-SET pc:hp JuanTieneUnaDelLaburo
-STORE pc:hp
-GET zelda:link
-SET zelda:link HeyListen
-STORE zelda:link
-GET colchon:canon
-SET colchon:canon EsMiColchon
-SET colchon:canon EnLaCocina
-STORE colchon:canon
+GET e3:sony:juegos
+GET e3:microsoft:juegos
+SET e3:sony:juegos TLOU2
+SET e3:sony:juegos Spiderman
+SET e3:sony:juegos GhostOfTsushima
+SET e3:sony:juegos DeathStranding
+SET e3:sony:juegos ResidenEvil2Remake
+SET e3:sony:juegos Destiny2DLCForsaken
+SET e3:microsoft:juegos DLCCuphead
+SET e3:microsoft:juegos ForzaHorizon4
+SET e3:microsoft:juegos Gears5
+SET e3:microsoft:juegos MetroExodus
+SET e3:microsoft:juegos Fallout76
+SET e3:microsoft:juegos TheDivision2
+SET e3:microsoft:juegos DyingLight2
+SET e3:microsoft:juegos Crackdown3
+SET e3:microsoft:juegos HaloInfinite
+SET e3:microsoft:juegos KingdomHearts3
+STORE e3:microsoft:juegos
+STORE e3:sony:juegos

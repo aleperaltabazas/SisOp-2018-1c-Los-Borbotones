@@ -889,12 +889,15 @@ bool estaAsignada(char* clave) {
 
 	while (puntero != NULL) {
 		if (tieneLaClave(puntero->instancia, clave)) {
+			log_debug(logger, "Instancia que tiene la clave: %s",
+					puntero->instancia.nombre);
 			return true;
 		}
 
 		puntero = puntero->sgte;
 	}
 
+	log_debug(logger, "Ninguna instancia tiene la clave asignada.");
 	return false;
 }
 
@@ -935,6 +938,8 @@ Instancia equitativeLoad(void) {
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero != NULL) {
+		log_debug(logger, "Pointer: %i", pointer);
+		log_debug(logger, "Index del puntero: %i", puntero->index);
 		if (puntero->index == pointer) {
 			if (puntero->instancia.disponible) {
 				ret_inst = puntero->instancia;
@@ -1001,6 +1006,7 @@ Instancia keyExplicit(char* clave) {
 }
 
 void avanzar_puntero(void) {
+	log_debug(logger, "Puntero antes de avanzar: %i", pointer);
 	pointer++;
 
 	pthread_mutex_lock(&sem_instancias);
@@ -1008,6 +1014,8 @@ void avanzar_puntero(void) {
 		pointer = 1;
 	}
 	pthread_mutex_unlock(&sem_instancias);
+
+	log_debug(logger, "Puntero después de avanzar: %i", pointer);
 }
 
 bool leCorresponde(Instancia instancia, char caracter) {
@@ -1036,12 +1044,10 @@ bool tieneLaClave(Instancia unaInstancia, char* clave) {
 
 	if (claves.head == NULL) {
 		loggear("La instancia no tiene claves asignadas");
+		return false;
 	}
 
 	while (puntero != NULL) {
-
-		log_debug(logger, "puntero clave: %s, clave: %s", puntero->clave,
-				clave);
 
 		if (mismoString(puntero->clave, clave)) {
 			return true;
@@ -1059,62 +1065,6 @@ Instancia getInstanciaStore(char* clave) {
 	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 	return instancia;
 
-}
-
-int hacer_store(char* clave) {
-	Instancia instancia = getInstanciaStore(clave);
-	int sockfd = instancia.sockfd;
-
-	if (mismoString(instancia.nombre, inst_error.nombre)) {
-		log_warning(logger, "No se encontró una instancia que posea la clave.");
-		return -1;
-	}
-
-	if (estaCaida(instancia)) {
-		log_warning(logger,
-				"La instancia que posee la clave se encuentra desconectada.");
-		desconectar(instancia);
-		return -1;
-	}
-
-	log_trace(logger, "La instancia %s tiene la clave %s", instancia.nombre,
-			clave);
-
-	pthread_mutex_lock(&sem_socket_operaciones_coordi);
-
-	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, 12);
-
-	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
-
-	log_warning(logger, "Clave size %i", clave_size);
-
-	package_int package_size = { .packed = clave_size };
-
-	int status;
-
-	status = send_package_int(package_size, sockfd);
-	status = send_string(clave, sockfd);
-
-	log_debug(logger, "Esperando confirmacion...");
-
-	int res = esperar_confirmacion_de_exito((int) sockfd);
-
-	if (res == -5) {
-		return -5;
-	}
-
-	if (res == -7) {
-		return -7;
-	}
-
-	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-
-	if (status == 0) {
-		log_warning(logger, "Falló el store.");
-		return -1;
-	}
-
-	return 1;
 }
 
 void desconectar(Instancia instancia) {
@@ -1146,20 +1096,6 @@ void liberar_ESI(t_blocked_list* lista, uint32_t id) {
 	if (estaEn(*lista, id)) {
 		eliminar_blocked(lista, id);
 	}
-}
-
-uint32_t get_clave_id(char* clave) {
-	t_clave_node* puntero = claves_bloqueadas.head;
-
-	while (puntero != NULL) {
-		if (strcmp(puntero->clave, clave) == 0) {
-			return puntero->block_id;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return -1;
 }
 
 void* atender_Planificador(void* un_socket) {
@@ -1256,8 +1192,8 @@ void desbloquear_clave(int socket_cliente) {
 	enviar_aviso(socket_cliente, desbloqueo_ok);
 }
 
-void desbloquear(char* clave) {
-	char* dup_clave = strdup(clave);
+void desbloquear(char* asd) {
+	char* dup_clave = strdup(asd);
 	if (!existe(dup_clave)) {
 		crear(dup_clave);
 		free(dup_clave);
@@ -1271,7 +1207,7 @@ void desbloquear(char* clave) {
 
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
 
-		proximo_desbloqueado = getDesbloqueado(clave);
+		proximo_desbloqueado = getDesbloqueado(dup_clave);
 		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 
 		if (proximo_desbloqueado != -1) {
@@ -1408,19 +1344,33 @@ void levantar_instancia(char* name, int sockfd) {
 	true, .veces_llamado = 0, .espacio_usado = 0, .id = instancia_id };
 	strcpy(instancia.nombre, name);
 
-	loggear("Instancia agregada correctamente");
-
 	pthread_mutex_lock(&sem_instancias);
 	agregar_instancia(&instancias, instancia, cantidad_instancias + 1);
 
 	cantidad_instancias++;
 	pthread_mutex_unlock(&sem_instancias);
 
+	loggear("Instancia agregada correctamente");
+
 	redistribuir_claves();
 
 }
 
+void pingAll(void) {
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		if (estaCaida(puntero->instancia)) {
+			desconectar(puntero->instancia);
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
 void redistribuir_claves(void) {
+	pingAll();
+
 	if (ALGORITMO_DISTRIBUCION == KE) {
 		int disponibles = instanciasDisponibles();
 		log_debug(logger, "Instancias disponibles: %i", disponibles);
@@ -1569,6 +1519,7 @@ void revivir(char* name, int sockfd) {
 	}
 
 	enviar_claves(claves, sockfd);
+	redistribuir_claves();
 }
 
 void enviar_claves(t_clave_list claves, int sockfd) {
