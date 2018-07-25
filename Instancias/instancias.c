@@ -90,14 +90,27 @@ void revivir(int sockfd) {
 
 		char * clave = recibir_clave(sockfd);
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
-		char * valor = leer_valor_de_archivo(archivo_a_leer);
-		fclose(archivo_a_leer);
-		parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
-				strlen(valor) + 1, .clave = clave, .tamanio_clave = strlen(clave)
-				+ 1 };
-		generar_entrada(unos_parametros);
-		free(linea_parseada);
-		free(clave);
+
+		if(archivo_a_leer == NULL){
+			loggear("No se pudo encontrar esa clave en los archivos");
+			confirmar_resultado_de_operacion(152);
+			free(clave);
+		}
+		else{
+			char * valor = leer_valor_de_archivo(archivo_a_leer);
+
+			fclose(archivo_a_leer);
+
+			parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
+					strlen(valor) + 1, .clave = clave, .tamanio_clave = strlen(clave) + 1 };
+
+			generar_entrada(unos_parametros);
+
+			free(linea_parseada);
+
+			free(clave);
+		}
+
 		hay_mas_claves = recibir_packed(sockfd).packed;
 	}
 
@@ -226,8 +239,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -250,7 +263,8 @@ FILE* open_file(char* file_name, char* mode, char* directory) {
 
 	if (fd == NULL) {
 		log_error(logger, "Falló la apertura del archivo %s.", file_name);
-		exit(-1);
+		free(path);
+		return NULL;
 	}
 
 	log_info(logger, "Archivo abierto exitosamente");
@@ -1239,6 +1253,10 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 		 loggear("COMPACTACION FINALIZADA");*/
 	} else if (codigo_exito_operacion == 150) {
 		loggear("RESURRECCION COMPLETA");
+	} else if (codigo_exito_operacion == 151) {
+			loggear("CLAVE RECIBIDA CON EXITO");
+	} else if (codigo_exito_operacion == 152) {
+			loggear("CLAVE NO FUE DUMPEADA");
 	} else if (codigo_exito_operacion == 666) {
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}
