@@ -1050,7 +1050,7 @@ void pausarOContinuar(void) {
 
 		consola_planificacion = false;
 
-		sleep(1);
+		sleep(0.5);
 
 		printf("Planificación pausada.\n");
 
@@ -1061,7 +1061,7 @@ void pausarOContinuar(void) {
 
 		consola_planificacion = true;
 
-		sleep(1);
+		sleep(0.5);
 
 		printf("Planificación reanudada.\n");
 		planificar();

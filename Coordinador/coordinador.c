@@ -339,7 +339,7 @@ int get(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response GET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(2);
+	sleep(1);
 
 	return (int) response.packed;
 }
@@ -354,7 +354,7 @@ int set(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response SET: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(2);
+	sleep(1);
 
 	return (int) response.packed;
 }
@@ -369,7 +369,7 @@ int store(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response STORE: %i", response.packed);
 	send_packed_no_exit(response, socket_cliente);
 
-	sleep(2);
+	sleep(1);
 
 	return (int) response.packed;
 }
