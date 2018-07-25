@@ -85,7 +85,7 @@ int obtener_entradas_que_ocupa(int tamanio_valor);
 /*
  * En base al tamanio de un valor (de caracteres) se calcula cuantas entradas ocupa
  */
-void crear_entrada(parametros_set parametros, int entrada_seleccionada, int tamanio_valor, int tamanio_clave);
+void crear_entrada(parametros_set parametros, int entrada_seleccionada);
 /*
  * Se genera una entrada (estructura) en base a los parametros recibidos
  */
@@ -204,7 +204,7 @@ entradas_node * buscar_entrada_en_posicion(int posicion);
 int obtener_cantidad_de_entradas_ocupadas();
 void agregar_entrada(entrada una_entrada);
 void actualizar_entradas_disponibles(int entradas_ocupadas);
-int posicion_de_entrada_con_clave(char * clave, int tamanio_clave);
+int posicion_de_entrada_con_clave(char * clave);
 void generar_entrada(parametros_set parametros);
 void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave);
 void actualizar_valor(int entrada_seleccionada, int entradas_que_ocupa, char * valor);
