@@ -1192,17 +1192,19 @@ void desbloquear_clave(int socket_cliente) {
 	enviar_aviso(socket_cliente, desbloqueo_ok);
 }
 
-void desbloquear(char* asd) {
-	char* dup_clave = strdup(asd);
+void desbloquear(char* clave) {
+	char* dup_clave = strdup(clave);
 	if (!existe(dup_clave)) {
 		crear(dup_clave);
 		free(dup_clave);
-		desbloquear(dup_clave);
+		desbloquear(clave);
 	}
 
 	else if (existe(dup_clave) && esta_bloqueada(dup_clave)) {
 		//mostrar_listas();
-		eliminar_clave(&claves_bloqueadas, dup_clave);
+		if (esta(clave, claves_bloqueadas)) {
+			eliminar_clave(&claves_bloqueadas, dup_clave);
+		}
 		agregar_clave(&claves_disponibles, dup_clave, -1);
 
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
@@ -1257,7 +1259,9 @@ void bloquear(char* clave, uint32_t id) {
 	}
 
 	else if (existe(clave) && !esta_bloqueada(clave)) {
-		eliminar_clave(&claves_disponibles, clave);
+		if (esta(clave, claves_disponibles)) {
+			eliminar_clave(&claves_disponibles, clave);
+		}
 		agregar_clave(&claves_bloqueadas, clave, id);
 
 		log_info(logger, "La clave %s fue bloqueada por %i (0 indica usuario).",
