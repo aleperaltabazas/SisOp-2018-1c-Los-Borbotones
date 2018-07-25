@@ -411,28 +411,27 @@ void conseguir_desbloqueado(void) {
 	aviso_con_ID aviso_desbloqueado = { .aviso = 15 };
 
 	enviar_aviso(socket_coordinador, aviso_desbloqueado);
-	aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
-	log_debug(logger, "Aviso: %i", respuesta_desbloqueado.aviso);
-	log_debug(logger, "ID: %i", respuesta_desbloqueado.id);
 
-	if (respuesta_desbloqueado.aviso == 0 || respuesta_desbloqueado.id == 0) {
-		log_info(logger, "No hay ningún ESI para desbloquear.");
-		return;
-	}
+	while (1) {
+		aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
+		if (respuesta_desbloqueado.aviso == 0
+				|| respuesta_desbloqueado.id == 0) {
+			log_info(logger, "No hay más ESIs para desbloquear.");
+			break;
+		} else if (respuesta_desbloqueado.aviso == 15) {
+			desbloquear_ESI(respuesta_desbloqueado.id);
+			log_info(logger, "El ESI %i fue desbloqueado",
+					respuesta_desbloqueado.id);
 
-	else if (respuesta_desbloqueado.aviso == 15) {
-		desbloquear_ESI(respuesta_desbloqueado.id);
-		log_info(logger, "ESI %i fue desbloqueado.", respuesta_desbloqueado.id);
-
-		if (ALGORITMO_PLANIFICACION.desalojo) {
-			desalojar();
+			if (ALGORITMO_PLANIFICACION.desalojo) {
+				desalojar();
+			}
+		} else {
+			salir_con_error("Falló la recepción del desbloqueado.",
+					socket_coordinador);
 		}
 	}
 
-	else {
-		salir_con_error("Falló la rececpión del desbloqueado",
-				socket_coordinador);
-	}
 }
 
 bool esta(t_esi_list lista, ESI esi) {

@@ -57,6 +57,7 @@ pthread_mutex_t sem_listening_socket;
 uint32_t id_not_found = -3;
 uint32_t desbloqueada_ID = -1;
 uint32_t proximo_desbloqueado;
+t_desbloqueado_list cola_desbloqueados;
 
 int cantidad_instancias;
 

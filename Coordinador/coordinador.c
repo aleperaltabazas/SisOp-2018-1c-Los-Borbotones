@@ -54,6 +54,7 @@ void iniciar_listas(void) {
 	claves_disponibles.head = NULL;
 	blocked_ESIs.head = NULL;
 	instancias.head = NULL;
+	cola_desbloqueados.head = NULL;
 }
 
 void iniciar_semaforos(void) {
@@ -1153,22 +1154,22 @@ void* atender_Planificador(void* un_socket) {
 }
 
 void enviar_desbloqueado(int sockfd) {
-	log_info(logger, "Enviando al planificador el ESI a desbloquear.");
+	log_info(logger, "Enviando al planificador los ESIs a desbloquear.");
 
-	if (proximo_desbloqueado == -1) {
-		loggear("No hay desbloqueado");
-		aviso_con_ID sin_desbloqueado = { .aviso = 0, .id = -1 };
-		enviar_aviso(sockfd, sin_desbloqueado);
-	}
-
-	else {
-		log_trace(logger, "ESI desbloqueado: %i", proximo_desbloqueado);
+	while (cola_desbloqueados.head != NULL) {
+		log_trace(logger, "ESI desbloqueado: %i", cola_desbloqueados.head->id);
 		aviso_con_ID aviso_desbloqueado = { .aviso = 15, .id =
-				proximo_desbloqueado };
+				cola_desbloqueados.head->id };
+
 		enviar_aviso(sockfd, aviso_desbloqueado);
-		proximo_desbloqueado = -1;
+
+		eliminar_desbloqueado(&cola_desbloqueados);
 	}
 
+	loggear("No hay más desbloqueados.");
+	aviso_con_ID sin_desbloqueado = { .aviso = 0, .id = -1 };
+
+	enviar_aviso(sockfd, sin_desbloqueado);
 }
 
 bool esta(char* clave, t_clave_list claves) {
@@ -1200,15 +1201,17 @@ void desbloquear_clave(int socket_cliente) {
 }
 
 void desbloquear(char* clave) {
-	char* dup_clave = strdup(clave);
-	if (!existe(dup_clave)) {
+
+	if (!existe(clave)) {
+		char* dup_clave = strdup(clave);
 		crear(dup_clave);
 		free(dup_clave);
 		desbloquear(clave);
 	}
 
-	else if (existe(dup_clave) && esta_bloqueada(dup_clave)) {
+	else if (existe(clave) && esta_bloqueada(clave)) {
 		//mostrar_listas();
+		char* dup_clave = strdup(clave);
 		if (esta(clave, claves_bloqueadas)) {
 			eliminar_clave(&claves_bloqueadas, dup_clave);
 		}
@@ -1217,14 +1220,18 @@ void desbloquear(char* clave) {
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
 
 		proximo_desbloqueado = getDesbloqueado(dup_clave);
+		if (proximo_desbloqueado != -1) {
+			agregar_desbloqueado(&cola_desbloqueados, proximo_desbloqueado);
+		}
 		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 
 		if (proximo_desbloqueado != -1) {
 			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
 		}
+
+		free(dup_clave);
 	}
 
-	free(dup_clave);
 }
 
 uint32_t getDesbloqueado(char* clave) {
