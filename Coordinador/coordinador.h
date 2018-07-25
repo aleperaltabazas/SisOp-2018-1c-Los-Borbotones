@@ -411,12 +411,13 @@ t_clave_list get_claves(char* name);
 	 * 		char* name: nombre de la instancia a buscar sus claves.
 	 */
 
-void enviar_claves(t_clave_list claves, int sockfd);
+void enviar_claves(t_clave_list claves, int sockfd, char* name);
 	/*
 	 * Descripción: envía las claves de la lista a una instancia a través del sockfd.
 	 * Argumentos:
 	 * 		t_clave_list claves: lista de claves a enviar.
 	 * 		int sockfd: socket por el cual comunicar.
+	 * 		char* name: nombre de la instancia
 	 */
 
 bool estaCaida(Instancia unaInstancia);
@@ -800,6 +801,25 @@ void pingAll(void);
 	/*
 	 * Descripción: envía mensaje de ping a todas las instancias para verificar cuáles siguen disponibles
 	 * 		para la distribución de claves en base a las nuevas instancias.
+	 * Argumentos:
+	 * 		void
+	 */
+
+Instancia getInstanciaByName(t_instancia_list lista, char* name);
+	/*
+	 * Descripción: devuelve la estructura Instancia de la lista asociada a name. Si no se encuentra un
+	 * 		elemento en la lista cuyo nombre sea name, devuelve inst_error
+	 * Argumentos:
+	 * 		t_instancia_list lista
+	 * 		char* name
+	 */
+
+void actualizarEntradas(Instancia instancia, uint32_t cantidad);
+	/*
+	 * Descripción: actualiza las entradas ocupadas por una instancia en la lista de instancias.
+	 * Argumentos:
+	 * 		Instancia instancia
+	 * 		uint32_t cantidad
 	 */
 
 t_blocked_list listaAuxiliar;
@@ -839,7 +859,6 @@ void liberar(t_blocked_list * lista);
 bool estaEn(t_blocked_list lista, uint32_t id);
 void agregar(t_blocked_list lista, t_blocked_node nodo);
 void comunicarDeadlock(int socket);
-void actualizarEntradas(Instancia instancia, uint32_t cantidad);
 
 char* getValor(char* clave);
 char* getInstancia(char* clave);
