@@ -19,8 +19,8 @@ int main(int argc, char** argv) {
 }
 
 void cerrar(void) {
-	avisar_cierre(socket_coordinador);
-	avisar_cierre(socket_planificador);
+	avisar_cierre(socket_coordinador, this_id);
+	avisar_cierre(socket_planificador, this_id);
 
 	close(socket_planificador);
 	close(socket_coordinador);

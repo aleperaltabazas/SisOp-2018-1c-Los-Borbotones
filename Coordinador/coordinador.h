@@ -53,6 +53,7 @@ pthread_mutex_t sem_socket_operaciones_coordi;
 
 pthread_mutex_t sem_instancias;
 pthread_mutex_t sem_listening_socket;
+pthread_mutex_t sem_desbloqueados;
 
 uint32_t id_not_found = -3;
 uint32_t desbloqueada_ID = -1;

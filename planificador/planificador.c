@@ -33,7 +33,7 @@ void manejar_conexiones(void) {
 }
 
 void cerrar(void) {
-	avisar_cierre(socket_coordinador);
+	avisar_cierre(socket_coordinador, 0);
 
 	close(socket_coordinador);
 
@@ -50,15 +50,6 @@ void iniciar(char** argv) {
 
 void startSigHandlers(void) {
 	signal(SIGINT, sigHandler_sigint);
-	signal(SIGSEGV, sigHandler_segfault);
-}
-
-void sigHandler_segfault(int signo) {
-	log_warning(logger, "uh la puta madre, seg fault.");
-	log_error(logger, strerror(errno));
-
-	close(listening_socket);
-	exit(-1);
 }
 
 void sigHandler_sigint(int signo) {
@@ -252,7 +243,6 @@ void* atender_ESI(void* buffer) {
 			.rafaga_real = 0 };
 
 	int this_id = asignar_ID(esi);
-
 	esi.id = this_id;
 
 	int status = 1;
@@ -307,6 +297,7 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 		ejecutando = false;
 		pthread_mutex_unlock(&sem_ejecutando);
 
+		conseguir_desbloqueado();
 		pthread_mutex_unlock(&sem_ejecucion);
 
 		return 0;
@@ -414,6 +405,9 @@ void conseguir_desbloqueado(void) {
 
 	while (1) {
 		aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
+		log_debug(logger, "Aviso: %i", respuesta_desbloqueado.aviso);
+		log_debug(logger, "ID: %i", respuesta_desbloqueado.id);
+
 		if (respuesta_desbloqueado.aviso == 0
 				|| respuesta_desbloqueado.id == 0) {
 			log_info(logger, "No hay más ESIs para desbloquear.");
@@ -1038,7 +1032,7 @@ void terminar(void) {
 	printf("Eligio cerrar el planificador \n");
 	seguir_ejecucion = false;
 
-	avisar_cierre(socket_coordinador);
+	avisar_cierre(socket_coordinador, 0);
 
 	exit(42);
 }

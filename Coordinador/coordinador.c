@@ -61,6 +61,7 @@ void iniciar_semaforos(void) {
 	pthread_mutex_init(&sem_socket_operaciones_coordi, NULL);
 	pthread_mutex_init(&sem_instancias, NULL);
 	pthread_mutex_init(&sem_listening_socket, NULL);
+	pthread_mutex_init(&sem_desbloqueados, NULL);
 }
 
 void startSigHandlers(void) {
@@ -216,7 +217,6 @@ void* atender_ESI(void* un_socket) {
 	}
 
 	while (status) {
-
 		status = chequear_solicitud(socket_cliente, id);
 	}
 
@@ -292,9 +292,9 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 
 	if (aviso_cliente.aviso == 0) {
 		log_info(logger, "Fin de ESI.");
-		if (aviso_cliente.id == id) {
-			liberar_claves(id);
-		}
+		pthread_mutex_lock(&sem_desbloqueados);
+		liberar_claves(id);
+		pthread_mutex_unlock(&sem_desbloqueados);
 		return 0;
 	}
 
@@ -305,19 +305,16 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 	else if (aviso_cliente.aviso == 11) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = get(socket_cliente, aviso_cliente.id);
-
 	}
 
 	else if (aviso_cliente.aviso == 12) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = set(socket_cliente, aviso_cliente.id);
-
 	}
 
 	else if (aviso_cliente.aviso == 13) {
 		log_debug(logger, "%i", aviso_cliente.id);
 		status = store(socket_cliente, aviso_cliente.id);
-
 	}
 
 	else {
@@ -330,6 +327,7 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 	}
 
 	if (status == -1) {
+		log_warning(logger, "Hubo un error. Abortando ESI.");
 		liberar_claves(id);
 		abortar_ESI(socket_cliente);
 		return 0;
@@ -339,15 +337,15 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 }
 
 int get(int socket_cliente, uint32_t id) {
+
 	GET_Op get = recv_get(socket_cliente);
 	get.id = id;
 
 	op_response response = { .packed = doGet(get) };
 
 	log_debug(logger, "Response GET: %i", response.packed);
-	send_packed_no_exit(response, socket_cliente);
-
 	sleep(1);
+	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
 }
@@ -360,9 +358,8 @@ int set(int socket_cliente, uint32_t id) {
 	op_response response = { .packed = doSet(set) };
 
 	log_debug(logger, "Response SET: %i", response.packed);
-	send_packed_no_exit(response, socket_cliente);
-
 	sleep(1);
+	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
 }
@@ -375,9 +372,8 @@ int store(int socket_cliente, uint32_t id) {
 	op_response response = { .packed = doStore(store) };
 
 	log_debug(logger, "Response STORE: %i", response.packed);
-	send_packed_no_exit(response, socket_cliente);
-
 	sleep(1);
+	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
 }
@@ -1156,6 +1152,7 @@ void* atender_Planificador(void* un_socket) {
 void enviar_desbloqueado(int sockfd) {
 	log_info(logger, "Enviando al planificador los ESIs a desbloquear.");
 
+	pthread_mutex_lock(&sem_desbloqueados);
 	while (cola_desbloqueados.head != NULL) {
 		log_trace(logger, "ESI desbloqueado: %i", cola_desbloqueados.head->id);
 		aviso_con_ID aviso_desbloqueado = { .aviso = 15, .id =
@@ -1165,6 +1162,7 @@ void enviar_desbloqueado(int sockfd) {
 
 		eliminar_desbloqueado(&cola_desbloqueados);
 	}
+	pthread_mutex_unlock(&sem_desbloqueados);
 
 	loggear("No hay más desbloqueados.");
 	aviso_con_ID sin_desbloqueado = { .aviso = 0, .id = -1 };
@@ -1222,12 +1220,9 @@ void desbloquear(char* clave) {
 		proximo_desbloqueado = getDesbloqueado(dup_clave);
 		if (proximo_desbloqueado != -1) {
 			agregar_desbloqueado(&cola_desbloqueados, proximo_desbloqueado);
-		}
-		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
-
-		if (proximo_desbloqueado != -1) {
 			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
 		}
+		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 
 		free(dup_clave);
 	}

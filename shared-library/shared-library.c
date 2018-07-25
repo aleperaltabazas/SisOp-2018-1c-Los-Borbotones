@@ -422,9 +422,9 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 	return buffer_parametros;
 }
 
-void avisar_cierre(int server_socket) {
+void avisar_cierre(int server_socket, uint32_t id) {
 	int status = 1;
-	aviso_con_ID aviso_de_fin = { .aviso = 0 };
+	aviso_con_ID aviso_de_fin = { .aviso = 0, .id = id };
 
 	int packageSize = sizeof(aviso_de_fin.aviso) + sizeof(aviso_de_fin.id);
 	char *message = malloc(packageSize);
