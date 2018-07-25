@@ -365,3 +365,56 @@ bool emptyParsed(t_parsed_list* lista) {
 	return lista->head == NULL;
 }
 
+/*
+ * ==============================
+ * =====    DESBLOQUEADO    =====
+ * ==============================
+ */
+
+t_desbloqueado_node* crear_nodo_desbloqueado(uint32_t id) {
+	t_desbloqueado_node* nodo = (t_desbloqueado_node*) malloc(
+			sizeof(t_desbloqueado_node));
+	nodo->id = id;
+	nodo->sgte = NULL;
+
+	return nodo;
+}
+
+void destruir_nodo_desbloqueado(t_desbloqueado_node* nodo) {
+	free(nodo);
+}
+
+void agregar_desbloqueado(t_desbloqueado_list* lista, uint32_t id) {
+	t_desbloqueado_node* nodo = crear_nodo_desbloqueado(id);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_desbloqueado_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+	return;
+}
+
+void eliminar_desbloqueado(t_desbloqueado_list* lista) {
+	if (!emptyDesbloqueado(lista)) {
+		t_desbloqueado_node* eliminado = lista->head;
+		lista->head = lista->head->sgte;
+		destruir_nodo_desbloqueado(eliminado);
+	}
+}
+
+bool emptyDesbloqueado(t_desbloqueado_list* lista) {
+	return lista->head == NULL;
+}
+
+uint32_t headDesbloqueado(t_desbloqueado_list lista) {
+	t_desbloqueado_node* head = lista.head;
+
+	return head->id;
+}

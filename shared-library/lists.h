@@ -249,6 +249,55 @@ t_log * logger;
 
 /*
  * ==============================
+ * =====    DESBLOQUEADO    =====
+ * ==============================
+ */
+
+t_desbloqueado_node* crear_nodo_desbloqueado(uint32_t id);
+	/*
+	 * Descripción: crea y retorna un nodo de desbloqueado.
+	 * Argumentos:
+	 * 		uint32_t id: ID a copiar en el nodo.
+	 */
+
+void destruir_nodo_desbloqueado(t_desbloqueado_node* nodo);
+	/*
+	 * Descripción: libera la porción de memoria de un nodo.
+	 * Argumentos:
+	 * 		t_desbloqueado_node*: el nodo a liberar.
+	 */
+
+void agregar_desbloqueado(t_desbloqueado_list* lista, uint32_t id);
+	/*
+	 * Descripción: agrega un desbloqueado a la lista.
+	 * Argumentos:
+	 * 		t_desbloqueado_list* lista
+	 * 		uint32_t id
+	 */
+
+void eliminar_desbloqueado(t_desbloqueado_list* lista);
+	/*
+	 * Descripción: elimina el primer nodo de la lista.
+	 * Argumentos:
+	 * 		t_desbloqueado_list* lista
+	 */
+
+bool emptyDesbloqueado(t_desbloqueado_list* lista);
+	/*
+	 * Descripción: devuelve si la cabeza de la lista es NULL.
+	 * Argumentos:
+	 * 		t_desbloqueado_list* lista
+	 */
+
+uint32_t headDesbloqueado(t_desbloqueado_list lista);
+	/*
+	 * Descripción: devuelve el ID del primer elemento de la lista.
+	 * Argumentos:
+	 * 		t_desbloqueado_list lista
+	 */
+
+/*
+ * ==============================
  * =====      ENTRADAS      =====
  * ==============================
  */

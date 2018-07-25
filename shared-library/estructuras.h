@@ -198,4 +198,13 @@ typedef struct t_instancia_list {
 	t_instancia_node* head;
 } t_instancia_list;
 
+typedef struct t_desbloqueado_node {
+	uint32_t id;
+	struct t_desbloqueado_node* sgte;
+} t_desbloqueado_node;
+
+typedef struct t_desbloqueado_list {
+	t_desbloqueado_node* head;
+} t_desbloqueado_list;
+
 #endif /* ESTRUCTURAS_H_ */
