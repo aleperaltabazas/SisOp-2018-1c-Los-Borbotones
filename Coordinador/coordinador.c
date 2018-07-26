@@ -1293,54 +1293,43 @@ void status(int sockfd) {
 	}
 
 	int aux_pointer = pointer;
-
 	Instancia instancia = getInstanciaSet(clave);
+	pointer = aux_pointer;
 
 	char* valor = getValor(clave);
 	char* bloqueados = getBloqueados(clave);
-
-	pointer = aux_pointer;
-
-	bool free_bloqueados = true;
-	char* instanciaName;
-
-	if (mismoString(valor, "null")) {
-		valor = "no tiene valor asignado";
-	}
+	char* instancia_message = NULL;
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
-		strcpy(instancia.nombre, "no hay instancia para despachar el pedido");
-		instanciaName = malloc(strlen(instancia.nombre) + 1);
-		instanciaName = instancia.nombre;
+		char message[] = "no hay instancia para despachar el pedido";
+		int message_size = strlen(message) + 1;
+		instancia_message = malloc(message_size);
+		strncpy(instancia_message, message, message_size);
 	} else if (!estaAsignada(clave)) {
-		instanciaName = malloc(
-				strlen(instancia.nombre) + strlen("(no esta asignada)" + 1));
-		instanciaName = strcat(instancia.nombre, "(no esta asignada)");
+		char* instanciaName = malloc(strlen(instancia.nombre) + 1);
+		strncpy(instanciaName, instancia.nombre, strlen(instancia.nombre) + 1);
+
+		char message[] = " (no esta asignada)";
+		int message_size = strlen(message) + 1;
+
+		instancia_message = malloc(strlen(instancia.nombre) + message_size);
+		strncpy(instancia_message, instanciaName, strlen(instanciaName));
+		strcat(instancia_message, message);
 	}
 
 	if (bloqueados == NULL) {
-		bloqueados = "no hay ningun ESI bloqueado esperando la clave";
-		free_bloqueados = false;
+		bloqueados = "no hay ningun ESI bloqueado";
 	}
 
 	log_debug(logger, "Valor: %s", valor);
-	log_debug(logger, "Instancia: %s", instanciaName);
+	log_debug(logger, "Instancia: %s", instancia_message);
 	log_debug(logger, "Bloqueados: %s", bloqueados);
 
-	if (valor == NULL) {
-		log_warning(logger, "Hubo un problema adquiriendo el valorde la clave");
-
-		aviso_con_ID aviso_no_existe = { .aviso = 0 };
-		enviar_aviso(sockfd, aviso_no_existe);
-		return;
-	}
-
 	char* valor_dup = strdup(valor);
-	char* instancia_dup = strdup(instanciaName);
 	char* bloqueados_dup = strdup(bloqueados);
 
 	uint32_t valor_size = (uint32_t) strlen(valor_dup) + 1;
-	uint32_t instancia_size = (uint32_t) strlen(instancia_dup) + 1;
+	uint32_t instancia_size = (uint32_t) strlen(instancia_message) + 1;
 	uint32_t bloqueados_size = (uint32_t) strlen(bloqueados_dup) + 1;
 
 	package_int valor_package = { .packed = valor_size };
@@ -1355,19 +1344,14 @@ void status(int sockfd) {
 	log_warning(logger, "Envié valor");
 
 	enviar_packed(instancia_package, sockfd);
-	send_string(instancia_dup, sockfd);
+	send_string(instancia_message, sockfd);
 	log_warning(logger, "Envié instancia");
 
 	enviar_packed(bloqueados_package, sockfd);
 	send_string(bloqueados_dup, sockfd);
 	log_warning(logger, "Envié bloqueados");
 
-	free(valor_dup);
-	free(instancia_dup);
-	free(bloqueados_dup);
-
-	if (free_bloqueados)
-		free(bloqueados);
+	free(instancia_message);
 }
 
 char* getValor(char* clave) {
@@ -1637,7 +1621,7 @@ void ping(Instancia instancia) {
 
 	 memcpy(buffer, &orden, packageSize);*/
 
-	//LOCK
+//LOCK
 	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 100);
 
 	log_trace(logger, "Pingeando instancia... SOCKET: %i", instancia.sockfd);
@@ -1701,7 +1685,7 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 
 		int ok_clave_recibida = esperar_confirmacion_de_exito(sockfd);
 
-		if(ok_clave_recibida != 151){
+		if (ok_clave_recibida != 151) {
 			loggear("ERROR EN EL ENVIO DE LA CADENA A LA INSTANCIA");
 			close(sockfd);
 			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
@@ -1710,7 +1694,7 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 		int respuesta_almacenamiento = esperar_confirmacion_de_exito(sockfd);
 
 		//Habria que utilizar esto para actualizar el struct cuando sale del while
-		if(respuesta_almacenamiento == 111){
+		if (respuesta_almacenamiento == 111) {
 			entradas_ocupadas = recibir_packed(sockfd);
 			actualizarEntradas(instancia, entradas_ocupadas.packed);
 		}
@@ -1914,7 +1898,6 @@ int esperar_confirmacion_de_exito(int un_socket) {
 
 		loggear("Resurreccion de la instancia finalizada con exito");
 		return 150;
-
 
 	} else if (confirmacion.packed == 151) {
 
