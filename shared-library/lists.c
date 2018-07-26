@@ -160,6 +160,7 @@ t_clave_node* crear_nodo_clave(char* clave, uint32_t id) {
 	t_clave_node* nodo = (t_clave_node*) malloc(
 			sizeof(uint32_t) + sizeof(t_clave_node));
 	strcpy(nodo->clave, clave);
+	strcpy(nodo->valor, "null");
 	nodo->block_id = id;
 	nodo->sgte = NULL;
 

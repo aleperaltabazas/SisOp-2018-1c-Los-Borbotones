@@ -919,7 +919,41 @@ void matar(void) {
 }
 
 void status(void) {
-//WIP
+	char clave[40];
+	printf("Ingrese la clave: ");
+	scanf("%s", clave);
+
+	aviso_con_ID aviso_status = { .aviso = 41 };
+	enviar_aviso(socket_coordinador, aviso_status);
+
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+	package_int size_package = { .packed = clave_size };
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(clave, socket_coordinador);
+
+	aviso_con_ID aviso_resultado = recibir_aviso(socket_coordinador);
+	if (aviso_resultado.aviso == 0) {
+		printf("La clave no se encuentra en el sistema \n");
+		return;
+	}
+
+	if (aviso_resultado.aviso != 41) {
+		salir_con_error("Falló la recepción del status", socket_coordinador);
+	}
+
+	package_int valor_size = recibir_packed(socket_coordinador);
+	char* valor = recibir_cadena(socket_coordinador, valor_size.packed);
+
+	package_int instancia_size = recibir_packed(socket_coordinador);
+	char* instancia = recibir_cadena(socket_coordinador, instancia_size.packed);
+
+	package_int bloqueados_size = recibir_packed(socket_coordinador);
+	char* bloqueados = recibir_cadena(socket_coordinador,
+			bloqueados_size.packed);
+
+	printf("Valor: %s \n", valor);
+	printf("Instancia: %s \n", instancia);
+	printf("Bloqueados esperando: %s \n", bloqueados);
 }
 
 void listar_bloqueados(void) {

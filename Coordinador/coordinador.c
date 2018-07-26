@@ -263,8 +263,6 @@ void liberar_claves(uint32_t id) {
 	}
 
 	t_clave_node* puntero = claves_bloqueadas.head;
-	//auxiliar se guarda el siguiente del puntero por si tengo que borrar el puntero
-	t_clave_node* auxiliar_puntero = claves_bloqueadas.head->sgte;
 
 	while (puntero != NULL) {
 		log_debug(logger, "Blocker: %i", puntero->block_id);
@@ -921,6 +919,7 @@ Instancia getInstanciaSet(char* clave) {
 		break;
 	default:
 		log_warning(logger, "Fallo en el algoritmo");
+		ret_inst = inst_error;
 		break;
 	}
 
@@ -1130,6 +1129,10 @@ void* atender_Planificador(void* un_socket) {
 			bloquear_clave(socket_planificador);
 		}
 
+		else if (aviso_plani.aviso == 41) {
+			status(socket_planificador);
+		}
+
 		else {
 			log_warning(logger,
 					"Error de mensaje con el planificador. Cierro el socket.");
@@ -1273,6 +1276,153 @@ void bloquear(char* clave, uint32_t id) {
 				clave, id);
 	}
 
+}
+
+void status(int sockfd) {
+	loggear("Pedido de status.");
+	package_int size_package = recibir_packed(sockfd);
+	char* clave = recibir_cadena(sockfd, size_package.packed);
+	log_info(logger, "Averiguando status de la clave %s.", clave);
+
+	if (!existe(clave)) {
+		log_warning(logger, "La clave %s no existe", clave);
+
+		aviso_con_ID aviso_no_existe = { .aviso = 0 };
+		enviar_aviso(sockfd, aviso_no_existe);
+		return;
+	}
+
+	int aux_pointer = pointer;
+
+	Instancia instancia = getInstanciaSet(clave);
+
+	char* valor = getValor(clave);
+	char* bloqueados = getBloqueados(clave);
+
+	pointer = aux_pointer;
+
+	bool free_bloqueados = true;
+	char* instanciaName;
+
+	if (mismoString(valor, "null")) {
+		valor = "no tiene valor asignado";
+	}
+
+	if (mismoString(instancia.nombre, inst_error.nombre)) {
+		strcpy(instancia.nombre, "no hay instancia para despachar el pedido");
+		instanciaName = malloc(strlen(instancia.nombre) + 1);
+		instanciaName = instancia.nombre;
+	} else if (!estaAsignada(clave)) {
+		instanciaName = malloc(
+				strlen(instancia.nombre) + strlen("(no esta asignada)" + 1));
+		instanciaName = strcat(instancia.nombre, "(no esta asignada)");
+	}
+
+	if (bloqueados == NULL) {
+		bloqueados = "no hay ningun ESI bloqueado esperando la clave";
+		free_bloqueados = false;
+	}
+
+	log_debug(logger, "Valor: %s", valor);
+	log_debug(logger, "Instancia: %s", instanciaName);
+	log_debug(logger, "Bloqueados: %s", bloqueados);
+
+	if (valor == NULL) {
+		log_warning(logger, "Hubo un problema adquiriendo el valorde la clave");
+
+		aviso_con_ID aviso_no_existe = { .aviso = 0 };
+		enviar_aviso(sockfd, aviso_no_existe);
+		return;
+	}
+
+	char* valor_dup = strdup(valor);
+	char* instancia_dup = strdup(instanciaName);
+	char* bloqueados_dup = strdup(bloqueados);
+
+	uint32_t valor_size = (uint32_t) strlen(valor_dup) + 1;
+	uint32_t instancia_size = (uint32_t) strlen(instancia_dup) + 1;
+	uint32_t bloqueados_size = (uint32_t) strlen(bloqueados_dup) + 1;
+
+	package_int valor_package = { .packed = valor_size };
+	package_int instancia_package = { .packed = instancia_size };
+	package_int bloqueados_package = { .packed = bloqueados_size };
+
+	aviso_con_ID aviso_status = { .aviso = 41 };
+	enviar_aviso(sockfd, aviso_status);
+
+	enviar_packed(valor_package, sockfd);
+	send_string(valor_dup, sockfd);
+	log_warning(logger, "Envié valor");
+
+	enviar_packed(instancia_package, sockfd);
+	send_string(instancia_dup, sockfd);
+	log_warning(logger, "Envié instancia");
+
+	enviar_packed(bloqueados_package, sockfd);
+	send_string(bloqueados_dup, sockfd);
+	log_warning(logger, "Envié bloqueados");
+
+	free(valor_dup);
+	free(instancia_dup);
+	free(bloqueados_dup);
+
+	if (free_bloqueados)
+		free(bloqueados);
+}
+
+char* getValor(char* clave) {
+	t_clave_node* nodo = findByKeyIn(clave, claves_bloqueadas);
+	if (nodo != NULL) {
+		return nodo->valor;
+	}
+
+	nodo = findByKeyIn(clave, claves_disponibles);
+	if (nodo != NULL) {
+		return "null";
+	}
+
+	return NULL;
+}
+
+char* getBloqueados(char* clave) {
+	t_blocked_node* puntero = blocked_ESIs.head;
+	if (puntero == NULL) {
+		return NULL;
+	}
+
+	char* bloqueados = malloc(255);
+	int posicion = 0;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, clave)) {
+			if (posicion > 0) {
+				bloqueados[posicion] = ',';
+				posicion++;
+				bloqueados[posicion] = ' ';
+				posicion++;
+			}
+			char* num = string_itoa(puntero->id);
+			bloqueados[posicion] = num[0];
+			posicion++;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return bloqueados;
+}
+
+t_clave_node* findByKeyIn(char* clave, t_clave_list lista) {
+	t_clave_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->clave, clave)) {
+			return puntero;
+		}
+		puntero = puntero->sgte;
+	}
+
+	return NULL;
 }
 
 bool esta_bloqueada(char* clave) {
