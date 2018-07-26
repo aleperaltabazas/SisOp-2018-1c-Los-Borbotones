@@ -1298,7 +1298,19 @@ void status(int sockfd) {
 
 	char* valor = getValor(clave);
 	char* bloqueados = getBloqueados(clave);
+	char* valor_message = NULL;
 	char* instancia_message = NULL;
+	char* bloqueados_message = NULL;
+
+	if (mismoString(valor, "null")) {
+		char message[] = "no tiene ningun valor asignado";
+		int message_size = strlen(message) + 1;
+		valor_message = malloc(message_size);
+		strncpy(valor_message, message, message_size);
+	} else {
+		valor_message = malloc(strlen(valor) + 1);
+		strncpy(valor_message, valor, strlen(valor) + 1);
+	}
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		char message[] = "no hay instancia para despachar el pedido";
@@ -1318,19 +1330,24 @@ void status(int sockfd) {
 	}
 
 	if (bloqueados == NULL) {
-		bloqueados = "no hay ningun ESI bloqueado";
+		char message[] = "no hay ningun ESI bloqueado";
+		int message_size = strlen(message) + 1;
+
+		bloqueados_message = malloc(message_size);
+		strncpy(bloqueados_message, message, message_size);
+	} else {
+		bloqueados_message = malloc(strlen(bloqueados) + 1);
+		strncpy(bloqueados_message, bloqueados, strlen(bloqueados) + 1);
+		free(bloqueados);
 	}
 
 	log_debug(logger, "Valor: %s", valor);
 	log_debug(logger, "Instancia: %s", instancia_message);
-	log_debug(logger, "Bloqueados: %s", bloqueados);
+	log_debug(logger, "Bloqueados: %s", bloqueados_message);
 
-	char* valor_dup = strdup(valor);
-	char* bloqueados_dup = strdup(bloqueados);
-
-	uint32_t valor_size = (uint32_t) strlen(valor_dup) + 1;
+	uint32_t valor_size = (uint32_t) strlen(valor_message) + 1;
 	uint32_t instancia_size = (uint32_t) strlen(instancia_message) + 1;
-	uint32_t bloqueados_size = (uint32_t) strlen(bloqueados_dup) + 1;
+	uint32_t bloqueados_size = (uint32_t) strlen(bloqueados_message) + 1;
 
 	package_int valor_package = { .packed = valor_size };
 	package_int instancia_package = { .packed = instancia_size };
@@ -1340,7 +1357,7 @@ void status(int sockfd) {
 	enviar_aviso(sockfd, aviso_status);
 
 	enviar_packed(valor_package, sockfd);
-	send_string(valor_dup, sockfd);
+	send_string(valor_message, sockfd);
 	log_warning(logger, "Envié valor");
 
 	enviar_packed(instancia_package, sockfd);
@@ -1348,10 +1365,12 @@ void status(int sockfd) {
 	log_warning(logger, "Envié instancia");
 
 	enviar_packed(bloqueados_package, sockfd);
-	send_string(bloqueados_dup, sockfd);
+	send_string(bloqueados_message, sockfd);
 	log_warning(logger, "Envié bloqueados");
 
+	free(valor_message);
 	free(instancia_message);
+	free(bloqueados_message);
 }
 
 char* getValor(char* clave) {
