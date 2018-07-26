@@ -810,6 +810,8 @@ void actualizarEntradas(Instancia instancia, uint32_t cantidad);
  * 		uint32_t cantidad
  */
 
+void listar_recurso(int sockfd);
+
 t_blocked_list listaAuxiliar;
 
 char* getValor(char* clave);

@@ -1133,6 +1133,10 @@ void* atender_Planificador(void* un_socket) {
 			status(socket_planificador);
 		}
 
+		else if (aviso_plani.aviso == 51) {
+			listar_recurso(socket_planificador);
+		}
+
 		else {
 			log_warning(logger,
 					"Error de mensaje con el planificador. Cierro el socket.");
@@ -1437,6 +1441,29 @@ void enviarBloqueados(int sockfd, char* clave) {
 
 	free(bloqueados);
 	free(bloqueados_message);
+}
+
+void listar_recurso(int sockfd) {
+	loggear("Pedido de listar recurso.");
+	package_int size_package = recibir_packed(sockfd);
+	char* clave = recibir_cadena(sockfd, size_package.packed);
+	log_info(logger, "Averiguando los bloqueados esperando la clave %s", clave);
+
+	if (!existe(clave)) {
+		log_warning(logger, "La clave %s no existe", clave);
+
+		aviso_con_ID aviso_no_existe = { .aviso = 0 };
+		enviar_aviso(sockfd, aviso_no_existe);
+		free(clave);
+		return;
+	}
+
+	aviso_con_ID aviso_listar = { .aviso = 51 };
+	enviar_aviso(sockfd, aviso_listar);
+
+	enviarBloqueados(sockfd, clave);
+
+	free(clave);
 }
 
 t_clave_node* findByKeyIn(char* clave, t_clave_list lista) {

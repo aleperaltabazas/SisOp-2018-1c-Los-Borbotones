@@ -961,7 +961,36 @@ void status(void) {
 }
 
 void listar_bloqueados(void) {
-//WIP
+	char clave[40];
+	printf("Ingrese la clave: ");
+	scanf("%s", clave);
+
+	aviso_con_ID aviso_listar = { .aviso = 51 };
+	enviar_aviso(socket_coordinador, aviso_listar);
+
+	uint32_t clave_size = (uint32_t) strlen(clave) + 1;
+	package_int size_package = { .packed = clave_size };
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(clave, socket_coordinador);
+
+	aviso_con_ID aviso_resultado = recibir_aviso(socket_coordinador);
+	if (aviso_resultado.aviso == 0) {
+		printf("La clave no se encuentra en el sistema \n");
+		return;
+	}
+
+	if (aviso_resultado.aviso != 51) {
+		salir_con_error("Falló la recepción de los bloqueados",
+				socket_coordinador);
+	}
+
+	package_int bloqueados_size = recibir_packed(socket_coordinador);
+	char* bloqueados = recibir_cadena(socket_coordinador,
+			bloqueados_size.packed);
+
+	printf("Bloqueados esperando la clave: %s \n", bloqueados);
+
+	free(bloqueados);
 }
 
 void bloquearSegunClave(void) {
