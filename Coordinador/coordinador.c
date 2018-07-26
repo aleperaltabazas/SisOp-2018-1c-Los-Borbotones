@@ -1700,10 +1700,20 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 		send_string_no_exit(puntero->clave, sockfd);
 
 		int ok_clave_recibida = esperar_confirmacion_de_exito(sockfd);
-		int ok_set_completado = esperar_confirmacion_de_exito(sockfd);
+
+		if(ok_clave_recibida != 151){
+			loggear("ERROR EN EL ENVIO DE LA CADENA A LA INSTANCIA");
+			close(sockfd);
+			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+		}
+
+		int respuesta_almacenamiento = esperar_confirmacion_de_exito(sockfd);
+
 		//Habria que utilizar esto para actualizar el struct cuando sale del while
-		entradas_ocupadas = recibir_packed(sockfd);
-		actualizarEntradas(instancia, entradas_ocupadas.packed);
+		if(respuesta_almacenamiento == 111){
+			entradas_ocupadas = recibir_packed(sockfd);
+			actualizarEntradas(instancia, entradas_ocupadas.packed);
+		}
 
 		puntero = puntero->sgte;
 
@@ -1715,7 +1725,7 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 			send_packed_no_exit(size_package, sockfd);
 		}
 
-		if (ok_clave_recibida != 151) {
+		if (ok_clave_recibida != 151 && ok_clave_recibida != 152) {
 			log_warning(logger, "ERROR EN EL ENVÍO DE MENSAJES: %s",
 					strerror(errno));
 			close(sockfd);
@@ -1723,13 +1733,6 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 			return;
 		}
 
-		if (ok_set_completado != 111) {
-			log_warning(logger, "ERROR EN EL SET DE LA INSTANCIA: %s",
-					strerror(errno));
-			close(sockfd);
-			pthread_mutex_unlock(&sem_socket_operaciones_coordi);
-			return;
-		}
 	}
 
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
@@ -1907,10 +1910,21 @@ int esperar_confirmacion_de_exito(int un_socket) {
 		loggear("Nombre asignado con exito");
 		return 0;
 
+	} else if (confirmacion.packed == 150) {
+
+		loggear("Resurreccion de la instancia finalizada con exito");
+		return 150;
+
+
 	} else if (confirmacion.packed == 151) {
 
 		loggear("Clave restaurada con exito");
 		return 151;
+
+	} else if (confirmacion.packed == 152) {
+
+		loggear("No se pudo restaurar la clave");
+		return 152;
 
 	} else if (confirmacion.packed == 666) {
 
