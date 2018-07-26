@@ -815,6 +815,9 @@ t_blocked_list listaAuxiliar;
 char* getValor(char* clave);
 char* getInstancia(char* clave);
 char* getBloqueados(char* clave);
+void enviarValor(int sockfd, char* clave);
+void enviarInstancia(int sockfd, char* clave);
+void enviarBloqueados(int sockfd, char* clave);
 t_clave_node* findByKeyIn(char* clave, t_clave_list lista);
 
 int do_set(char* valor, char* clave);

@@ -91,18 +91,18 @@ void revivir(int sockfd) {
 		char * clave = recibir_clave(sockfd);
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 
-		if(archivo_a_leer == NULL){
+		if (archivo_a_leer == NULL) {
 			loggear("No se pudo encontrar esa clave en los archivos");
 			confirmar_resultado_de_operacion(152);
 			free(clave);
-		}
-		else{
+		} else {
 			char * valor = leer_valor_de_archivo(archivo_a_leer);
 
 			fclose(archivo_a_leer);
 
 			parametros_set unos_parametros = { .valor = valor, .tamanio_valor =
-					strlen(valor) + 1, .clave = clave, .tamanio_clave = strlen(clave) + 1 };
+					strlen(valor) + 1, .clave = clave, .tamanio_clave = strlen(
+					clave) + 1 };
 
 			generar_entrada(unos_parametros);
 
@@ -239,8 +239,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	//strcpy(dump_spot, "/home/alesaurio/dump/");
-	strcpy(dump_spot, "/home/utnso/dump/");
+	strcpy(dump_spot, "/home/alesaurio/dump/");
+	//strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -279,7 +279,7 @@ FILE* open_file(char* file_name, char* mode, char* directory) {
 void write_file(char* file_name, char* text, char* directory) {
 	FILE* fd = open_file(file_name, "w", directory);
 
-	log_trace(logger,"text: %s", text);
+	log_trace(logger, "text: %s", text);
 	cerrar_cadena(text);
 	int res = fputs(text, fd);
 
@@ -1169,7 +1169,8 @@ char * leer_clave_valor(entradas_node * puntero) {
 	int posicion = puntero->una_entrada.pos_valor;
 
 	//+ 1 por el ':' + 1 por el '\0' que agrego al final para leer
-	int tamanio_total = tamanio_de_la_clave_a_leer + 1 + tamanio_del_valor_a_leer;
+	int tamanio_total = tamanio_de_la_clave_a_leer + 1
+			+ tamanio_del_valor_a_leer;
 
 	auxiliar = malloc(tamanio_total + 1);
 
@@ -1254,9 +1255,9 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 	} else if (codigo_exito_operacion == 150) {
 		loggear("RESURRECCION COMPLETA");
 	} else if (codigo_exito_operacion == 151) {
-			loggear("CLAVE RECIBIDA CON EXITO");
+		loggear("CLAVE RECIBIDA CON EXITO");
 	} else if (codigo_exito_operacion == 152) {
-			loggear("CLAVE NO FUE DUMPEADA");
+		loggear("CLAVE NO FUE DUMPEADA");
 	} else if (codigo_exito_operacion == 666) {
 		loggear("PIDIENDO ABORTO DEL ESI");
 	}
