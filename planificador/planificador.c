@@ -994,7 +994,62 @@ void listar_bloqueados(void) {
 }
 
 void bloquearSegunClave(void) {
-//WIP
+	printf("Ingrese el ID del ESI: ");
+	int id;
+	scanf("%i", &id);
+	uint32_t id_as_uint = (uint32_t) id;
+
+	if (!existe(id)) {
+		printf("El ESI no se encuentra en el sistema. \n");
+		return;
+	}
+
+	else {
+		ESI esi = { .id = id_as_uint };
+		if (esta(blocked_ESIs, esi)) {
+			printf("El ESI %i ya está bloqueado \n", id);
+			return;
+		}
+
+		if (esta(finished_ESIs, esi)) {
+			printf("El ESI %i ya terminó \n", id);
+			return;
+		}
+	}
+
+	printf("Ingrese la clave: ");
+	char clave[40];
+	scanf("%s", clave);
+
+	aviso_con_ID aviso_bloqueo = { .aviso = 21 };
+	enviar_aviso(socket_coordinador, aviso_bloqueo);
+
+	uint32_t length = (uint32_t) strlen(clave) + 1;
+	package_int size_package = { .packed = length };
+
+	enviar_packed(size_package, socket_coordinador);
+	enviar_cadena(clave, socket_coordinador);
+
+	package_int id_package = { .packed = id_as_uint };
+	enviar_packed(id_package, socket_coordinador);
+
+	aviso_con_ID aviso_resultado = recibir_aviso(socket_coordinador);
+
+	if (aviso_resultado.aviso != 21) {
+		salir_con_error("Hubo un error bloqueando el ESI detrás de la clave",
+				socket_coordinador);
+	}
+
+	pthread_mutex_lock(&sem_ready_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+	ESI esi = findByIDIn(id_as_uint, ready_ESIs);
+	eliminar_ESI(&ready_ESIs, esi);
+	ESIs_size--;
+	agregar_ESI(&blocked_ESIs, esi);
+	pthread_mutex_unlock(&sem_ready_ESIs);
+	pthread_mutex_unlock(&sem_ESIs_size);
+
+	printf("El ESI %i fue bloqueado tras la clave %s \n", id, clave);
 }
 void desbloquear_clave() {
 	printf("Ingrese la clave a desbloquear: ");

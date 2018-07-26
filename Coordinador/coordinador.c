@@ -322,7 +322,9 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 
 	if (status == -1) {
 		log_warning(logger, "Hubo un error. Abortando ESI.");
+		pthread_mutex_lock(&sem_desbloqueados);
 		liberar_claves(id);
+		pthread_mutex_unlock(&sem_desbloqueados);
 		abortar_ESI(socket_cliente);
 		return 0;
 	}
@@ -1121,6 +1123,10 @@ void* atender_Planificador(void* un_socket) {
 			enviar_desbloqueado(socket_planificador);
 		}
 
+		else if (aviso_plani.aviso == 21) {
+			bloquear_segun_clave(socket_planificador);
+		}
+
 		else if (aviso_plani.aviso == 31) {
 			desbloquear_clave(socket_planificador);
 		}
@@ -1199,6 +1205,7 @@ void desbloquear_clave(int socket_cliente) {
 
 	aviso_con_ID desbloqueo_ok = { .aviso = 31 };
 	enviar_aviso(socket_cliente, desbloqueo_ok);
+	free(clave);
 }
 
 void desbloquear(char* clave) {
@@ -1225,6 +1232,7 @@ void desbloquear(char* clave) {
 			agregar_desbloqueado(&cola_desbloqueados, proximo_desbloqueado);
 			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
 		}
+
 		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 
 		free(dup_clave);
@@ -1280,6 +1288,42 @@ void bloquear(char* clave, uint32_t id) {
 				clave, id);
 	}
 
+}
+
+void bloquear_segun_clave(int sockfd) {
+	log_info(logger, "Pedido de bloqueo según clave");
+	package_int size_package = recibir_packed(sockfd);
+	char* clave = recibir_cadena(sockfd, size_package.packed);
+	package_int id_package = recibir_packed(sockfd);
+
+	log_debug(logger, "ID: %i", id_package.packed);
+	log_debug(logger, "Clave: %s", clave);
+
+	bloquear(clave, 0);
+
+	blocked bloqueado = { .id = id_package.packed };
+	strcpy(bloqueado.clave, clave);
+	agregar_blocked(&blocked_ESIs, bloqueado);
+
+	show_blocked_list(blocked_ESIs);
+
+	aviso_con_ID aviso_bloqueo = { .aviso = 21 };
+
+	enviar_aviso(sockfd, aviso_bloqueo);
+	free(clave);
+}
+
+void show_blocked_list(t_blocked_list lista) {
+	t_blocked_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		log_debug(logger, "ID: %i", puntero->id);
+		log_debug(logger, "Clave: %s", puntero->clave);
+
+		puntero = puntero->sgte;
+	}
+
+	loggear("Fin de lista");
 }
 
 void status(int sockfd) {
