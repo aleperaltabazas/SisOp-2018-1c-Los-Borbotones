@@ -1289,11 +1289,13 @@ void status(int sockfd) {
 
 		aviso_con_ID aviso_no_existe = { .aviso = 0 };
 		enviar_aviso(sockfd, aviso_no_existe);
+		free(clave);
 		return;
 	}
 
 	int aux_pointer = pointer;
 	Instancia instancia = getInstanciaSet(clave);
+
 	pointer = aux_pointer;
 
 	char* valor = getValor(clave);
@@ -1306,27 +1308,40 @@ void status(int sockfd) {
 		char message[] = "no tiene ningun valor asignado";
 		int message_size = strlen(message) + 1;
 		valor_message = malloc(message_size);
-		strncpy(valor_message, message, message_size);
+		memcpy(valor_message, message, message_size);
 	} else {
-		valor_message = malloc(strlen(valor) + 1);
-		strncpy(valor_message, valor, strlen(valor) + 1);
+		int valor_size = strlen(valor) + 1;
+		valor_message = malloc(valor_size);
+		memcpy(valor_message, valor, valor_size);
 	}
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		char message[] = "no hay instancia para despachar el pedido";
 		int message_size = strlen(message) + 1;
 		instancia_message = malloc(message_size);
-		strncpy(instancia_message, message, message_size);
-	} else if (!estaAsignada(clave)) {
-		char* instanciaName = malloc(strlen(instancia.nombre) + 1);
-		strncpy(instanciaName, instancia.nombre, strlen(instancia.nombre) + 1);
+		memcpy(instancia_message, message, message_size);
+	}
+	else if (!estaAsignada(clave)) {
 
+		int instancia_name_size = strlen(instancia.nombre);
 		char message[] = " (no esta asignada)";
 		int message_size = strlen(message) + 1;
 
-		instancia_message = malloc(strlen(instancia.nombre) + message_size);
-		strncpy(instancia_message, instanciaName, strlen(instanciaName));
-		strcat(instancia_message, message);
+		instancia_message = malloc(instancia_name_size + message_size);
+
+		memcpy(instancia_message, instancia.nombre, instancia_name_size);
+		memcpy(instancia_message + instancia_name_size, message, message_size);
+
+	}
+
+	//Esta asignada
+	else {
+		int instancia_name_size = strlen(instancia.nombre) + 1;
+
+		instancia_message = malloc(instancia_name_size);
+
+		memcpy(instancia_message, instancia.nombre, instancia_name_size);
+
 	}
 
 	if (bloqueados == NULL) {
@@ -1334,11 +1349,10 @@ void status(int sockfd) {
 		int message_size = strlen(message) + 1;
 
 		bloqueados_message = malloc(message_size);
-		strncpy(bloqueados_message, message, message_size);
+		memcpy(bloqueados_message, message, message_size);
 	} else {
 		bloqueados_message = malloc(strlen(bloqueados) + 1);
-		strncpy(bloqueados_message, bloqueados, strlen(bloqueados) + 1);
-		free(bloqueados);
+		memcpy(bloqueados_message, bloqueados, strlen(bloqueados) + 1);
 	}
 
 	log_debug(logger, "Valor: %s", valor);
@@ -1368,6 +1382,8 @@ void status(int sockfd) {
 	send_string(bloqueados_message, sockfd);
 	log_warning(logger, "Envié bloqueados");
 
+	free(clave);
+	free(bloqueados);
 	free(valor_message);
 	free(instancia_message);
 	free(bloqueados_message);
@@ -1394,6 +1410,7 @@ char* getBloqueados(char* clave) {
 	}
 
 	char* bloqueados = malloc(255);
+
 	int posicion = 0;
 
 	while (puntero != NULL) {
@@ -1407,10 +1424,13 @@ char* getBloqueados(char* clave) {
 			char* num = string_itoa(puntero->id);
 			bloqueados[posicion] = num[0];
 			posicion++;
+			free(num);
 		}
 
 		puntero = puntero->sgte;
 	}
+
+	bloqueados[posicion] = '\0';
 
 	return bloqueados;
 }

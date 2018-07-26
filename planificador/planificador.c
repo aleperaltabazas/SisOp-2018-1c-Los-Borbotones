@@ -954,6 +954,10 @@ void status(void) {
 	printf("Valor: %s \n", valor);
 	printf("Instancia: %s \n", instancia);
 	printf("Bloqueados esperando: %s \n", bloqueados);
+
+	free(valor);
+	free(instancia);
+	free(bloqueados);
 }
 
 void listar_bloqueados(void) {
