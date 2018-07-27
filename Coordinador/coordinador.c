@@ -252,7 +252,9 @@ void getKeyESI(uint32_t id, char* clave) {
 
 		puntero = puntero->sgte;
 	}
+
 	pthread_mutex_unlock(&sem_ESIs);
+
 }
 
 void finishESI(uint32_t id) {
@@ -786,6 +788,7 @@ uint32_t waitPing(Instancia unaInstancia) {
 
 }
 
+/*
 int settear(char* valor, char* clave, uint32_t id) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
@@ -827,7 +830,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 	}
 
 	return -3;
-}
+}*/
 
 void actualizarClave(char* clave, char* valor) {
 	t_clave_node* puntero = claves_bloqueadas.head;
@@ -845,6 +848,7 @@ void actualizarClave(char* clave, char* valor) {
 	}
 }
 
+/*
 int do_set(char* valor, char* clave) {
 	uint32_t valor_size = (uint32_t) strlen(valor);
 	uint32_t clave_size = (uint32_t) strlen(clave);
@@ -859,6 +863,7 @@ int do_set(char* valor, char* clave) {
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		return -1;
 	}
+
 	actualizarInstancia(instancia, clave);
 	actualizarClave(clave, valor);
 
@@ -870,10 +875,9 @@ int do_set(char* valor, char* clave) {
 
 	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 
-	enviar_orden_instancia(tamanio_parametros_set,
-			(void*) (intptr_t) instancia.sockfd, 11);
-	enviar_valores_set(tamanio_parametros_set,
-			(void*) (intptr_t) instancia.sockfd);
+	enviar_orden_instancia(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd, 11);
+
+	enviar_valores_set(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd);
 
 	log_debug(logger, "Esperando confirmacion...");
 
@@ -899,7 +903,7 @@ int do_set(char* valor, char* clave) {
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	return 1;
-}
+}*/
 
 void actualizarInstancia(Instancia instancia, char* clave) {
 	t_instancia_node* puntero = instancias.head;
@@ -1827,29 +1831,9 @@ bool murio(char* name, int sockfd) {
 }
 
 void ping(Instancia instancia) {
-	/*orden_del_coordinador orden;
-	 orden.codigo_operacion = 100;
-	 orden.tamanio_a_enviar = 0;
-
-	 uint32_t packageSize = sizeof(orden_del_coordinador);
-
-	 orden_del_coordinador* buffer = malloc(packageSize);
-
-	 memcpy(buffer, &orden, packageSize);*/
 
 //LOCK
 	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 100);
-
-	log_trace(logger, "Pingeando instancia... SOCKET: %i", instancia.sockfd);
-
-	/*int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
-
-	 log_debug(logger, "Bytes enviados: %i", envio);
-
-	 if (envio < 0) {
-	 log_warning(logger, "Falló el envío de ping.");
-	 return;
-	 }*/
 
 	loggear("Ping enviado.");
 }
