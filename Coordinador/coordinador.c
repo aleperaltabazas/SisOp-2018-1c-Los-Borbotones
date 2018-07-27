@@ -37,7 +37,7 @@ void iniciar(char** argv) {
 	iniciar_log("Coordinador", "Nace el coordinador...");
 	cargar_configuracion(argv);
 
-	log_operaciones = log_create("Operaciones.log", "Log de operaciones", false,
+	log_operaciones = log_create("Operaciones.log", "Log de operaciones", true,
 			LOG_LEVEL_INFO);
 
 	log_info(log_operaciones, "Logger iniciado correctamente.");
@@ -424,6 +424,10 @@ uint32_t doStore(STORE_Op store) {
 		log_warning(logger,
 				"El ESI %i trató de hacer STORE sobre la clave %s, que estaba en posesión de %i",
 				store.id, store.clave, blocker_id);
+
+		operacion error = { .id = store.id, .op_type = op_ERROR };
+		log_op(error);
+		return -1;
 	}
 
 	return 20;
@@ -456,6 +460,7 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 	if (resultado == 20) {
 		actualizarInstancia(instancia, set.clave);
 		actualizarClave(set.clave, set.valor);
+		log_set(set);
 		return 20;
 	} else {
 		log_warning(logger, "Falló la operación de SET del ESI %i.", set.id);
@@ -484,6 +489,10 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 
 	desbloquear(store.clave);
 	avisarDesbloqueo(store.clave);
+
+	if (resultado == 20) {
+		log_store(store);
+	}
 
 	return resultado;
 }
