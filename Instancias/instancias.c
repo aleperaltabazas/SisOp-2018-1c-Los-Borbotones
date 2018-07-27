@@ -280,7 +280,6 @@ void write_file(char* file_name, char* text, char* directory) {
 	FILE* fd = open_file(file_name, "w", directory);
 
 	log_trace(logger, "text: %s", text);
-	cerrar_cadena(text);
 	int res = fputs(text, fd);
 
 	if (res < 0) {
@@ -291,7 +290,6 @@ void write_file(char* file_name, char* text, char* directory) {
 	//log_trace(logger, "%s", text);
 
 	//loggear("Archivo escrito correctamente");
-	free(text);
 	fclose(fd);
 }
 
@@ -329,6 +327,8 @@ void* dump(void* buffer) {
 
 			//log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
+
+			free(valor_a_dumpear);
 
 			nodo_auxiliar = nodo_auxiliar->siguiente;
 		}
