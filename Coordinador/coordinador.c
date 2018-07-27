@@ -66,15 +66,6 @@ void iniciar_semaforos(void) {
 
 void startSigHandlers(void) {
 	signal(SIGINT, sigHandler_sigint);
-	signal(SIGSEGV, sigHandler_segfault);
-}
-
-void sigHandler_segfault(int signo) {
-	log_warning(logger, "uh la puta madre, seg fault.");
-	log_error(logger, strerror(errno));
-
-	close(listening_socket);
-	exit(-1);
 }
 
 void sigHandler_sigint(int signo) {
@@ -88,7 +79,8 @@ void sigHandler_sigint(int signo) {
 void cargar_configuracion(char** argv) {
 	t_config* config = config_create(argv[1]);
 
-	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	char* puerto = config_get_string_value(config, "PUERTO_COORDINADOR");
+	PUERTO_COORDINADOR = transfer(puerto, strlen(puerto) + 1);
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
 
 	char* algoritmo = config_get_string_value(config, "ALGORITMO_DISTRIBUCION");
@@ -105,14 +97,8 @@ void cargar_configuracion(char** argv) {
 	RETARDO = dame_retardo(retardo);
 	log_info(logger, "Retardo: %i (en microsegundos)", retardo);
 
-	PUERTO_PLANIFICADOR = config_get_string_value(config,
-			"PUERTO_PLANIFICADOR");
-	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
-
-	free(config->path);
-	free(config);
-
 	loggear("Configuración cargada.");
+	config_destroy(config);
 }
 
 algoritmo_distribucion dame_algoritmo(char* algoritmo_src) {

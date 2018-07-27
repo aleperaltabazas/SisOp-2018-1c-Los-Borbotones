@@ -7,6 +7,12 @@
 
 #include "strings.h"
 
+char* transfer(char* src, int size) {
+	char* ret = malloc(size);
+	memcpy(ret, src, size);
+	return ret;
+}
+
 bool mismoString(char* unString, char* otroString) {
 	return strcmp(unString, otroString) == 0;
 }

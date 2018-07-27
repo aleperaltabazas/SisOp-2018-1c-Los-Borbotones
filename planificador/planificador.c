@@ -84,18 +84,17 @@ void cargar_configuracion(char** argv) {
 
 	t_config* config = config_create(argv[1]);
 
-	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	char* puerto_coordi = config_get_string_value(config, "PUERTO_COORDINADOR");
+	PUERTO_COORDINADOR = transfer(puerto_coordi, strlen(puerto_coordi) + 1);
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
 
-	PUERTO_PLANIFICADOR = config_get_string_value(config,
-			"PUERTO_PLANIFICADOR");
+	char* puerto_plani = config_get_string_value(config, "PUERTO_PLANIFICADOR");
+	PUERTO_PLANIFICADOR = transfer(puerto_plani, strlen(puerto_plani) + 1);
 	log_info(logger, "Puerto Planificador: %s", PUERTO_PLANIFICADOR);
 
-	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
+	char* ip_coordi = config_get_string_value(config, "IP_COORDINADOR");
+	IP_COORDINADOR = transfer(ip_coordi, strlen(ip_coordi) + 1);
 	log_info(logger, "IP Coordinador: %s", IP_COORDINADOR);
-
-	IP_PLANIFICADOR = config_get_string_value(config, "IP_PLANIFICADOR");
-	log_info(logger, "IP Planificador: %s", IP_COORDINADOR);
 
 	char* algoritmo = config_get_string_value(config,
 			"ALGORITMO_PLANIFICACION");
@@ -116,6 +115,7 @@ void cargar_configuracion(char** argv) {
 	}
 
 	loggear("Configuración cargada.");
+	config_destroy(config);
 }
 
 void bloqueo_inicial(void) {

@@ -11,6 +11,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdlib.h>
+
+char* transfer(char* src, int size);
+	/*
+	 * Descripción: devuelve un char* con el contenido de src de longitud size.
+	 * Argumentos:
+	 * 		char* src
+	 * 		int size
+	 */
 
 bool mismoString(char* unString, char* OtroString);
 	/*

@@ -18,8 +18,6 @@ algoritmo_distribucion ALGORITMO_DISTRIBUCION;
 int CANTIDAD_ENTRADAS;
 int TAMANIO_ENTRADAS;
 float RETARDO;
-char* PUERTO_PLANIFICADOR;
-char* IP_PLANIFICADOR;
 
 int seguir_ejecucion = 1;
 
@@ -523,13 +521,6 @@ void startSigHandlers(void);
 void sigHandler_sigint(int signo);
 /*
  * Descripción: atrapa la señal SIGINT ante un CTRL+C, logea el último error y cierra el listening_socket.
- * Argumentos:
- * 		int signo
- */
-
-void sigHandler_segfault(int signo);
-/*
- * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
  * Argumentos:
  * 		int signo
  */

@@ -423,13 +423,6 @@ void sigHandler_sigint(int signo);
 	 * 		int signo
 	 */
 
-void sigHandler_segfault(int signo);
-	/*
-	 * Descripción: atrapa la señal SIGSEGV y logea el error que lo causó.
-	 * Argumentos:
-	 * 		int signo
-	 */
-
 ESI findByIDIn(uint32_t id, t_esi_list lista);
 	/*
 	 * Descripción: busca un con el ID en la lista. Si no lo encuentra, retorna ESI_error.

@@ -218,19 +218,10 @@ void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
 
-	signal(SIGSEGV, sigHandler_segfault);
-
 	cargar_configuracion(argv);
 	setup_montaje();
 	init_dump_thread();
 	iniciar_semaforos();
-}
-
-void sigHandler_segfault(int signo) {
-	log_warning(logger, "uh la puta madre, seg fault.");
-	log_error(logger, strerror(errno));
-
-	exit(-1);
 }
 
 void iniciar_semaforos(void) {
@@ -388,31 +379,33 @@ algoritmo_reemplazo dame_algoritmo(char* algoritmo_src) {
 void cargar_configuracion(char** argv) {
 	t_config* config = config_create(argv[1]);
 
-	PUERTO_COORDINADOR = config_get_string_value(config, "PUERTO_COORDINADOR");
+	char* puerto_coordi = config_get_string_value(config, "PUERTO_COORDINADOR");
+	PUERTO_COORDINADOR = transfer(puerto_coordi, strlen(puerto_coordi) + 1);
 	log_info(logger, "Puerto Coordinador: %s", PUERTO_COORDINADOR);
 
-	IP_COORDINADOR = config_get_string_value(config, "IP_COORDINADOR");
+	char* ip_coordi = config_get_string_value(config, "IP_COORDINADOR");
+	IP_COORDINADOR = transfer(ip_coordi, strlen(ip_coordi) + 1);
 	log_info(logger, "IP Coordinador: %s", IP_COORDINADOR);
 
 	char* algoritmo = config_get_string_value(config, "ALGORITMO_DISTRIBUCION");
 	ALGORITMO_REEMPLAZO = dame_algoritmo(algoritmo);
 	log_info(logger, "Algoritmo: %s", algoritmo);
 
-	PUNTO_MONTAJE = config_get_string_value(config, "PUNTO_MONTAJE");
+	char* punto_montaje = config_get_string_value(config, "PUNTO_MONTAJE");
+	PUNTO_MONTAJE = transfer(punto_montaje, strlen(punto_montaje) + 1);
 	cerrar_cadena(PUNTO_MONTAJE);
 	log_info(logger, "Punto de montaje: %s", PUNTO_MONTAJE);
 
-	NOMBRE = config_get_string_value(config, "NOMBRE");
+	char* nombre = config_get_string_value(config, "NOMBRE");
+	NOMBRE = transfer(nombre, strlen(nombre) + 1);
 	cerrar_cadena(NOMBRE);
 	log_info(logger, "Nombre: %s", NOMBRE);
 
 	DUMP = config_get_int_value(config, "DUMP");
 	log_info(logger, "Intervalo de dump: %i", DUMP);
 
-	free(config->path);
-	free(config);
-
 	loggear("Configuración cargada.");
+	config_destroy(config);
 }
 
 void inicializar(int cantidad_entradas, int tamanio_entrada) {
