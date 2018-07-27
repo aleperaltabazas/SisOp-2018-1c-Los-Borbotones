@@ -305,14 +305,14 @@ void* dump(void* buffer) {
 		leer_valores_almacenados();
 
 		pthread_mutex_lock(&sem_entradas);
-		nodo_auxiliar = entradas_asignadas.head;
+		entradas_node * nodo_aux = entradas_asignadas.head;
 
-		while (nodo_auxiliar != NULL) {
+		while (nodo_aux != NULL) {
 			char* valor_a_dumpear = leer_valor(
-					nodo_auxiliar->una_entrada.pos_valor,
-					nodo_auxiliar->una_entrada.tamanio_valor);
+					nodo_aux->una_entrada.pos_valor,
+					nodo_aux->una_entrada.tamanio_valor);
 
-			char* clave_a_dumpear = nodo_auxiliar->una_entrada.clave;
+			char* clave_a_dumpear = nodo_aux->una_entrada.clave;
 			//log_debug(logger, "Clave: %s", clave_a_dumpear);
 			//log_debug(logger, "Valor: %s", valor_a_dumpear);
 
@@ -321,7 +321,7 @@ void* dump(void* buffer) {
 
 			free(valor_a_dumpear);
 
-			nodo_auxiliar = nodo_auxiliar->siguiente;
+			nodo_aux = nodo_aux->siguiente;
 		}
 
 		pthread_mutex_unlock(&sem_entradas);
