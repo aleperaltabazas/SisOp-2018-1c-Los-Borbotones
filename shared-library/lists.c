@@ -240,6 +240,16 @@ bool emptyClaves(t_clave_list lista) {
 	return lista.head == NULL;
 }
 
+void claveListDestroy(t_clave_list* lista) {
+	t_clave_node* puntero;
+
+	while (lista->head != NULL) {
+		puntero = lista->head;
+		lista->head = lista->head->sgte;
+		free(puntero);
+	}
+}
+
 /*
  * ==============================
  * =====      BLOCKED       =====
@@ -435,6 +445,7 @@ t_deadlock_node* crear_nodo_deadlock(deadlock esi) {
 	nodo->esi.id = esi.id;
 	strcpy(nodo->esi.claveBloqueo, esi.claveBloqueo);
 	nodo->esi.clavesTomadas = esi.clavesTomadas;
+	nodo->sgte = NULL;
 
 	return nodo;
 }

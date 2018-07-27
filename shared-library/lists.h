@@ -209,6 +209,13 @@ bool emptyParsed(t_parsed_list* lista);
 	 * 		t_parsed_list* lista: lista a verificar.
 	 */
 
+void claveListDestroy(t_clave_list* lista);
+	/*
+	 * Descripción: elimina todos los elementos de la lista, liberando toda la memoria ocupada por la misma.
+	 * Argumentos:
+	 * 		t_clave_list* lista
+	 */
+
 /*
  * ==============================
  * =====      BLOCKED       =====

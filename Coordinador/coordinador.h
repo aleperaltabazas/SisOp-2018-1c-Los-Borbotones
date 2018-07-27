@@ -884,6 +884,15 @@ bool tieneAlgoQueOtroQuiere(deadlock esi, t_deadlock_list lista);
  * 		t_deadlock_list lista
  */
 
+void destroyTomadas(uint32_t id, t_deadlock_list* lista);
+/*
+ * Descripción: llama a claveListDestroy() sobre el elemento cuyo ID coincide con el id de la firma. Si no se
+ * 		encuentra, no hace nada.
+ * Argumentos:
+ * 		uint32_t id
+ * 		t_deadlock_list* lista
+ */
+
 void getDeadlock(int sockfd);
 
 void listar_recurso(int sockfd);

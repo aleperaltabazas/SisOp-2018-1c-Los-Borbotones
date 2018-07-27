@@ -259,8 +259,21 @@ void finishESI(uint32_t id) {
 	t_ESI esi = { .id = id };
 
 	pthread_mutex_lock(&sem_ESIs);
+	destroyTomadas(id, &ESIs);
 	eliminar_deadlock(&ESIs, esi);
 	pthread_mutex_unlock(&sem_ESIs);
+}
+
+void destroyTomadas(uint32_t id, t_deadlock_list* lista) {
+	t_deadlock_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			claveListDestroy(&(puntero->esi.clavesTomadas));
+		}
+
+		puntero = puntero->sgte;
+	}
 }
 
 uint32_t decimeID(int sockfd) {
