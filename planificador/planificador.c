@@ -880,8 +880,7 @@ void interpretarYEjecutarCodigo(int comando) {
 		status();
 		break;
 	case 7:
-		//deadlock();
-		printf("WIP \n");
+		getDeadlock();
 		break;
 	case 8:
 		mostrame_clock();
@@ -1293,7 +1292,19 @@ void getDeadlock(void) {
 	aviso_con_ID aviso_deadlock = { .aviso = 404 };
 	enviar_aviso(socket_coordinador, aviso_deadlock);
 
+	printf("ESIs en Deadlock: ");
+	while (1) {
+		aviso_con_ID deadlock_id = recibir_aviso(socket_coordinador);
+		if (deadlock_id.aviso == 0) {
+			printf("No hay ESIs en Deadlock \n");
+			return;
+		}
 
+		if (deadlock_id.aviso == 414) {
+			break;
+		}
+		printf(" %i ", deadlock_id.id);
+	}
 }
 
 void show_deadlock(void) {

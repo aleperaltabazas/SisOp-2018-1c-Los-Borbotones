@@ -367,6 +367,13 @@ bool isEmptyDeadlock(t_deadlock_list lista);
 	 * 		t_deadlock_list lista
 	 */
 
+int deadlockLength(t_deadlock_list lista);
+	/*
+	 * Descripción: devuelve la longitud de una lista de deadlock.
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 */
+
 /*
  * ==============================
  * =====      ENTRADAS      =====

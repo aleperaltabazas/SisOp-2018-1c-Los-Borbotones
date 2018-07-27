@@ -103,6 +103,7 @@ void matar(void);
 void datos_ESI(void);
 void show_debug(void);
 void show(void);
+void getDeadlock(void);
 
 //Funciones de servidor
 

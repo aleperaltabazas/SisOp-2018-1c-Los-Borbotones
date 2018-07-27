@@ -219,6 +219,7 @@ typedef struct t_deadlock_node {
 } t_deadlock_node;
 
 typedef struct t_deadlock_list {
+	int size;
 	t_deadlock_node* head;
 } t_deadlock_list;
 

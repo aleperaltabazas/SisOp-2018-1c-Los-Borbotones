@@ -468,6 +468,7 @@ void agregar_deadlock(t_deadlock_list* lista, deadlock esi) {
 		puntero->sgte = nodo;
 	}
 
+	lista->size++;
 	return;
 }
 
@@ -490,6 +491,8 @@ void eliminar_deadlock(t_deadlock_list* lista, deadlock esi) {
 			destruir_nodo_deadlock(eliminado);
 		}
 	}
+
+	lista->size--;
 }
 
 void deadlockListDestroy(t_deadlock_list* lista) {
@@ -501,6 +504,8 @@ void deadlockListDestroy(t_deadlock_list* lista) {
 		free(puntero);
 	}
 
+	lista->head = NULL;
+	lista->size = 0;
 }
 
 deadlock headDeadlock(t_deadlock_list lista) {
@@ -513,3 +518,6 @@ bool isEmptyDeadlock(t_deadlock_list lista) {
 	return lista.head == NULL;
 }
 
+int deadlockLength(t_deadlock_list lista) {
+	return lista.size;
+}

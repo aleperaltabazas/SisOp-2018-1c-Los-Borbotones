@@ -7,6 +7,10 @@
 
 #include "testCoordinador.h"
 
+void testDeadlock(void) {
+
+}
+
 void testLSU(void) {
 	ALGORITMO_DISTRIBUCION = LSU;
 
