@@ -405,9 +405,7 @@ int set(int socket_cliente, uint32_t id) {
 	log_debug(logger, "Response SET: %i", response.packed);
 
 	if(response.packed == 101){
-		sleep(10);
 		enviar_instancias_a_compactar();
-		sleep(10);
 		log_debug(logger, "Ya mande a compactar, volviendo a intentar el SET...");
 		response.packed = doSet(set);
 	}
@@ -578,13 +576,10 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 }
 
 void enviar_set(SET_Op set, Instancia instancia) {
-	/*
-	 * Mati: acá necesito que hagas que le mande a la instancia el SET, que tiene la clave
-	 * y su valor, nada más.
-	 */
+
 	int tamanio_parametros_set = obtener_tamanio_parametros_set(set);
 
-	//Lock semaforo
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(tamanio_parametros_set,
 			(void*) (intptr_t) instancia.sockfd, 11);
 
@@ -595,7 +590,7 @@ void enviar_set(SET_Op set, Instancia instancia) {
 
 	free(valor_set.clave);
 	free(valor_set.valor);
-	//Unlock semaforo
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 }
 
 int obtener_tamanio_parametros_set(SET_Op set) {
@@ -643,26 +638,21 @@ void actualizarEntradas(Instancia instancia, uint32_t entradas) {
 }
 
 void enviar_store(STORE_Op store, Instancia instancia) {
-	/*
-	 * Mati: acá necesito que hagas que le mande a la instancia el STORE. La estructura tiene la clave.
-	 */
+
 	int tamanio_clave = strlen(store.clave) + 1;
 
-	//lock
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(tamanio_clave, (void*) (intptr_t) instancia.sockfd,
 			12);
 
 	enviar_cadena(store.clave, instancia.sockfd);
-	//unlock?? creo que seria despues de que ya reciba el store, aunque van a quedar muy distantes
 }
 
 uint32_t recibir_store(Instancia instancia) {
-	/*
-	 * Mati: acá necesito que recibas el resultado de store.
-	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
-	 */
 
 	int resultado_store = esperar_confirmacion_de_exito(instancia.sockfd);
+
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (resultado_store == 666) {
 		loggear("Tengo que abortar el ESI");
@@ -803,7 +793,7 @@ uint32_t waitPing(Instancia unaInstancia) {
 	int resultado_ping = esperar_confirmacion_de_exito(unaInstancia.sockfd);
 	log_debug(logger, "Ping recibido: %i", resultado_ping);
 
-	//UNLOCK
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (resultado_ping != 100) {
 		log_error(logger, "Error en el ping, resultado recibido: %i",
@@ -1863,7 +1853,7 @@ bool murio(char* name, int sockfd) {
 
 void ping(Instancia instancia) {
 
-//LOCK
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 100);
 
 	loggear("Ping enviado.");
@@ -1924,7 +1914,6 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 
 		int respuesta_almacenamiento = esperar_confirmacion_de_exito(sockfd);
 
-		//Habria que utilizar esto para actualizar el struct cuando sale del while
 		if (respuesta_almacenamiento == 111) {
 			entradas_ocupadas = recibir_packed(sockfd);
 			actualizarEntradas(instancia, entradas_ocupadas.packed);
