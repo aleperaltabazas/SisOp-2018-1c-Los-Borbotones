@@ -461,4 +461,64 @@ void conseguir_desbloqueado(void);
 	 * 		void
 	 */
 
+void aumentarRafaga(ESI esi);
+	/*
+	 * Descripción: aumenta la ráfaga real del ESI en la lista ready_ESIs. Si no se encuentra en la lista,
+	 * 		no hace nada.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void actualizarEstimacion(ESI esi);
+	/*
+	 * Descripción: pone en el atributo de rafaga_estimada del ESI la estimación producida por estimated(ESI),
+	 * 		en el ESI en la lista ready_ESIs. Si no se encuentra, no hace nada.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void actualizarTiempoArribo(ESI esi);
+	/*
+	 * Descripción: actualiza el atributo tiempo_arribo del ESI en la lista en base a la variable global tiempo.
+	 * 		Si no se encuentra en la lista, no hace nada.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void newESI(ESI esi);
+	/*
+	 * Descripción: asigna los valores iniciales del esi (tiempo de arribo, rafagas) y lo agrega a la
+	 * 		lista de ready_ESIs. Si hay desalojo, llama a desalojar().
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void blockESI(ESI esi);
+	/*
+	 * Descripción: elimina al ESI de la lista ready_ESIs y lo pone en la cola blocked_ESIs.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void abortESI(ESI esi);
+	/*
+	 * Descripción: elimina al ESI de la lista ready_ESIs.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void finishESI(ESI esi);
+	/*
+	 * Descripción: elimina al esi de la lista ready_ESIs y lo agrega a la lista finished_ESIs.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void executeESI(ESI esi);
+	/*
+	 * Descripción: libera los semáforos correspondientes y aumenta la ráfaga del executing_ESI.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
 #endif /* PLANIFICADOR_H_ */

@@ -239,8 +239,7 @@ void* atender_ESI(void* buffer) {
 
 	loggear("Hilo de ESI inicializado correctamente.");
 
-	ESI esi = { .socket = socket_ESI, .rafaga_estimada = ESTIMACION_INICIAL,
-			.rafaga_real = 0 };
+	ESI esi = { .socket = socket_ESI };
 
 	int this_id = asignar_ID(esi);
 	esi.id = this_id;
@@ -267,121 +266,96 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 	log_trace(logger, "Mensaje recibido del ESI numero: %i", id);
 
 	if (aviso.aviso == 0) {
-		log_info(logger,
-				"ESI número %i terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.",
-				id);
-
-		agregar_ESI(&finished_ESIs, esi);
-
-		pthread_mutex_lock(&sem_ready_ESIs);
-		pthread_mutex_lock(&sem_ESIs_size);
-		if (!esta(ready_ESIs, esi)) {
-			return 0;
-		}
-
-		eliminar_ESI(&ready_ESIs, esi);
-
-		ESIs_size--;
-		pthread_mutex_unlock(&sem_ESIs_size);
-		pthread_mutex_unlock(&sem_ready_ESIs);
-
-		vaciar_ESI();
-
-		loggear("Agregado correctamente a la cola de terminados.");
-
-		pthread_mutex_lock(&sem_clock);
-		tiempo++;
-		pthread_mutex_unlock(&sem_clock);
-
-		pthread_mutex_lock(&sem_ejecutando);
-		ejecutando = false;
-		pthread_mutex_unlock(&sem_ejecutando);
-
-		conseguir_desbloqueado();
-		pthread_mutex_unlock(&sem_ejecucion);
-
+		finishESI(esi);
 		return 0;
 	}
 
 	else if (aviso.aviso == 1) {
-		pthread_mutex_lock(&sem_clock);
-		esi.tiempo_arribo = tiempo;
-		pthread_mutex_unlock(&sem_clock);
-
-		pthread_mutex_lock(&sem_ready_ESIs);
-		pthread_mutex_lock(&sem_ESIs_size);
-		agregar_ESI(&ready_ESIs, esi);
-
-		ESIs_size++;
-		pthread_mutex_unlock(&sem_ESIs_size);
-		pthread_mutex_unlock(&sem_ready_ESIs);
-
-		log_info(logger, "ESI número %i listo para ejecutar añadido a la cola.",
-				id);
-
-		if (ALGORITMO_PLANIFICACION.desalojo) {
-			desalojar();
-		}
-
+		newESI(esi);
 	}
 
 	else if (aviso.aviso == 5) {
-		pthread_mutex_lock(&sem_ready_ESIs);
-		pthread_mutex_lock(&sem_ESIs_size);
-		eliminar_ESI(&ready_ESIs, esi);
-
-		ESIs_size--;
-		pthread_mutex_unlock(&sem_ready_ESIs);
-		pthread_mutex_unlock(&sem_ESIs_size);
-
-		pthread_mutex_lock(&sem_ejecutando);
-		ejecutando = false;
-		pthread_mutex_unlock(&sem_ejecutando);
-
-		pthread_mutex_unlock(&sem_ejecucion);
-
-		agregar_ESI(&blocked_ESIs, esi);
-
-		log_info(logger, "ESI número %i fue bloqueado.", id);
-
-		vaciar_ESI();
+		blockESI(esi);
 	}
 
 	else if (aviso.aviso == 10) {
-		pthread_mutex_lock(&sem_clock);
-		tiempo++;
-		pthread_mutex_unlock(&sem_clock);
-
-		pthread_mutex_lock(&sem_ejecutando);
-		ejecutando = false;
-		pthread_mutex_unlock(&sem_ejecutando);
-
-		executing_ESI.rafaga_real++;
-
-		log_info(logger, "ESI número %i ejecutó correctamente.", id);
-
-		conseguir_desbloqueado();
-
-		pthread_mutex_unlock(&sem_ejecucion);
+		executeESI(esi);
 	}
 
 	else {
-		log_warning(logger, "El ESI %i se cayó o fue abortado.", id);
-		if (executing_ESI.id == (uint32_t) id) {
+		abortESI(esi);
+		return 0;
+	}
 
-			pthread_mutex_lock(&sem_ready_ESIs);
-			pthread_mutex_lock(&sem_ESIs_size);
-			if (!esta(ready_ESIs, esi)) {
-				agregar_ESI(&ready_ESIs, esi);
-				ESIs_size++;
-			}
+	return 1;
+}
 
-			eliminar_ESI(&ready_ESIs, esi);
+void newESI(ESI esi) {
+	pthread_mutex_lock(&sem_clock);
+	esi.tiempo_arribo = tiempo;
+	pthread_mutex_unlock(&sem_clock);
 
-			ESIs_size--;
-			pthread_mutex_unlock(&sem_ESIs_size);
-			pthread_mutex_unlock(&sem_ready_ESIs);
+	esi.rafaga_real = 0;
+	esi.rafaga_estimada = ESTIMACION_INICIAL;
 
+	pthread_mutex_lock(&sem_ready_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+	agregar_ESI(&ready_ESIs, esi);
+
+	ESIs_size++;
+	pthread_mutex_unlock(&sem_ESIs_size);
+	pthread_mutex_unlock(&sem_ready_ESIs);
+
+	log_info(logger, "ESI número %i listo para ejecutar añadido a la cola.",
+			esi.id);
+
+	if (ALGORITMO_PLANIFICACION.desalojo) {
+		desalojar();
+	}
+}
+
+void blockESI(ESI esi) {
+	pthread_mutex_lock(&sem_ready_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+	eliminar_ESI(&ready_ESIs, esi);
+
+	ESIs_size--;
+	pthread_mutex_unlock(&sem_ready_ESIs);
+	pthread_mutex_unlock(&sem_ESIs_size);
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = false;
+	pthread_mutex_unlock(&sem_ejecutando);
+
+	pthread_mutex_unlock(&sem_ejecucion);
+
+	agregar_ESI(&blocked_ESIs, esi);
+
+	log_info(logger, "ESI número %i fue bloqueado.", esi.id);
+
+	if (executing_ESI.id == esi.id) {
+		vaciar_ESI();
+	}
+}
+
+void abortESI(ESI esi) {
+	log_warning(logger, "El ESI %i se cayó o fue abortado.", esi.id);
+	if (executing_ESI.id == esi.id) {
+
+		pthread_mutex_lock(&sem_ready_ESIs);
+		pthread_mutex_lock(&sem_ESIs_size);
+		if (!esta(ready_ESIs, esi)) {
+			agregar_ESI(&ready_ESIs, esi);
+			ESIs_size++;
+		}
+
+		eliminar_ESI(&ready_ESIs, esi);
+
+		ESIs_size--;
+		pthread_mutex_unlock(&sem_ESIs_size);
+		pthread_mutex_unlock(&sem_ready_ESIs);
+
+		if (executing_ESI.id == esi.id) {
 			vaciar_ESI();
 
 			pthread_mutex_lock(&sem_ejecutando);
@@ -390,11 +364,68 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 			pthread_mutex_unlock(&sem_ejecucion);
 		}
+	}
+}
 
-		return 0;
+void finishESI(ESI esi) {
+	log_info(logger,
+			"ESI número %i terminado. Moviendo a la cola de terminados y eliminando de la cola de listos.",
+			esi.id);
+
+	agregar_ESI(&finished_ESIs, esi);
+
+	pthread_mutex_lock(&sem_ready_ESIs);
+	pthread_mutex_lock(&sem_ESIs_size);
+	if (!esta(ready_ESIs, esi)) {
+		pthread_mutex_unlock(&sem_ejecutando);
+
+		conseguir_desbloqueado();
+		pthread_mutex_unlock(&sem_ejecucion);
+
+		return;
 	}
 
-	return 1;
+	eliminar_ESI(&ready_ESIs, esi);
+
+	ESIs_size--;
+	pthread_mutex_unlock(&sem_ESIs_size);
+	pthread_mutex_unlock(&sem_ready_ESIs);
+
+	if (executing_ESI.id == esi.id) {
+		vaciar_ESI();
+	}
+
+	loggear("Agregado correctamente a la cola de terminados.");
+
+	pthread_mutex_lock(&sem_clock);
+	tiempo++;
+	pthread_mutex_unlock(&sem_clock);
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = false;
+	pthread_mutex_unlock(&sem_ejecutando);
+
+	conseguir_desbloqueado();
+	pthread_mutex_unlock(&sem_ejecucion);
+
+}
+
+void executeESI(ESI esi) {
+	pthread_mutex_lock(&sem_clock);
+	tiempo++;
+	pthread_mutex_unlock(&sem_clock);
+
+	pthread_mutex_lock(&sem_ejecutando);
+	ejecutando = false;
+	pthread_mutex_unlock(&sem_ejecutando);
+
+	executing_ESI.rafaga_real++;
+
+	log_info(logger, "ESI número %i ejecutó correctamente.", esi.id);
+
+	conseguir_desbloqueado();
+
+	pthread_mutex_unlock(&sem_ejecucion);
 }
 
 void conseguir_desbloqueado(void) {
@@ -724,6 +755,45 @@ void cerrar_ESIs() {
 
 }
 
+void aumentarRafaga(ESI esi) {
+	t_esi_node* puntero = ready_ESIs.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			puntero->esi.rafaga_real++;
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+void actualizarEstimacion(ESI esi) {
+	t_esi_node* puntero = ready_ESIs.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			float estimated_aux = estimated_time(puntero->esi);
+			puntero->esi.rafaga_estimada = estimated_aux;
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+void actualizarTiempoArribo(ESI esi) {
+	t_esi_node* puntero = ready_ESIs.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			pthread_mutex_lock(&sem_clock);
+			puntero->esi.tiempo_arribo = tiempo;
+			pthread_mutex_unlock(&sem_clock);
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
 /*	=====================
  *	===== CONSOLITA =====
  *	=====================
@@ -1051,6 +1121,7 @@ void bloquearSegunClave(void) {
 
 	printf("El ESI %i fue bloqueado tras la clave %s \n", id, clave);
 }
+
 void desbloquear_clave() {
 	printf("Ingrese la clave a desbloquear: ");
 	char clave[40] = "futbol:messi";
