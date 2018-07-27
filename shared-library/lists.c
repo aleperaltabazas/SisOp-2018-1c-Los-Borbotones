@@ -243,11 +243,17 @@ bool emptyClaves(t_clave_list lista) {
 void claveListDestroy(t_clave_list* lista) {
 	t_clave_node* puntero;
 
+	if (lista->head == NULL) {
+		return;
+	}
+
 	while (lista->head != NULL) {
 		puntero = lista->head;
-		lista->head = lista->head->sgte;
+		lista->head = puntero->sgte;
 		free(puntero);
 	}
+
+	lista->head = NULL;
 }
 
 /*
@@ -501,6 +507,7 @@ void deadlockListDestroy(t_deadlock_list* lista) {
 	while (lista->head != NULL) {
 		puntero = lista->head;
 		lista->head = lista->head->sgte;
+		claveListDestroy(&(puntero->esi.clavesTomadas));
 		free(puntero);
 	}
 

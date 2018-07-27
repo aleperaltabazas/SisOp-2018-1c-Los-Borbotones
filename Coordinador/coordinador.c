@@ -368,8 +368,8 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 	else {
 		log_warning(logger, "Mensaje erróneo. Abortando ESI.");
 		liberar_claves(id);
-
 		abortar_ESI(socket_cliente);
+		finishESI(id);
 
 		return 0;
 	}
@@ -1229,12 +1229,24 @@ void* atender_Planificador(void* un_socket) {
 
 void getDeadlock(int sockfd) {
 	pthread_mutex_lock(&sem_ESIs);
+	if (chequearNull(ESIs, sockfd))
+		return;
 	t_deadlock_list firstIteration = getRetenientes(ESIs);
 	pthread_mutex_unlock(&sem_ESIs);
+
+	if (chequearNull(firstIteration, sockfd))
+		return;
+
 	t_deadlock_list secondIteration = getEsperando(firstIteration);
+	if (chequearNull(secondIteration, sockfd))
+		return;
+
 	t_deadlock_list finalIteration = getEsperaCircular(secondIteration);
+	if (chequearNull(finalIteration, sockfd))
+		return;
 
 	t_deadlock_list deadlocked;
+
 	t_deadlock_list aux = finalIteration;
 
 	int iteraciones;
@@ -1244,11 +1256,8 @@ void getDeadlock(int sockfd) {
 		aux = deadlocked;
 	}
 
-	if (deadlocked.head == NULL) {
-		aviso_con_ID noDeadlock = { .aviso = 0 };
-		enviar_aviso(socket_planificador, noDeadlock);
+	if (chequearNull(deadlocked, sockfd))
 		return;
-	}
 
 	log_debug(logger, "ESIs en deadlock: ");
 	t_deadlock_node* puntero = deadlocked.head;
@@ -1266,6 +1275,16 @@ void getDeadlock(int sockfd) {
 	deadlockListDestroy(&firstIteration);
 	deadlockListDestroy(&secondIteration);
 	deadlockListDestroy(&finalIteration);
+}
+
+bool chequearNull(t_deadlock_list lista, int sockfd) {
+	if (lista.head == NULL) {
+		aviso_con_ID noDeadlock = { .aviso = 0 };
+		enviar_aviso(socket_planificador, noDeadlock);
+		return true;
+	}
+
+	return false;
 }
 
 t_deadlock_list getRetenientes(t_deadlock_list lista) {

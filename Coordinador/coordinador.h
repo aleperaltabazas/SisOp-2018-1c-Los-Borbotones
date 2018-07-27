@@ -893,7 +893,18 @@ void destroyTomadas(uint32_t id, t_deadlock_list* lista);
  * 		t_deadlock_list* lista
  */
 
+bool chequearNull(t_deadlock_list lista, int sockfd);
+/*
+ * Descripción: si la cabeza de la lista es NULL, envía un mensaje a través de sockfd de que no hay deadlock, y
+ * 		devuelve true. Caso contrario, devuelve false.
+ * Argumentos:
+ * 		t_deadlock_list lista
+ * 		int sockfd
+ */
+
 void getDeadlock(int sockfd);
+
+void liberarClavesTomadas(t_deadlock_list* lista);
 
 void listar_recurso(int sockfd);
 

@@ -448,7 +448,7 @@ float response_ratio(ESI esi);
 	 * 		ESI esi
 	 */
 
-void conseguir_desbloqueado(void);
+void conseguir_desbloqueados(void);
 	/*
 	 * Descripción: intercambia mensajes con el coordinador para averiguar el próximo ESI a desbloquear.
 	 * Argumentos:

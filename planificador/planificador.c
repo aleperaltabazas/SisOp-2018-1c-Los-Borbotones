@@ -379,7 +379,7 @@ void finishESI(ESI esi) {
 	if (!esta(ready_ESIs, esi)) {
 		pthread_mutex_unlock(&sem_ejecutando);
 
-		conseguir_desbloqueado();
+		conseguir_desbloqueados();
 		pthread_mutex_unlock(&sem_ejecucion);
 
 		return;
@@ -405,7 +405,7 @@ void finishESI(ESI esi) {
 	ejecutando = false;
 	pthread_mutex_unlock(&sem_ejecutando);
 
-	conseguir_desbloqueado();
+	conseguir_desbloqueados();
 	pthread_mutex_unlock(&sem_ejecucion);
 
 }
@@ -423,12 +423,12 @@ void executeESI(ESI esi) {
 
 	log_info(logger, "ESI número %i ejecutó correctamente.", esi.id);
 
-	conseguir_desbloqueado();
+	conseguir_desbloqueados();
 
 	pthread_mutex_unlock(&sem_ejecucion);
 }
 
-void conseguir_desbloqueado(void) {
+void conseguir_desbloqueados(void) {
 	log_info(logger, "Preguntando al coordinador que ESI desbloquear.");
 	aviso_con_ID aviso_desbloqueado = { .aviso = 15 };
 
@@ -985,6 +985,7 @@ void matar(void) {
 	printf("Introduzca el ESI ID: ");
 	scanf("%i", &id);
 	kill_esi((uint32_t) id);
+	conseguir_desbloqueados();
 }
 
 void status(void) {
@@ -1132,7 +1133,7 @@ void desbloquear_clave() {
 
 	printf("La clave %s fue desbloqueada \n", clave);
 
-	conseguir_desbloqueado();
+	conseguir_desbloqueados();
 	planificar();
 }
 
@@ -1295,6 +1296,9 @@ void getDeadlock(void) {
 	printf("ESIs en Deadlock: ");
 	while (1) {
 		aviso_con_ID deadlock_id = recibir_aviso(socket_coordinador);
+		log_debug(logger, "Aviso: %i", deadlock_id.aviso);
+		log_debug(logger, "ID: %i", deadlock_id.id);
+
 		if (deadlock_id.aviso == 0) {
 			printf("No hay ESIs en Deadlock \n");
 			return;
