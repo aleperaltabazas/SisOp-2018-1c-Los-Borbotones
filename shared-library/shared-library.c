@@ -447,6 +447,8 @@ void avisar_cierre(int server_socket, uint32_t id) {
 		}
 	}
 
+	free(message);
+
 	loggear("Aviso exitoso.");
 }
 

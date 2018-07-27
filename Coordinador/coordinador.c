@@ -315,6 +315,7 @@ void liberar_claves(uint32_t id) {
 			puntero = puntero->sgte;
 		}
 	}
+
 }
 
 int chequear_solicitud(int socket_cliente, uint32_t id) {
@@ -395,7 +396,14 @@ int set(int socket_cliente, uint32_t id) {
 
 	op_response response = { .packed = doSet(set) };
 
+	// -25 valor de reintento porque justo la instancia que elegi murio
+	while(response.packed == -25){
+		log_debug(logger, "Response SET: %i", response.packed);
+		response.packed = doSet(set);
+	}
+
 	log_debug(logger, "Response SET: %i", response.packed);
+
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
 
@@ -444,6 +452,12 @@ uint32_t doSet(SET_Op set) {
 
 	if (blocker_id == set.id) {
 		Instancia instanciaSet = getInstanciaSet(set.clave);
+
+		if (estaCaida(instanciaSet)) {
+			desconectar(instanciaSet);
+			return -25;
+		}
+
 		return settearClave(set, instanciaSet);
 	}
 
@@ -500,11 +514,6 @@ void gettearClave(GET_Op get) {
 }
 
 uint32_t settearClave(SET_Op set, Instancia instancia) {
-
-	if (estaCaida(instancia)) {
-		desconectar(instancia);
-		return -1;
-	}
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		log_warning(logger, "Hubo un error asignando la instancia.");
@@ -757,6 +766,9 @@ void log_store(STORE_Op store) {
 }
 
 bool estaCaida(Instancia unaInstancia) {
+
+	log_debug(logger, "Verificando disponibilidad de la instancia...");
+
 	if (!unaInstancia.disponible) {
 		log_warning(logger, "La instancia fue marcada como no disponible");
 		return true;
@@ -1130,6 +1142,7 @@ void desconectar(Instancia instancia) {
 			puntero->instancia.disponible = false;
 			log_error(logger, "%s desconectada.", instancia.nombre);
 		}
+
 		puntero = puntero->sgte;
 	}
 
@@ -1326,9 +1339,11 @@ void desbloquear(char* clave) {
 	else if (existe(clave) && esta_bloqueada(clave)) {
 		//mostrar_listas();
 		char* dup_clave = strdup(clave);
+
 		if (esta(clave, claves_bloqueadas)) {
 			eliminar_clave(&claves_bloqueadas, dup_clave);
 		}
+
 		agregar_clave(&claves_disponibles, dup_clave, -1);
 
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);

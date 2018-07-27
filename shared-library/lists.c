@@ -158,7 +158,8 @@ Instancia headInstancias(t_instancia_list lista) {
 
 t_clave_node* crear_nodo_clave(char* clave, uint32_t id) {
 
-	t_clave_node* nodo = (t_clave_node*) malloc(sizeof(uint32_t) + sizeof(t_clave_node));
+	t_clave_node* nodo = (t_clave_node*) malloc(sizeof(t_clave_node));
+
 	strcpy(nodo->clave, clave);
 	strcpy(nodo->valor, "null");
 	nodo->block_id = id;
@@ -182,7 +183,6 @@ void agregar_clave(t_clave_list* lista, char* clave, uint32_t id) {
 
 	if (lista->head == NULL) {
 		lista->head = nodo;
-
 	}
 
 	else {
@@ -220,6 +220,7 @@ void eliminar_clave(t_clave_list* lista, char* clave) {
 			t_clave_node* puntero = lista->head;
 
 			while (puntero->sgte != NULL) {
+
 				if (mismoString(puntero->sgte->clave, clave)) {
 					break;
 				}
@@ -230,7 +231,6 @@ void eliminar_clave(t_clave_list* lista, char* clave) {
 			t_clave_node* eliminado = puntero->sgte;
 			puntero->sgte = eliminado->sgte;
 			destruir_nodo_clave(eliminado);
-
 		}
 	}
 }
