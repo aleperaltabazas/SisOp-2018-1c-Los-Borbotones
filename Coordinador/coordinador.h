@@ -835,6 +835,26 @@ void finishESI(uint32_t id);
  * 		uint32_t id
  */
 
+t_deadlock_list getRetenientes(t_deadlock_list lista);
+/*
+ * Descripción: devuelve una lista nueva, filtrando los elementos de la lista que cuya lista de claves tomadas
+ * 		no está vacía.
+ * Argumentos:
+ * 		t_deadlock_list lista
+ */
+
+t_deadlock_list getEsperando(t_deadlock_list lista);
+/*
+ * Descripción: devuelve una lista nueva, filtrando los elementos de la lista cuyo atributo "claveBloqueo" es
+ * 		distinto de "null".
+ * Argumentos:
+ * 		t_deadlock_list lista
+ */
+
+
+
+void getDeadlock(int sockfd);
+
 void listar_recurso(int sockfd);
 
 void show_blocked_list(t_blocked_list lista);

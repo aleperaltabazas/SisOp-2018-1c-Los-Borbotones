@@ -1289,6 +1289,13 @@ void kill_esi(int id) {
 			id);
 }
 
+void getDeadlock(void) {
+	aviso_con_ID aviso_deadlock = { .aviso = 404 };
+	enviar_aviso(socket_coordinador, aviso_deadlock);
+
+
+}
+
 void show_deadlock(void) {
 	package_int paquete;
 	char * ids = NULL;

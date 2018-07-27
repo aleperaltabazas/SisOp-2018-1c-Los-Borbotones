@@ -236,6 +236,10 @@ char* headClaves(t_clave_list lista) {
 	return key;
 }
 
+bool emptyClaves(t_clave_list lista) {
+	return lista.head == NULL;
+}
+
 /*
  * ==============================
  * =====      BLOCKED       =====
@@ -477,9 +481,24 @@ void eliminar_deadlock(t_deadlock_list* lista, deadlock esi) {
 	}
 }
 
+void deadlockListDestroy(t_deadlock_list* lista) {
+	t_deadlock_node* puntero;
+
+	while (lista->head != NULL) {
+		puntero = lista->head;
+		lista->head = lista->head->sgte;
+		free(puntero);
+	}
+
+}
+
 deadlock headDeadlock(t_deadlock_list lista) {
 	deadlock esi = lista.head->esi;
 
 	return esi;
+}
+
+bool isEmptyDeadlock(t_deadlock_list lista) {
+	return lista.head == NULL;
 }
 

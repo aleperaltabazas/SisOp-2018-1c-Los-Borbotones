@@ -151,6 +151,13 @@ int contiene_la_clave(t_clave_list * lista, char * clave);
 	 * 		char* clave: la clave a buscar.
 	 */
 
+bool emptyClaves(t_clave_list lista);
+	/*
+	 * Descripción: devuelve si la cabeza de la lista es igual a NULL.
+	 * Argumentos:
+	 * 		t_clave_list lista
+	 */
+
 void eliminar_blockeados(t_blocked_list * lista);
 
 /*
@@ -332,9 +339,23 @@ void eliminar_deadlock(t_deadlock_list* lista, deadlock esi);
 	 * 		deadlock esi
 	 */
 
+void deadlockListDestroy(t_deadlock_list* lista);
+	/*
+	 * Descripción: elimina todos los elementos de la lista, liberando toda la memoria ocupada por la misma
+	 * Argumentos:
+	 * 		t_deadlock_list* lista
+	 */
+
 deadlock headDeadlock(t_deadlock_list lista);
 	/*
 	 * Descripción: devuelve el primer elemento de una lista de deadlock
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 */
+
+bool isEmptyDeadlock(t_deadlock_list lista);
+	/*
+	 * Descripción: indica si la cabeza de la lista es igual a NULL.
 	 * Argumentos:
 	 * 		t_deadlock_list lista
 	 */

@@ -215,6 +215,7 @@ void* atender_ESI(void* un_socket) {
 
 void newESI(uint32_t id) {
 	t_ESI esi = { .id = id };
+	strcpy(esi.claveBloqueo, "null");
 	esi.clavesTomadas.head = NULL;
 
 	pthread_mutex_lock(&sem_ESIs);
@@ -418,12 +419,14 @@ uint32_t doGet(GET_Op get) {
 	uint32_t blocker_id = getBlockerID(get.clave);
 
 	if (blocker_id == desbloqueada_ID) {
+		getKeyESI(get.id, get.clave);
 		gettearClave(get);
 		return 20;
 	}
 
 	else {
 		bloquear_ESI(get.clave, get.id);
+		blockESI(get.id, get.clave);
 
 		log_warning(logger,
 				"El ESI %i fue bloqueado tratando de adquirir la clave %s, en posesión de %i.",
@@ -1190,6 +1193,10 @@ void* atender_Planificador(void* un_socket) {
 			listar_recurso(socket_planificador);
 		}
 
+		else if (aviso_plani.aviso == 404) {
+			getDeadlock(socket_planificador);
+		}
+
 		else {
 			log_warning(logger,
 					"Error de mensaje con el planificador. Cierro el socket.");
@@ -1203,6 +1210,54 @@ void* atender_Planificador(void* un_socket) {
 	seguir_ejecucion = 0;
 
 	return NULL;
+}
+
+void getDeadlock(int sockfd) {
+	pthread_mutex_lock(&sem_ESIs);
+	t_deadlock_list firstIteration = getRetenientes(ESIs);
+	t_deadlock_list secondIteration = getEsperando(firstIteration);
+
+	pthread_mutex_unlock(&sem_ESIs);
+}
+
+t_deadlock_list getRetenientes(t_deadlock_list lista) {
+	t_deadlock_list retenientes = { .head = NULL };
+
+	if (lista.head == NULL) {
+		return retenientes;
+	}
+
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (!emptyClaves(puntero->esi.clavesTomadas)) {
+			agregar_deadlock(&retenientes, puntero->esi);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return retenientes;
+}
+
+t_deadlock_list getEsperando(t_deadlock_list lista) {
+	t_deadlock_list esperando = { .head = NULL };
+
+	if (lista.head == NULL) {
+		return esperando;
+	}
+
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (!mismoString(puntero->esi.claveBloqueo, "null")) {
+			agregar_deadlock(&esperando, puntero->esi);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return esperando;
 }
 
 void enviar_desbloqueado(int sockfd) {
