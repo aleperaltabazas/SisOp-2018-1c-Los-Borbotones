@@ -419,3 +419,67 @@ uint32_t headDesbloqueado(t_desbloqueado_list lista) {
 
 	return head->id;
 }
+
+/*
+ * ==============================
+ * =====      DEADLOCK      =====
+ * ==============================
+ */
+
+t_deadlock_node* crear_nodo_deadlock(deadlock esi) {
+	t_deadlock_node* nodo = (t_deadlock_node*) malloc(sizeof(t_deadlock_node));
+	nodo->esi.id = esi.id;
+	strcpy(nodo->esi.claveBloqueo, esi.claveBloqueo);
+	nodo->esi.clavesTomadas = esi.clavesTomadas;
+
+	return nodo;
+}
+
+void destruir_nodo_deadlock(t_deadlock_node* node) {
+	free(node);
+}
+
+void agregar_deadlock(t_deadlock_list* lista, deadlock esi) {
+	t_deadlock_node* nodo = crear_nodo_deadlock(esi);
+
+	if (lista->head == NULL) {
+		lista->head = nodo;
+	} else {
+		t_deadlock_node* puntero = lista->head;
+		while (puntero->sgte != NULL) {
+			puntero = puntero->sgte;
+		}
+
+		puntero->sgte = nodo;
+	}
+
+	return;
+}
+
+void eliminar_deadlock(t_deadlock_list* lista, deadlock esi) {
+	if (lista->head != NULL) {
+		deadlock head = headDeadlock(*lista);
+		if (head.id == esi.id) {
+			t_deadlock_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_nodo_deadlock(eliminado);
+		} else {
+			t_deadlock_node* puntero = lista->head;
+
+			while (puntero->sgte->esi.id != esi.id) {
+				puntero = puntero->sgte;
+			}
+
+			t_deadlock_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_nodo_deadlock(eliminado);
+		}
+	}
+}
+
+deadlock headDeadlock(t_deadlock_list lista) {
+	deadlock esi = lista.head->esi;
+
+	return esi;
+}
+

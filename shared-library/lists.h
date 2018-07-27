@@ -298,6 +298,49 @@ uint32_t headDesbloqueado(t_desbloqueado_list lista);
 
 /*
  * ==============================
+ * =====      DEADLOCK      =====
+ * ==============================
+ */
+
+t_deadlock_node* crear_nodo_deadlock(deadlock esi);
+	/*
+	 * Descripción: crea y retorna un nodo de deadlock.
+	 * Argumentos:
+	 * 		deadlock esi
+	 */
+
+void destruir_nodo_deadlock(t_deadlock_node* nodo);
+	/*
+	 * Descripción: libera la memoria del nodo.
+	 * Argumentos:
+	 * 		t_deadlock_node* nodo
+	 */
+
+void agregar_deadlock(t_deadlock_list* lista, deadlock esi);
+	/*
+	 * Descripción: agrega un esi a la lista de deadlock.
+	 * Argumentos:
+	 * 		t_deadlock_list* lista
+	 * 		deadlock esi
+	 */
+
+void eliminar_deadlock(t_deadlock_list* lista, deadlock esi);
+	/*
+	 * Descripción: elimina un esi de la lista de deadlock.
+	 * Argumentos:
+	 * 		t_deadlock_list* lista
+	 * 		deadlock esi
+	 */
+
+deadlock headDeadlock(t_deadlock_list lista);
+	/*
+	 * Descripción: devuelve el primer elemento de una lista de deadlock
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 */
+
+/*
+ * ==============================
  * =====      ENTRADAS      =====
  * ==============================
  */

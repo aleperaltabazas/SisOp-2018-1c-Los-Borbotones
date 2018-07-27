@@ -62,6 +62,7 @@ void iniciar_semaforos(void) {
 	pthread_mutex_init(&sem_instancias, NULL);
 	pthread_mutex_init(&sem_listening_socket, NULL);
 	pthread_mutex_init(&sem_desbloqueados, NULL);
+	pthread_mutex_init(&sem_ESIs, NULL);
 }
 
 void startSigHandlers(void) {
@@ -202,6 +203,7 @@ void* atender_ESI(void* un_socket) {
 		status = 0;
 	}
 
+	newESI(id);
 	while (status) {
 		status = chequear_solicitud(socket_cliente, id);
 	}
@@ -209,6 +211,55 @@ void* atender_ESI(void* un_socket) {
 	log_trace(logger, "Hilo de ESI número %i terminado", id);
 
 	return NULL;
+}
+
+void newESI(uint32_t id) {
+	t_ESI esi = { .id = id };
+	esi.clavesTomadas.head = NULL;
+
+	pthread_mutex_lock(&sem_ESIs);
+	agregar_deadlock(&ESIs, esi);
+	pthread_mutex_unlock(&sem_ESIs);
+}
+
+void blockESI(uint32_t id, char* clave) {
+	pthread_mutex_lock(&sem_ESIs);
+	t_deadlock_node* puntero = ESIs.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			strcpy(puntero->esi.claveBloqueo, clave);
+			break;
+		}
+
+		puntero = puntero->sgte;
+	}
+	pthread_mutex_unlock(&sem_ESIs);
+}
+
+void getKeyESI(uint32_t id, char* clave) {
+	pthread_mutex_lock(&sem_ESIs);
+	t_deadlock_node* puntero = ESIs.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			t_clave_list claves = puntero->esi.clavesTomadas;
+			agregar_clave(&claves, clave, id);
+			puntero->esi.clavesTomadas = claves;
+			break;
+		}
+
+		puntero = puntero->sgte;
+	}
+	pthread_mutex_unlock(&sem_ESIs);
+}
+
+void finishESI(uint32_t id) {
+	t_ESI esi = { .id = id };
+
+	pthread_mutex_lock(&sem_ESIs);
+	eliminar_deadlock(&ESIs, esi);
+	pthread_mutex_unlock(&sem_ESIs);
 }
 
 uint32_t decimeID(int sockfd) {
@@ -275,6 +326,7 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 		pthread_mutex_lock(&sem_desbloqueados);
 		liberar_claves(id);
 		pthread_mutex_unlock(&sem_desbloqueados);
+		finishESI(id);
 		return 0;
 	}
 
@@ -312,6 +364,7 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 		liberar_claves(id);
 		pthread_mutex_unlock(&sem_desbloqueados);
 		abortar_ESI(socket_cliente);
+		finishESI(id);
 		return 0;
 	}
 
@@ -439,7 +492,6 @@ void gettearClave(GET_Op get) {
 			get.clave);
 
 	log_get(get);
-
 }
 
 uint32_t settearClave(SET_Op set, Instancia instancia) {

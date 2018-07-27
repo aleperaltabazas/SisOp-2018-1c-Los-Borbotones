@@ -207,4 +207,19 @@ typedef struct t_desbloqueado_list {
 	t_desbloqueado_node* head;
 } t_desbloqueado_list;
 
+typedef struct deadlock {
+	uint32_t id;
+	char claveBloqueo[40];
+	t_clave_list clavesTomadas;
+} deadlock;
+
+typedef struct t_deadlock_node {
+	deadlock esi;
+	struct t_deadlock_node* sgte;
+} t_deadlock_node;
+
+typedef struct t_deadlock_list {
+	t_deadlock_node* head;
+} t_deadlock_list;
+
 #endif /* ESTRUCTURAS_H_ */

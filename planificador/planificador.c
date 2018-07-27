@@ -1289,7 +1289,7 @@ void kill_esi(int id) {
 			id);
 }
 
-void deadlock(void) {
+void show_deadlock(void) {
 	package_int paquete;
 	char * ids = NULL;
 	paquete.packed = 62;

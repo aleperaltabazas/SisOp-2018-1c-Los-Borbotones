@@ -31,6 +31,7 @@ t_clave_list claves_bloqueadas;
 t_clave_list claves_disponibles;
 t_blocked_list blocked_ESIs;
 t_instancia_list instancias;
+t_deadlock_list ESIs;
 
 int pointer;
 
@@ -48,6 +49,7 @@ pthread_mutex_t sem_socket_operaciones_coordi;
 pthread_mutex_t sem_instancias;
 pthread_mutex_t sem_listening_socket;
 pthread_mutex_t sem_desbloqueados;
+pthread_mutex_t sem_ESIs;
 
 uint32_t id_not_found = -3;
 uint32_t desbloqueada_ID = -1;
@@ -55,6 +57,8 @@ uint32_t proximo_desbloqueado;
 t_desbloqueado_list cola_desbloqueados;
 
 int cantidad_instancias;
+
+typedef deadlock t_ESI;
 
 //Hilos
 
@@ -799,6 +803,36 @@ void actualizarEntradas(Instancia instancia, uint32_t cantidad);
  * Argumentos:
  * 		Instancia instancia
  * 		uint32_t cantidad
+ */
+
+void newESI(uint32_t id);
+/*
+ * Descripción: agrega un t_ESI con el ID a la lista de ESIs.
+ * Argumentos:
+ * 		uint32_t id
+ */
+
+void blockESI(uint32_t id, char* clave);
+/*
+ * Descripción: sobreescribe el atributo claveBloqueo con clave del esi con el id en la lista de ESIs.
+ * Argumentos:
+ * 		uint32_t id
+ * 		char* clave
+ */
+
+void getKeyESI(uint32_t id, char* clave);
+/*
+ * Descripción: agrega la clave a la lista clavesTomadas del ESI con el id en la lista de ESIs.
+ * Argumentos:
+ * 		uint32_t id
+ * 		char* clave
+ */
+
+void finishESI(uint32_t id);
+/*
+ * Descripción: elimina el ESI asociado al id de la lista de ESIs.
+ * Argumentos:
+ * 		uint32_t id
  */
 
 void listar_recurso(int sockfd);
