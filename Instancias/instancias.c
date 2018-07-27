@@ -467,6 +467,7 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 void set(uint32_t longitud_parametros, int socket_coordinador) {
 
 	parametros_set parametros;
+
 	if (recieve_and_deserialize_set(&(parametros), socket_coordinador) < 0) {
 		loggear("Fallo en la recepcion de los parametros");
 	}
@@ -611,8 +612,6 @@ void generar_entrada(parametros_set parametros) {
 
 	if (puedo_almacenar_si_compacto(entradas_que_ocupa)) {
 		loggear("Puedo almacenar si compacto...");
-		compactacion();
-		generar_entrada(parametros);
 		confirmar_resultado_de_operacion(101);
 		return;
 	}
@@ -1006,7 +1005,7 @@ void compactacion() {
 
 	actualizar_entradas_disponibles(total_de_entradas_ocupadas);
 
-	//confirmar_resultado_de_operacion(114);
+	confirmar_resultado_de_operacion(114);
 
 }
 
@@ -1239,12 +1238,12 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 		loggear("CONFIRMO SET");
 	} else if (codigo_exito_operacion == 112) {
 		loggear("CONFIRMO STORE");
+	} else if (codigo_exito_operacion == 114) {
+	 loggear("COMPACTACION FINALIZADA");
 	} else if (codigo_exito_operacion == 115) {
 		loggear("CONFIRMO LECTURA");
 	} else if (codigo_exito_operacion == 140) {
 		loggear("CONFIRMO NOMBRE ENVIADO");
-		/*} else if (codigo_exito_operacion == 114) {
-		 loggear("COMPACTACION FINALIZADA");*/
 	} else if (codigo_exito_operacion == 150) {
 		loggear("RESURRECCION COMPLETA");
 	} else if (codigo_exito_operacion == 151) {

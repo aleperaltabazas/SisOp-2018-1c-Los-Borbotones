@@ -404,6 +404,16 @@ int set(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "Response SET: %i", response.packed);
 
+	if(response.packed == 101){
+		sleep(10);
+		enviar_instancias_a_compactar();
+		sleep(10);
+		log_debug(logger, "Ya mande a compactar, volviendo a intentar el SET...");
+		response.packed = doSet(set);
+	}
+
+	log_debug(logger, "Response SET: %i", response.packed);
+
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
 
@@ -522,6 +532,10 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 
 	enviar_set(set, instancia);
 	uint32_t resultado = recibir_set(instancia);
+
+	if(resultado == 101){
+		return 101;
+	}
 
 	if (resultado == 20) {
 		actualizarInstancia(instancia, set.clave);
@@ -686,18 +700,20 @@ uint32_t recibir_set(Instancia instancia) {
 
 	}
 
+	if (resultado_set == 101) {
+		//Esto quedo medio feo, porque la instancia compacta sola y despues se le avisa a todas las demas
+		loggear("Tengo que mandar las instancias a compactar");
+		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
+		//enviar_instancias_a_compactar();
+		return 101;
+	}
+
 	loggear("SET completo en la instancia");
 	package_int entradas_ocupadas = recibir_packed(instancia.sockfd);
 	//Actualizar la instancia con este valor
 
 	actualizarEntradas(instancia, entradas_ocupadas.packed);
 
-	if (resultado_set == 101) {
-		//Esto quedo medio feo, porque la instancia compacta sola y despues se le avisa a todas las demas
-		loggear("Tengo que mandar las instancias a compactar");
-		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
-		enviar_instancias_a_compactar();
-	}
 
 	return 20;
 
@@ -2098,6 +2114,11 @@ int esperar_confirmacion_de_exito(int un_socket) {
 
 		loggear("Operacion STORE finalizada con exito");
 		return 112;
+
+	} else if (confirmacion.packed == 114) {
+
+		loggear("Operacion Compactacion finalizada con exito");
+		return 114;
 
 	} else if (confirmacion.packed == 115) {
 
