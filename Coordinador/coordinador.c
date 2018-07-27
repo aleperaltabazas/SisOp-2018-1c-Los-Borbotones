@@ -1216,7 +1216,7 @@ void getDeadlock(int sockfd) {
 	pthread_mutex_lock(&sem_ESIs);
 	t_deadlock_list firstIteration = getRetenientes(ESIs);
 	t_deadlock_list secondIteration = getEsperando(firstIteration);
-
+	t_deadlock_list finalInteration = getEsperaCircular(secondIteration);
 	pthread_mutex_unlock(&sem_ESIs);
 }
 
@@ -1258,6 +1258,55 @@ t_deadlock_list getEsperando(t_deadlock_list lista) {
 	}
 
 	return esperando;
+}
+
+t_deadlock_list getEsperaCircular(t_deadlock_list lista) {
+	t_deadlock_list circular = { .head = NULL };
+
+	if (lista.head == NULL) {
+		return circular;
+	}
+
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (esperaAlgoDeOtro(puntero->esi, lista)
+				&& tieneAlgoQueOtroQuiere(puntero->esi, lista)) {
+			agregar_deadlock(&circular, puntero->esi);
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return circular;
+}
+
+bool esperaAlgoDeOtro(deadlock esi, t_deadlock_list lista) {
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (esta(esi.claveBloqueo, (puntero->esi.clavesTomadas))) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
+bool tieneAlgoQueOtroQuiere(deadlock esi, t_deadlock_list lista) {
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (esta(puntero->esi.claveBloqueo, esi.clavesTomadas)) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
 }
 
 void enviar_desbloqueado(int sockfd) {

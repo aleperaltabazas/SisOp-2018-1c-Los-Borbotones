@@ -851,7 +851,38 @@ t_deadlock_list getEsperando(t_deadlock_list lista);
  * 		t_deadlock_list lista
  */
 
+t_deadlock_list getEsperaCircular(t_deadlock_list lista);
+/*
+ * Descripción: devuelve una lista nueva, filtrando los elementos que esperan un recurso retenido por alguno
+ * 		de los otros elementos de la lista, y retiene un recurso requerido por otro elemento de la lista.
+ * Argumentos:
+ * 		t_deadlock_list lista
+ */
 
+bool esta(char* clave, t_clave_list lista);
+/*
+ * Descripción: devuelve si la clave se encuentra en la lista.
+ * Argumentos:
+ * 		char* clave
+ * 		t_clave_list lista
+ */
+
+bool esperaAlgoDeOtro(deadlock esi, t_deadlock_list lista);
+/*
+ * Descripción: devuelve si el atributo claveBloqueada de esi se encuentra en alguna de las listas de claves
+ * 		bloqueadas de algún elemento de la lista.
+ * Argumentos:
+ * 		deadlock esi
+ * 		t_deadlock_list lista
+ */
+
+bool tieneAlgoQueOtroQuiere(deadlock esi, t_deadlock_list lista);
+/*
+ * Descripción: devuelve si alguno de los recursos que posee el esi es requerido por otro elemento de la lista.
+ * Argumentos:
+ * 		deadlock esi
+ * 		t_deadlock_list lista
+ */
 
 void getDeadlock(int sockfd);
 
