@@ -254,7 +254,9 @@ void getKeyESI(uint32_t id, char* clave) {
 
 		puntero = puntero->sgte;
 	}
+
 	pthread_mutex_unlock(&sem_ESIs);
+
 }
 
 void finishESI(uint32_t id) {
@@ -328,6 +330,7 @@ void liberar_claves(uint32_t id) {
 			puntero = puntero->sgte;
 		}
 	}
+
 }
 
 int chequear_solicitud(int socket_cliente, uint32_t id) {
@@ -408,7 +411,22 @@ int set(int socket_cliente, uint32_t id) {
 
 	op_response response = { .packed = doSet(set) };
 
+	// -25 valor de reintento porque justo la instancia que elegi murio
+	while(response.packed == -25){
+		log_debug(logger, "Response SET: %i", response.packed);
+		response.packed = doSet(set);
+	}
+
 	log_debug(logger, "Response SET: %i", response.packed);
+
+	if(response.packed == 101){
+		enviar_instancias_a_compactar();
+		log_debug(logger, "Ya mande a compactar, volviendo a intentar el SET...");
+		response.packed = doSet(set);
+	}
+
+	log_debug(logger, "Response SET: %i", response.packed);
+
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
 
@@ -457,6 +475,12 @@ uint32_t doSet(SET_Op set) {
 
 	if (blocker_id == set.id) {
 		Instancia instanciaSet = getInstanciaSet(set.clave);
+
+		if (estaCaida(instanciaSet)) {
+			desconectar(instanciaSet);
+			return -25;
+		}
+
 		return settearClave(set, instanciaSet);
 	}
 
@@ -514,11 +538,6 @@ void gettearClave(GET_Op get) {
 
 uint32_t settearClave(SET_Op set, Instancia instancia) {
 
-	if (estaCaida(instancia)) {
-		desconectar(instancia);
-		return -1;
-	}
-
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		log_warning(logger, "Hubo un error asignando la instancia.");
 		return -1;
@@ -526,6 +545,10 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 
 	enviar_set(set, instancia);
 	uint32_t resultado = recibir_set(instancia);
+
+	if(resultado == 101){
+		return 101;
+	}
 
 	if (resultado == 20) {
 		actualizarInstancia(instancia, set.clave);
@@ -568,13 +591,10 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 }
 
 void enviar_set(SET_Op set, Instancia instancia) {
-	/*
-	 * Mati: acá necesito que hagas que le mande a la instancia el SET, que tiene la clave
-	 * y su valor, nada más.
-	 */
+
 	int tamanio_parametros_set = obtener_tamanio_parametros_set(set);
 
-	//Lock semaforo
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(tamanio_parametros_set,
 			(void*) (intptr_t) instancia.sockfd, 11);
 
@@ -585,7 +605,7 @@ void enviar_set(SET_Op set, Instancia instancia) {
 
 	free(valor_set.clave);
 	free(valor_set.valor);
-	//Unlock semaforo
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 }
 
 int obtener_tamanio_parametros_set(SET_Op set) {
@@ -633,26 +653,21 @@ void actualizarEntradas(Instancia instancia, uint32_t entradas) {
 }
 
 void enviar_store(STORE_Op store, Instancia instancia) {
-	/*
-	 * Mati: acá necesito que hagas que le mande a la instancia el STORE. La estructura tiene la clave.
-	 */
+
 	int tamanio_clave = strlen(store.clave) + 1;
 
-	//lock
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(tamanio_clave, (void*) (intptr_t) instancia.sockfd,
 			12);
 
 	enviar_cadena(store.clave, instancia.sockfd);
-	//unlock?? creo que seria despues de que ya reciba el store, aunque van a quedar muy distantes
 }
 
 uint32_t recibir_store(Instancia instancia) {
-	/*
-	 * Mati: acá necesito que recibas el resultado de store.
-	 * Si va bien, devolvé 20. Si sale mal, devolvé -1.
-	 */
 
 	int resultado_store = esperar_confirmacion_de_exito(instancia.sockfd);
+
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (resultado_store == 666) {
 		loggear("Tengo que abortar el ESI");
@@ -690,18 +705,20 @@ uint32_t recibir_set(Instancia instancia) {
 
 	}
 
+	if (resultado_set == 101) {
+		//Esto quedo medio feo, porque la instancia compacta sola y despues se le avisa a todas las demas
+		loggear("Tengo que mandar las instancias a compactar");
+		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
+		//enviar_instancias_a_compactar();
+		return 101;
+	}
+
 	loggear("SET completo en la instancia");
 	package_int entradas_ocupadas = recibir_packed(instancia.sockfd);
 	//Actualizar la instancia con este valor
 
 	actualizarEntradas(instancia, entradas_ocupadas.packed);
 
-	if (resultado_set == 101) {
-		//Esto quedo medio feo, porque la instancia compacta sola y despues se le avisa a todas las demas
-		loggear("Tengo que mandar las instancias a compactar");
-		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
-		enviar_instancias_a_compactar();
-	}
 
 	return 20;
 
@@ -770,6 +787,9 @@ void log_store(STORE_Op store) {
 }
 
 bool estaCaida(Instancia unaInstancia) {
+
+	log_debug(logger, "Verificando disponibilidad de la instancia...");
+
 	if (!unaInstancia.disponible) {
 		log_warning(logger, "La instancia fue marcada como no disponible");
 		return true;
@@ -788,7 +808,7 @@ uint32_t waitPing(Instancia unaInstancia) {
 	int resultado_ping = esperar_confirmacion_de_exito(unaInstancia.sockfd);
 	log_debug(logger, "Ping recibido: %i", resultado_ping);
 
-	//UNLOCK
+	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	if (resultado_ping != 100) {
 		log_error(logger, "Error en el ping, resultado recibido: %i",
@@ -801,6 +821,7 @@ uint32_t waitPing(Instancia unaInstancia) {
 
 }
 
+/*
 int settear(char* valor, char* clave, uint32_t id) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
@@ -842,7 +863,7 @@ int settear(char* valor, char* clave, uint32_t id) {
 	}
 
 	return -3;
-}
+}*/
 
 void actualizarClave(char* clave, char* valor) {
 	t_clave_node* puntero = claves_bloqueadas.head;
@@ -860,6 +881,7 @@ void actualizarClave(char* clave, char* valor) {
 	}
 }
 
+/*
 int do_set(char* valor, char* clave) {
 	uint32_t valor_size = (uint32_t) strlen(valor);
 	uint32_t clave_size = (uint32_t) strlen(clave);
@@ -874,6 +896,7 @@ int do_set(char* valor, char* clave) {
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		return -1;
 	}
+
 	actualizarInstancia(instancia, clave);
 	actualizarClave(clave, valor);
 
@@ -885,10 +908,9 @@ int do_set(char* valor, char* clave) {
 
 	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 
-	enviar_orden_instancia(tamanio_parametros_set,
-			(void*) (intptr_t) instancia.sockfd, 11);
-	enviar_valores_set(tamanio_parametros_set,
-			(void*) (intptr_t) instancia.sockfd);
+	enviar_orden_instancia(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd, 11);
+
+	enviar_valores_set(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd);
 
 	log_debug(logger, "Esperando confirmacion...");
 
@@ -914,7 +936,7 @@ int do_set(char* valor, char* clave) {
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
 	return 1;
-}
+}*/
 
 void actualizarInstancia(Instancia instancia, char* clave) {
 	t_instancia_node* puntero = instancias.head;
@@ -1141,6 +1163,7 @@ void desconectar(Instancia instancia) {
 			puntero->instancia.disponible = false;
 			log_error(logger, "%s desconectada.", instancia.nombre);
 		}
+
 		puntero = puntero->sgte;
 	}
 
@@ -1438,9 +1461,11 @@ void desbloquear(char* clave) {
 	else if (existe(clave) && esta_bloqueada(clave)) {
 		//mostrar_listas();
 		char* dup_clave = strdup(clave);
+
 		if (esta(clave, claves_bloqueadas)) {
 			eliminar_clave(&claves_bloqueadas, dup_clave);
 		}
+
 		agregar_clave(&claves_disponibles, dup_clave, -1);
 
 		log_info(logger, "La clave %s fue desbloqueada.", dup_clave);
@@ -1943,29 +1968,9 @@ bool murio(char* name, int sockfd) {
 }
 
 void ping(Instancia instancia) {
-	/*orden_del_coordinador orden;
-	 orden.codigo_operacion = 100;
-	 orden.tamanio_a_enviar = 0;
 
-	 uint32_t packageSize = sizeof(orden_del_coordinador);
-
-	 orden_del_coordinador* buffer = malloc(packageSize);
-
-	 memcpy(buffer, &orden, packageSize);*/
-
-//LOCK
+	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 100);
-
-	log_trace(logger, "Pingeando instancia... SOCKET: %i", instancia.sockfd);
-
-	/*int envio = send(instancia.sockfd, buffer, packageSize, MSG_NOSIGNAL);
-
-	 log_debug(logger, "Bytes enviados: %i", envio);
-
-	 if (envio < 0) {
-	 log_warning(logger, "Falló el envío de ping.");
-	 return;
-	 }*/
 
 	loggear("Ping enviado.");
 }
@@ -2025,7 +2030,6 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 
 		int respuesta_almacenamiento = esperar_confirmacion_de_exito(sockfd);
 
-		//Habria que utilizar esto para actualizar el struct cuando sale del while
 		if (respuesta_almacenamiento == 111) {
 			entradas_ocupadas = recibir_packed(sockfd);
 			actualizarEntradas(instancia, entradas_ocupadas.packed);
@@ -2215,6 +2219,11 @@ int esperar_confirmacion_de_exito(int un_socket) {
 
 		loggear("Operacion STORE finalizada con exito");
 		return 112;
+
+	} else if (confirmacion.packed == 114) {
+
+		loggear("Operacion Compactacion finalizada con exito");
+		return 114;
 
 	} else if (confirmacion.packed == 115) {
 
