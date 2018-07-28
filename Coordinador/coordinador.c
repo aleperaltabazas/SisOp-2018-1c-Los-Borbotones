@@ -268,8 +268,9 @@ void finishESI(uint32_t id) {
 	pthread_mutex_unlock(&sem_ESIs);
 
 	pthread_mutex_lock(&sem_desbloqueados);
+
 	if (contieneDesbloqueado(cola_desbloqueados, id)) {
-		loggear("El desbloqueado está en la lista.");
+		log_error(logger, "El desbloqueado está en la lista.");
 		eliminarDesbloqueadoPorID(&cola_desbloqueados, id);
 	}
 	pthread_mutex_unlock(&sem_desbloqueados);
@@ -1411,6 +1412,7 @@ void enviar_desbloqueado(int sockfd) {
 	log_info(logger, "Enviando al planificador los ESIs a desbloquear.");
 
 	pthread_mutex_lock(&sem_desbloqueados);
+
 	while (cola_desbloqueados.head != NULL) {
 		log_trace(logger, "ESI desbloqueado: %i", cola_desbloqueados.head->id);
 		aviso_con_ID aviso_desbloqueado = { .aviso = 15, .id =
@@ -1419,7 +1421,6 @@ void enviar_desbloqueado(int sockfd) {
 		enviar_aviso(sockfd, aviso_desbloqueado);
 
 		eliminar_desbloqueado(&cola_desbloqueados);
-		log_debug(logger, "Eliminé de la lista.");
 	}
 	pthread_mutex_unlock(&sem_desbloqueados);
 
@@ -1499,8 +1500,10 @@ uint32_t getDesbloqueado(char* clave) {
 
 	while (puntero != NULL) {
 		if (mismoString(clave_dup, puntero->clave)) {
-			free(clave_dup);
-			return puntero->id;
+			if (deadlockListContains(ESIs, puntero->id)) {
+				free(clave_dup);
+				return puntero->id;
+			}
 		}
 
 		puntero = puntero->sgte;

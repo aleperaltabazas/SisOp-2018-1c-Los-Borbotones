@@ -326,6 +326,13 @@ uint32_t headDesbloqueado(t_desbloqueado_list lista);
 	 * 		t_desbloqueado_list lista
 	 */
 
+void show_desbloqueados(t_desbloqueado_list lista);
+	/*
+	 * Descripción: muestra el ID de los elementos de la lista. Si la lista está vacía, avisa.
+	 * Argumentos:
+	 * 		t_desbloqueado_list lista
+	 */
+
 /*
  * ==============================
  * =====      DEADLOCK      =====
@@ -388,6 +395,14 @@ int deadlockLength(t_deadlock_list lista);
 	 * Descripción: devuelve la longitud de una lista de deadlock.
 	 * Argumentos:
 	 * 		t_deadlock_list lista
+	 */
+
+bool deadlockListContains(t_deadlock_list lista, uint32_t id);
+	/*
+	 * Descripción: devuelve si un elemento se encuentra en la lista.
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 * 		uint32_t id
 	 */
 
 /*
