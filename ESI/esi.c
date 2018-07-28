@@ -122,7 +122,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	if (orden.aviso == -1) {
 		log_info(logger, "Orden de terminación.");
-		enviar_aviso(socket_coordinador, aviso_fin);
+		cerrar();
 
 		exit(1);
 	} else if (orden.aviso == 2) {

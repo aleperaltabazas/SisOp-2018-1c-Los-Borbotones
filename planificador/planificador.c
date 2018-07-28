@@ -376,20 +376,18 @@ void finishESI(ESI esi) {
 
 	pthread_mutex_lock(&sem_ready_ESIs);
 	pthread_mutex_lock(&sem_ESIs_size);
-	if (!esta(ready_ESIs, esi)) {
-		pthread_mutex_unlock(&sem_ejecutando);
 
-		conseguir_desbloqueados();
-		pthread_mutex_unlock(&sem_ejecucion);
-
-		return;
+	if (esta(ready_ESIs, esi)) {
+		eliminar_ESI(&ready_ESIs, esi);
+		ESIs_size--;
 	}
 
-	eliminar_ESI(&ready_ESIs, esi);
-
-	ESIs_size--;
 	pthread_mutex_unlock(&sem_ESIs_size);
 	pthread_mutex_unlock(&sem_ready_ESIs);
+
+	if (esta(blocked_ESIs, esi)) {
+		eliminar_ESI(&blocked_ESIs, esi);
+	}
 
 	if (executing_ESI.id == esi.id) {
 		vaciar_ESI();
@@ -442,7 +440,7 @@ void conseguir_desbloqueados(void) {
 		if (respuesta_desbloqueado.aviso == 0
 				|| respuesta_desbloqueado.id == 0) {
 			log_info(logger, "No hay más ESIs para desbloquear.");
-			break;
+			return;
 		} else if (respuesta_desbloqueado.aviso == 15) {
 			desbloquear_ESI(respuesta_desbloqueado.id);
 			log_info(logger, "El ESI %i fue desbloqueado",
@@ -985,7 +983,6 @@ void matar(void) {
 	printf("Introduzca el ESI ID: ");
 	scanf("%i", &id);
 	kill_esi((uint32_t) id);
-	conseguir_desbloqueados();
 }
 
 void status(void) {
@@ -1167,6 +1164,8 @@ void desbloquear_ESI(uint32_t id) {
 
 	pthread_mutex_unlock(&sem_ready_ESIs);
 	pthread_mutex_unlock(&sem_ESIs_size);
+
+	log_info(logger, "El ESI %i fue desbloqueado.", id);
 }
 
 void bloquear_clave() {

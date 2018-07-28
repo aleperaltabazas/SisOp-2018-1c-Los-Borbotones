@@ -435,6 +435,41 @@ void eliminar_desbloqueado(t_desbloqueado_list* lista) {
 	}
 }
 
+void eliminarDesbloqueadoPorID(t_desbloqueado_list* lista, uint32_t id) {
+	if (lista->head != NULL) {
+		uint32_t head = headDesbloqueado(*lista);
+		if (id == head) {
+			t_desbloqueado_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_nodo_desbloqueado(eliminado);
+		} else {
+			t_desbloqueado_node* puntero = lista->head;
+
+			while (puntero->sgte->id != id) {
+				puntero = puntero->sgte;
+			}
+
+			t_desbloqueado_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_nodo_desbloqueado(eliminado);
+		}
+	}
+}
+
+bool contieneDesbloqueado(t_desbloqueado_list lista, uint32_t id) {
+	t_desbloqueado_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (puntero->id == id) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 bool emptyDesbloqueado(t_desbloqueado_list* lista) {
 	return lista->head == NULL;
 }
@@ -508,11 +543,9 @@ void eliminar_deadlock(t_deadlock_list* lista, deadlock esi) {
 
 void deadlockListDestroy(t_deadlock_list* lista) {
 	t_deadlock_node* puntero;
-	t_clave_list claves;
 
 	while (lista->head != NULL) {
 		puntero = lista->head;
-		claves = puntero->esi.clavesTomadas;
 		lista->head = lista->head->sgte;
 		free(puntero);
 	}

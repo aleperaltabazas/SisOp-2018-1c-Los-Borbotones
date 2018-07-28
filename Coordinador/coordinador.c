@@ -266,6 +266,13 @@ void finishESI(uint32_t id) {
 	destroyTomadas(id, &ESIs);
 	eliminar_deadlock(&ESIs, esi);
 	pthread_mutex_unlock(&sem_ESIs);
+
+	pthread_mutex_lock(&sem_desbloqueados);
+	if (contieneDesbloqueado(cola_desbloqueados, id)) {
+		loggear("El desbloqueado está en la lista.");
+		eliminarDesbloqueadoPorID(&cola_desbloqueados, id);
+	}
+	pthread_mutex_unlock(&sem_desbloqueados);
 }
 
 void destroyTomadas(uint32_t id, t_deadlock_list* lista) {
@@ -1412,6 +1419,7 @@ void enviar_desbloqueado(int sockfd) {
 		enviar_aviso(sockfd, aviso_desbloqueado);
 
 		eliminar_desbloqueado(&cola_desbloqueados);
+		log_debug(logger, "Eliminé de la lista.");
 	}
 	pthread_mutex_unlock(&sem_desbloqueados);
 

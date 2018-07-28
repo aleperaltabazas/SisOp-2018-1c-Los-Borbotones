@@ -296,6 +296,22 @@ void eliminar_desbloqueado(t_desbloqueado_list* lista);
 	 * 		t_desbloqueado_list* lista
 	 */
 
+void eliminarDesbloqueadoPorID(t_desbloqueado_list* lista, uint32_t id);
+	/*
+	 * Descripción: elimina el elemento cuyo ID coincide con el de la firma.
+	 * Argumentos:
+	 * 		t_desbloqueado_list* lista
+	 * 		uint32_t id
+	 */
+
+bool contieneDesbloqueado(t_desbloqueado_list lista, uint32_t id);
+	/*
+	 * Descripción: devuelve si algún elemento de la lista tiene el mismo ID.
+	 * Argumentos:
+	 * 		t_desbloqueado_list lista
+	 * 		uint32_t id
+	 */
+
 bool emptyDesbloqueado(t_desbloqueado_list* lista);
 	/*
 	 * Descripción: devuelve si la cabeza de la lista es NULL.
