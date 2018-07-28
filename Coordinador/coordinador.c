@@ -412,16 +412,17 @@ int set(int socket_cliente, uint32_t id) {
 	op_response response = { .packed = doSet(set) };
 
 	// -25 valor de reintento porque justo la instancia que elegi murio
-	while(response.packed == -25){
+	while (response.packed == -25) {
 		log_debug(logger, "Response SET: %i", response.packed);
 		response.packed = doSet(set);
 	}
 
 	log_debug(logger, "Response SET: %i", response.packed);
 
-	if(response.packed == 101){
+	if (response.packed == 101) {
 		enviar_instancias_a_compactar();
-		log_debug(logger, "Ya mande a compactar, volviendo a intentar el SET...");
+		log_debug(logger,
+				"Ya mande a compactar, volviendo a intentar el SET...");
 		response.packed = doSet(set);
 	}
 
@@ -546,7 +547,7 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 	enviar_set(set, instancia);
 	uint32_t resultado = recibir_set(instancia);
 
-	if(resultado == 101){
+	if (resultado == 101) {
 		return 101;
 	}
 
@@ -719,7 +720,6 @@ uint32_t recibir_set(Instancia instancia) {
 
 	actualizarEntradas(instancia, entradas_ocupadas.packed);
 
-
 	return 20;
 
 }
@@ -822,48 +822,48 @@ uint32_t waitPing(Instancia unaInstancia) {
 }
 
 /*
-int settear(char* valor, char* clave, uint32_t id) {
-	t_clave_node* puntero = claves_bloqueadas.head;
+ int settear(char* valor, char* clave, uint32_t id) {
+ t_clave_node* puntero = claves_bloqueadas.head;
 
-	if (!existe(clave)) {
-		return -3;
-	}
+ if (!existe(clave)) {
+ return -3;
+ }
 
-	if (!esta_bloqueada(clave)) {
-		log_warning(logger, "Abortando ESI %i.", id);
-		return -3;
-	}
+ if (!esta_bloqueada(clave)) {
+ log_warning(logger, "Abortando ESI %i.", id);
+ return -3;
+ }
 
-	while (puntero != NULL) {
+ while (puntero != NULL) {
 
-		if (strcmp(puntero->clave, clave) == 0) {
-			if (puntero->block_id != id) {
-				log_debug(logger, "%i %i", puntero->block_id, id);
+ if (strcmp(puntero->clave, clave) == 0) {
+ if (puntero->block_id != id) {
+ log_debug(logger, "%i %i", puntero->block_id, id);
 
-				log_warning(logger, "Abortando ESI %i.", id);
-				return -3;
-			}
+ log_warning(logger, "Abortando ESI %i.", id);
+ return -3;
+ }
 
-			operacion op = { .op_type = op_SET, .id = id };
-			strcpy(op.clave, clave);
-			strcpy(op.valor, valor);
+ operacion op = { .op_type = op_SET, .id = id };
+ strcpy(op.clave, clave);
+ strcpy(op.valor, valor);
 
-			log_op(op);
+ log_op(op);
 
-			log_info(logger, "SET %s %s", clave, valor);
-			int status = do_set(valor, clave);
+ log_info(logger, "SET %s %s", clave, valor);
+ int status = do_set(valor, clave);
 
-			if (status == -1) {
-				return -3;
-			}
+ if (status == -1) {
+ return -3;
+ }
 
-			return 20;
-		}
-		puntero = puntero->sgte;
-	}
+ return 20;
+ }
+ puntero = puntero->sgte;
+ }
 
-	return -3;
-}*/
+ return -3;
+ }*/
 
 void actualizarClave(char* clave, char* valor) {
 	t_clave_node* puntero = claves_bloqueadas.head;
@@ -882,61 +882,61 @@ void actualizarClave(char* clave, char* valor) {
 }
 
 /*
-int do_set(char* valor, char* clave) {
-	uint32_t valor_size = (uint32_t) strlen(valor);
-	uint32_t clave_size = (uint32_t) strlen(clave);
+ int do_set(char* valor, char* clave) {
+ uint32_t valor_size = (uint32_t) strlen(valor);
+ uint32_t clave_size = (uint32_t) strlen(clave);
 
-	valor_set.tamanio_clave = clave_size;
-	valor_set.tamanio_valor = valor_size;
-	valor_set.clave = clave;
-	valor_set.valor = valor;
+ valor_set.tamanio_clave = clave_size;
+ valor_set.tamanio_valor = valor_size;
+ valor_set.clave = clave;
+ valor_set.valor = valor;
 
-	Instancia instancia = getInstanciaSet(clave);
+ Instancia instancia = getInstanciaSet(clave);
 
-	if (mismoString(instancia.nombre, inst_error.nombre)) {
-		return -1;
-	}
+ if (mismoString(instancia.nombre, inst_error.nombre)) {
+ return -1;
+ }
 
-	actualizarInstancia(instancia, clave);
-	actualizarClave(clave, valor);
+ actualizarInstancia(instancia, clave);
+ actualizarClave(clave, valor);
 
-	int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
-			+ valor_set.tamanio_valor;
+ int tamanio_parametros_set = 2 * sizeof(uint32_t) + valor_set.tamanio_clave
+ + valor_set.tamanio_valor;
 
-	log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
-			valor_size, tamanio_parametros_set);
+ log_trace(logger, "CLAVE: %d VALOR: %d TAMANIO_PARAMETROS: %d", clave_size,
+ valor_size, tamanio_parametros_set);
 
-	pthread_mutex_lock(&sem_socket_operaciones_coordi);
+ pthread_mutex_lock(&sem_socket_operaciones_coordi);
 
-	enviar_orden_instancia(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd, 11);
+ enviar_orden_instancia(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd, 11);
 
-	enviar_valores_set(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd);
+ enviar_valores_set(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd);
 
-	log_debug(logger, "Esperando confirmacion...");
+ log_debug(logger, "Esperando confirmacion...");
 
-	esperar_confirmacion_de_exito((int) instancia.sockfd);
+ esperar_confirmacion_de_exito((int) instancia.sockfd);
 
-	package_int cantidad_entradas_ocupadas_instancia;
+ package_int cantidad_entradas_ocupadas_instancia;
 
-	cantidad_entradas_ocupadas_instancia = recibir_packed(instancia.sockfd);
+ cantidad_entradas_ocupadas_instancia = recibir_packed(instancia.sockfd);
 
-	log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i",
-			instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
+ log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i",
+ instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
 
-	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+ log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
 
-	actualizarEntradas(instancia, cantidad_entradas_ocupadas_instancia.packed);
+ actualizarEntradas(instancia, cantidad_entradas_ocupadas_instancia.packed);
 
-	enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 15);
+ enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 15);
 
-	log_debug(logger, "Esperando confirmacion...");
+ log_debug(logger, "Esperando confirmacion...");
 
-	esperar_confirmacion_de_exito((int) instancia.sockfd);
+ esperar_confirmacion_de_exito((int) instancia.sockfd);
 
-	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
+ pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
-	return 1;
-}*/
+ return 1;
+ }*/
 
 void actualizarInstancia(Instancia instancia, char* clave) {
 	t_instancia_node* puntero = instancias.head;
@@ -1298,6 +1298,7 @@ void getDeadlock(int sockfd) {
 	deadlockListDestroy(&firstIteration);
 	deadlockListDestroy(&secondIteration);
 	deadlockListDestroy(&finalIteration);
+	deadlockListDestroy(&deadlocked);
 }
 
 bool chequearNull(t_deadlock_list lista, int sockfd) {

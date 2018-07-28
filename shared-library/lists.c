@@ -508,11 +508,12 @@ void eliminar_deadlock(t_deadlock_list* lista, deadlock esi) {
 
 void deadlockListDestroy(t_deadlock_list* lista) {
 	t_deadlock_node* puntero;
+	t_clave_list claves;
 
 	while (lista->head != NULL) {
 		puntero = lista->head;
+		claves = puntero->esi.clavesTomadas;
 		lista->head = lista->head->sgte;
-		claveListDestroy(&(puntero->esi.clavesTomadas));
 		free(puntero);
 	}
 
