@@ -195,7 +195,7 @@ void desactualizar_entradas(uint32_t tamanio_valor, int posicion_entrada_clave);
 
 entradas_node * buscar_entrada_en_posicion(int posicion);
 int obtener_cantidad_de_entradas_ocupadas();
-void agregar_entrada(entrada una_entrada);
+void agregar_entrada(entrada una_entrada, t_entrada_list * lista_de_entradas);
 void actualizar_entradas_disponibles(int entradas_ocupadas);
 int posicion_de_entrada_con_clave(char * clave);
 void generar_entrada(parametros_set parametros);
@@ -222,9 +222,8 @@ int puedo_almacenar_si_compacto(int cantidad_entradas_solicitadas);
 void* dump();
 char * recibir_clave(int sockfd);
 char * leer_valor_de_archivo(FILE * archivo_a_leer);
-
-//Nodo para recorrer lista
-entradas_node * nodo_auxiliar = NULL;
+t_entrada_list obtener_entradas_atomicas();
+bool es_entrada_atomica(entrada una_entrada);
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_entrada_list entradas_asignadas;

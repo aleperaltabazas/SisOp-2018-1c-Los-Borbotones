@@ -74,8 +74,6 @@ int main(int argc, char** argv) {
 
 	//Deberia vaciar la lista...
 
-	destruir_nodo_entrada(nodo_auxiliar);
-
 	free(almacenamiento_de_valores);
 
 	free(entradas_disponibles);
@@ -501,7 +499,7 @@ int posicion_de_entrada_con_clave(char* clave) {
 		return -1;
 	}
 
-	nodo_auxiliar = entradas_asignadas.head;
+	entradas_node * nodo_auxiliar = entradas_asignadas.head;
 
 	while (nodo_auxiliar != NULL) {
 		entrada posible_entrada = nodo_auxiliar->una_entrada;
@@ -655,7 +653,10 @@ void eliminar_entrada_segun_algoritmo() {
 
 entrada obtener_entrada_segun_CIRC() {
 
-	entradas_node* puntero = entradas_asignadas.head;
+	//Obtener entradas atomicas y usar esa lista
+	t_entrada_list entradas_atomicas = obtener_entradas_atomicas();
+
+	entradas_node * puntero = entradas_atomicas.head;
 
 	while (puntero->una_entrada.pos_valor != puntero_entrada) {
 
@@ -663,16 +664,16 @@ entrada obtener_entrada_segun_CIRC() {
 
 		//Si no encontre ninguna entrada pruebo en el siguiente, porque a lo mejor justo no hay algun valor
 		//donde apunta el puntero.
-		if (puntero == NULL) {
 
+		if (puntero == NULL) {
 			//Termine la lista y no lo encontre, tengo que posicionarme al principio
-			puntero = entradas_asignadas.head;
+			puntero = entradas_atomicas.head;
 			avanzar_puntero_CIRC();
 		}
 
 	}
 
-	//Cualquiera de las dos formas seria valida creoooooo
+	//Cualquiera de las dos formas seria valida creeeeeo
 	puntero_entrada = puntero->una_entrada.pos_valor;
 	avanzar_puntero_CIRC();
 
@@ -710,19 +711,29 @@ void avanzar_puntero_CIRC() {
 	if (puntero_entrada >= cantidad_entradas) {
 		puntero_entrada = 0;
 	}
+
 }
 
 entrada obtener_entrada_segun_LRU() {
-	entradas_node* puntero = entradas_asignadas.head;
-	//entradas_node* puntero_auxiliar = malloc(sizeof(entradas_node));
-	entradas_node *puntero_auxiliar = entradas_asignadas.head;
+
+	//Obtener entradas atomicas y usar esa lista
+	t_entrada_list entradas_atomicas = obtener_entradas_atomicas();
+
+	entradas_node * puntero = entradas_atomicas.head;
+	entradas_node * puntero_auxiliar = entradas_atomicas.head;
+
+	//El primero de la lista de filtrados
+	int tiempo_del_elegido = puntero -> una_entrada.tiempo_sin_ser_referenciado;
+
 
 	while (puntero_auxiliar != NULL) {
 
+		int tiempo_entrada_a_comparar = puntero_auxiliar -> una_entrada.tiempo_sin_ser_referenciado;
+
 		//Busco el que tenga el mayor tiempo sin ser referenciado, o sea el que tenga el menor tiempo de ultimo acceso
-		if (puntero->una_entrada.tiempo_sin_ser_referenciado
-				> puntero_auxiliar->una_entrada.tiempo_sin_ser_referenciado) {
+		if (tiempo_del_elegido > tiempo_entrada_a_comparar) {
 			puntero = puntero_auxiliar;
+			tiempo_del_elegido = tiempo_entrada_a_comparar;
 		}
 
 		puntero_auxiliar = puntero_auxiliar->siguiente;
@@ -735,34 +746,60 @@ entrada obtener_entrada_segun_LRU() {
 	return puntero->una_entrada;
 }
 
+t_entrada_list obtener_entradas_atomicas(){
+
+	t_entrada_list entradas_atomicas;
+	entradas_atomicas.head = NULL;
+
+	entradas_node * puntero = entradas_asignadas.head;
+
+	while (puntero != NULL) {
+
+		entrada una_entrada = puntero -> una_entrada;
+
+		if (es_entrada_atomica(una_entrada)) {
+			agregar_entrada(una_entrada, &entradas_atomicas);
+		}
+
+		puntero = puntero -> siguiente;
+
+	}
+
+	return entradas_atomicas;
+}
+
+bool es_entrada_atomica(entrada una_entrada){
+
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(una_entrada.tamanio_valor);
+
+	return entradas_que_ocupa == 1;
+}
+
 entrada obtener_entrada_segun_BSU() {
-	entradas_node* puntero = entradas_asignadas.head;
-	entradas_node *puntero_auxiliar = entradas_asignadas.head->siguiente;
+	//Obtener entradas atomicas y usar esa lista
+	t_entrada_list entradas_atomicas = obtener_entradas_atomicas();
+
+	entradas_node * puntero = entradas_atomicas.head;
+	entradas_node * puntero_auxiliar = entradas_atomicas.head;
 
 	int tamanio_referencia = puntero->una_entrada.tamanio_valor;
 	int tamanio_a_comparar;
-	int entradas_que_ocupa_actual = obtener_entradas_que_ocupa(
-			tamanio_referencia);
-	int entradas_que_ocupa_nuevo;
 
 	while (puntero_auxiliar != NULL) {
 
 		tamanio_a_comparar = puntero_auxiliar->una_entrada.tamanio_valor;
-		entradas_que_ocupa_nuevo = obtener_entradas_que_ocupa(
-				tamanio_a_comparar);
 
 		//Si empatan tengo que ver segun CIRC
-		if (entradas_que_ocupa_nuevo == entradas_que_ocupa_actual) {
+		if (tamanio_referencia == tamanio_a_comparar) {
 			if (el_nuevo_supera_segun_CIRC(puntero, puntero_auxiliar)) {
 				puntero = puntero_auxiliar;
-				entradas_que_ocupa_actual = entradas_que_ocupa_nuevo;
 			}
 		}
 
-		//Si ocupa mas entradas lo selecciono de una
-		if (entradas_que_ocupa_nuevo > entradas_que_ocupa_actual) {
+		//Si ocupa mas espacio lo selecciono de una
+		if (tamanio_a_comparar > tamanio_referencia) {
 			puntero = puntero_auxiliar;
-			entradas_que_ocupa_actual = entradas_que_ocupa_nuevo;
+			tamanio_referencia = tamanio_a_comparar;
 
 		}
 
@@ -860,7 +897,7 @@ void crear_entrada(parametros_set parametros, int entrada_seleccionada) {
 
 	loggear("Entrada creada, agregando a la lista...");
 
-	agregar_entrada(nueva_entrada);
+	agregar_entrada(nueva_entrada, &entradas_asignadas);
 
 }
 
@@ -1011,18 +1048,7 @@ void compactacion() {
 
 entradas_node * buscar_entrada_en_posicion(int posicion) {
 
-	/*
-	 if(entradas_asignadas.head == NULL){
-	 //Si se verifico que esta nunca deberia entrar por aca
-	 entradas_node * entrada_error;
-	 entrada_error -> una_entrada.clave = "ERRORMSG";
-	 entrada_error -> una_entrada.pos_valor = -1;
-	 entrada_error -> una_entrada.tamanio_valor = -1;
-	 return entrada_error;
-	 }
-	 */
-
-	nodo_auxiliar = entradas_asignadas.head;
+	entradas_node * nodo_auxiliar = entradas_asignadas.head;
 
 	while (nodo_auxiliar != NULL) {
 
@@ -1076,16 +1102,16 @@ void actualizar_entradas_disponibles(int entradas_ocupadas) {
 	}
 }
 
-void agregar_entrada(entrada una_entrada) {
+void agregar_entrada(entrada una_entrada, t_entrada_list * lista_de_entradas) {
 	entradas_node* nodo = crear_nodo_entrada(una_entrada);
 
-	if (entradas_asignadas.head == NULL) {
-		entradas_asignadas.head = nodo;
+	if (lista_de_entradas->head == NULL) {
+		lista_de_entradas->head = nodo;
 	}
 
 	else {
 
-		entradas_node* puntero = entradas_asignadas.head;
+		entradas_node* puntero = lista_de_entradas->head;
 
 		while (puntero->siguiente != NULL) {
 
@@ -1197,7 +1223,7 @@ void leer_valores_almacenados() {
 
 	loggear("Se almacenaron los siguientes valores: ");
 
-	nodo_auxiliar = entradas_asignadas.head;
+	entradas_node * nodo_auxiliar = entradas_asignadas.head;
 
 	while (nodo_auxiliar != NULL) {
 
