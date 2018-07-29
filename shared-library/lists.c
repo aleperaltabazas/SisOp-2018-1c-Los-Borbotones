@@ -435,6 +435,44 @@ void eliminar_desbloqueado(t_desbloqueado_list* lista) {
 	}
 }
 
+void eliminarDesbloqueadoPorID(t_desbloqueado_list* lista, uint32_t id) {
+	if (lista->head != NULL) {
+		uint32_t head = headDesbloqueado(*lista);
+		if (id == head) {
+			t_desbloqueado_node* eliminado = lista->head;
+			lista->head = lista->head->sgte;
+			destruir_nodo_desbloqueado(eliminado);
+		} else {
+			t_desbloqueado_node* puntero = lista->head;
+
+			while (puntero->sgte->id != id) {
+				puntero = puntero->sgte;
+			}
+
+			t_desbloqueado_node* eliminado = puntero->sgte;
+			puntero->sgte = eliminado->sgte;
+			destruir_nodo_desbloqueado(eliminado);
+		}
+	}
+}
+
+bool contieneDesbloqueado(t_desbloqueado_list lista, uint32_t id) {
+	t_desbloqueado_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		log_error(logger, "ID: %i", id);
+		log_error(logger, "Puntero: %i", puntero->id);
+
+		if (puntero->id == id) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
+}
+
 bool emptyDesbloqueado(t_desbloqueado_list* lista) {
 	return lista->head == NULL;
 }
@@ -443,6 +481,19 @@ uint32_t headDesbloqueado(t_desbloqueado_list lista) {
 	t_desbloqueado_node* head = lista.head;
 
 	return head->id;
+}
+
+void show_desbloqueados(t_desbloqueado_list lista) {
+	t_desbloqueado_node* puntero = lista.head;
+
+	if (lista.head == NULL) {
+		log_error(logger, "NO HAY DESBLOQUEADOS");
+	}
+
+	while (puntero != NULL) {
+		log_debug(logger, "ID: %i", puntero->id);
+		puntero = puntero->sgte;
+	}
 }
 
 /*
@@ -512,7 +563,6 @@ void deadlockListDestroy(t_deadlock_list* lista) {
 	while (lista->head != NULL) {
 		puntero = lista->head;
 		lista->head = lista->head->sgte;
-		claveListDestroy(&(puntero->esi.clavesTomadas));
 		free(puntero);
 	}
 
@@ -524,6 +574,20 @@ deadlock headDeadlock(t_deadlock_list lista) {
 	deadlock esi = lista.head->esi;
 
 	return esi;
+}
+
+bool deadlockListContains(t_deadlock_list lista, uint32_t id) {
+	t_deadlock_node* puntero = lista.head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == id) {
+			return true;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return false;
 }
 
 bool isEmptyDeadlock(t_deadlock_list lista) {

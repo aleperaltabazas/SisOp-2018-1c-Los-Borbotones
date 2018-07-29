@@ -296,6 +296,22 @@ void eliminar_desbloqueado(t_desbloqueado_list* lista);
 	 * 		t_desbloqueado_list* lista
 	 */
 
+void eliminarDesbloqueadoPorID(t_desbloqueado_list* lista, uint32_t id);
+	/*
+	 * Descripción: elimina el elemento cuyo ID coincide con el de la firma.
+	 * Argumentos:
+	 * 		t_desbloqueado_list* lista
+	 * 		uint32_t id
+	 */
+
+bool contieneDesbloqueado(t_desbloqueado_list lista, uint32_t id);
+	/*
+	 * Descripción: devuelve si algún elemento de la lista tiene el mismo ID.
+	 * Argumentos:
+	 * 		t_desbloqueado_list lista
+	 * 		uint32_t id
+	 */
+
 bool emptyDesbloqueado(t_desbloqueado_list* lista);
 	/*
 	 * Descripción: devuelve si la cabeza de la lista es NULL.
@@ -306,6 +322,13 @@ bool emptyDesbloqueado(t_desbloqueado_list* lista);
 uint32_t headDesbloqueado(t_desbloqueado_list lista);
 	/*
 	 * Descripción: devuelve el ID del primer elemento de la lista.
+	 * Argumentos:
+	 * 		t_desbloqueado_list lista
+	 */
+
+void show_desbloqueados(t_desbloqueado_list lista);
+	/*
+	 * Descripción: muestra el ID de los elementos de la lista. Si la lista está vacía, avisa.
 	 * Argumentos:
 	 * 		t_desbloqueado_list lista
 	 */
@@ -372,6 +395,14 @@ int deadlockLength(t_deadlock_list lista);
 	 * Descripción: devuelve la longitud de una lista de deadlock.
 	 * Argumentos:
 	 * 		t_deadlock_list lista
+	 */
+
+bool deadlockListContains(t_deadlock_list lista, uint32_t id);
+	/*
+	 * Descripción: devuelve si un elemento se encuentra en la lista.
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 * 		uint32_t id
 	 */
 
 /*
