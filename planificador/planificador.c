@@ -146,7 +146,7 @@ algoritmo_planificacion dame_algoritmo(char* algoritmo_src) {
 	}
 
 	else if (strcmp(algoritmo_src, "SJF-CD") == 0) {
-		algoritmo_ret.tipo = SJF;
+		algoritmo_ret.tipo = SRT;
 		algoritmo_ret.desalojo = true;
 	}
 
@@ -297,6 +297,7 @@ void newESI(ESI esi) {
 
 	esi.rafaga_real = 0;
 	esi.rafaga_estimada = ESTIMACION_INICIAL;
+	esi.rafaga_remanente = ESTIMACION_INICIAL;
 
 	pthread_mutex_lock(&sem_ready_ESIs);
 	pthread_mutex_lock(&sem_ESIs_size);
@@ -410,7 +411,8 @@ void finishESI(ESI esi) {
 
 void executeESI(ESI esi) {
 	pthread_mutex_lock(&sem_ready_ESIs);
-	aumentarRafaga(esi);
+	aumentarRafaga(esi, &ready_ESIs);
+	decrementarRemanente(esi, &ready_ESIs);
 	pthread_mutex_unlock(&sem_ready_ESIs);
 
 	pthread_mutex_lock(&sem_clock);
@@ -481,22 +483,34 @@ void desalojar(void) {
 
 		pthread_mutex_lock(&sem_ready_ESIs);
 		ESI esi = findByIDIn(executing_ESI.id, ready_ESIs);
+		log_debug(logger, "ESI: %i", esi.id);
+
 		if (esi.id == ESI_error.id) {
 			salir_con_error("El executing_ESI no se enconraba en la lista",
 					socket_coordinador);
 		}
 
-		actualizarTiempoArribo(esi);
-		actualizarEstimacion(esi);
+		actualizarTiempoArribo(esi, &ready_ESIs);
+		actualizarEstimacion(esi, &ready_ESIs);
 
-		eliminar_ESI(&ready_ESIs, esi);
-		agregar_ESI(&ready_ESIs, esi);
+		ESI aux = findByIDIn(esi.id, ready_ESIs);
+
+		log_debug(logger, "Nuevo tiempo de arribo: %i", aux.tiempo_arribo);
+		log_debug(logger, "Nueva estimación: %f", aux.rafaga_estimada);
+
+		reencolar(esi);
 		pthread_mutex_unlock(&sem_ready_ESIs);
 
 		vaciar_ESI();
 
 		log_info(logger, "ESI desalojado.");
 	}
+}
+
+void reencolar(ESI esi) {
+	ESI aux = findByIDIn(esi.id, ready_ESIs);
+	eliminar_ESI(&ready_ESIs, esi);
+	agregar_ESI(&ready_ESIs, aux);
 }
 
 void vaciar_ESI(void) {
@@ -587,7 +601,10 @@ ESI dame_proximo_ESI() {
 		next_esi = headESIs(ready_ESIs);
 		break;
 	case SJF:
-		next_esi = shortest(ready_ESIs);
+		next_esi = shortest_job(ready_ESIs);
+		break;
+	case SRT:
+		next_esi = shortest_remaining(ready_ESIs);
 		break;
 	case HRRN:
 		next_esi = highest_RR(ready_ESIs);
@@ -602,13 +619,29 @@ ESI dame_proximo_ESI() {
 	return next_esi;
 }
 
-ESI shortest(t_esi_list lista) {
+ESI shortest_job(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
 
 	ESI esi = headESIs(lista);
 
 	while (puntero != NULL) {
-		if (es_mas_corto(esi, puntero->esi)) {
+		if (esMasCorto(esi, puntero->esi)) {
+			esi = puntero->esi;
+		}
+
+		puntero = puntero->sgte;
+	}
+
+	return esi;
+}
+
+ESI shortest_remaining(t_esi_list lista) {
+	t_esi_node* puntero = lista.head;
+
+	ESI esi = headESIs(lista);
+
+	while (puntero != NULL) {
+		if (leQuedaMenosTiempo(esi, puntero->esi)) {
 			esi = puntero->esi;
 		}
 
@@ -624,22 +657,7 @@ ESI highest_RR(t_esi_list lista) {
 	ESI esi = headESIs(lista);
 
 	while (puntero != NULL) {
-		log_debug(logger, "ESI actual: %i", esi.id);
-		log_debug(logger, "Puntero: %i", puntero->esi.id);
-
-		log_debug(logger, "Estimada anterior del actual: %f",
-				esi.rafaga_estimada);
-		log_debug(logger, "Estimada anterior del puntero: %f",
-				puntero->esi.rafaga_estimada);
-
-		log_debug(logger, "Tiempo de espera del actual: %i", wait_time(esi));
-		log_debug(logger, "Tiempo de espera del puntero: %i",
-				wait_time(puntero->esi));
-
-		log_debug(logger, "RR del actual: %f", response_ratio(esi));
-		log_debug(logger, "RR del puntero: %f", response_ratio(puntero->esi));
-
-		if (tiene_mas_RR(esi, puntero->esi)) {
+		if (tieneMasRR(esi, puntero->esi)) {
 			esi = puntero->esi;
 		}
 
@@ -649,11 +667,15 @@ ESI highest_RR(t_esi_list lista) {
 	return esi;
 }
 
-bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI) {
+bool esMasCorto(ESI primer_ESI, ESI segundo_ESI) {
 	return estimated_time(segundo_ESI) < estimated_time(primer_ESI);
 }
 
-bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI) {
+bool leQuedaMenosTiempo(ESI primer_ESI, ESI segundo_ESI) {
+	return primer_ESI.rafaga_remanente > segundo_ESI.rafaga_remanente;
+}
+
+bool tieneMasRR(ESI primer_ESI, ESI segundo_ESI) {
 	return response_ratio(primer_ESI) < response_ratio(segundo_ESI);
 }
 
@@ -747,39 +769,53 @@ void cerrar_ESIs() {
 
 }
 
-void aumentarRafaga(ESI esi) {
-	t_esi_node* puntero = ready_ESIs.head;
+void aumentarRafaga(ESI esi, t_esi_list* lista) {
+	t_esi_node* puntero = lista->head;
 
 	while (puntero != NULL) {
 		if (puntero->esi.id == esi.id) {
-			puntero->esi.rafaga_real++;
+			(puntero->esi.rafaga_real)++;
 		}
 
 		puntero = puntero->sgte;
 	}
 }
 
-void actualizarEstimacion(ESI esi) {
-	t_esi_node* puntero = ready_ESIs.head;
+void actualizarEstimacion(ESI esi, t_esi_list* lista) {
+	t_esi_node* puntero = lista->head;
 
 	while (puntero != NULL) {
 		if (puntero->esi.id == esi.id) {
 			float estimated_aux = estimated_time(puntero->esi);
 			puntero->esi.rafaga_estimada = estimated_aux;
+			puntero->esi.rafaga_remanente = estimated_aux;
 		}
 
 		puntero = puntero->sgte;
 	}
+
 }
 
-void actualizarTiempoArribo(ESI esi) {
-	t_esi_node* puntero = ready_ESIs.head;
+void actualizarTiempoArribo(ESI esi, t_esi_list* lista) {
+	t_esi_node* puntero = lista->head;
 
 	while (puntero != NULL) {
 		if (puntero->esi.id == esi.id) {
 			pthread_mutex_lock(&sem_clock);
 			puntero->esi.tiempo_arribo = tiempo;
 			pthread_mutex_unlock(&sem_clock);
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+void decrementarRemanente(ESI esi, t_esi_list* lista) {
+	t_esi_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			puntero->esi.rafaga_remanente--;
 		}
 
 		puntero = puntero->sgte;
@@ -930,6 +966,8 @@ void datos_ESI(void) {
 		printf("Su última ráfaga real es de %i \n", esi.rafaga_real);
 		printf("La estimación de su próxima ráfaga es de %f \n",
 				estimated_time(esi));
+		printf("La ráfaga remanente dedl ESI es de %f \n",
+				esi.rafaga_remanente);
 		printf("Su último tiempo de arribo fue en t = %i \n",
 				esi.tiempo_arribo);
 		printf("Su tiempo de espera es de %i \n", wait_time(esi));

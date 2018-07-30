@@ -112,7 +112,7 @@ typedef package_int op_response;
 
 typedef struct algoritmo_planificacion {
 	enum {
-		FIFO, SJF, HRRN,
+		FIFO, SJF, SRT, HRRN,
 	} tipo;
 	bool desalojo;
 } algoritmo_planificacion;

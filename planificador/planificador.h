@@ -227,7 +227,7 @@ void kill_ESI(ESI esi);
 	 * 		ESI esi: esi a terminar.
 	 */
 
-bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);
+bool tieneMasRR(ESI primer_ESI, ESI segundo_ESI);
 	/*
 	 * Descripción: devuelve si el segundo ESI tiene mayor RR que el primero.
 	 * Argumentos:
@@ -235,13 +235,21 @@ bool tiene_mas_RR(ESI primer_ESI, ESI segundo_ESI);
 	 * 		ESI segundo_ESI: ESI a comparar.
 	 */
 
-bool es_mas_corto(ESI primer_ESI, ESI segundo_ESI);
+bool esMasCorto(ESI primer_ESI, ESI segundo_ESI);
 	/*
 	 * Descripción: devuelve si el segundo ESI tiene una duración de ráfaga estimada
 	 * 		menor al primero.
 	 * Argumentos:
 	 * 		ESI primer_ESI: ESI a comparar.
 	 * 		ESI segundo_ESI: ESI a comparar.
+	 */
+
+bool leQuedaMenosTiempo(ESI primer_ESI, ESI segundo_ESI);
+	/*
+	 * Descripción: devuelve si la ráfaga remanente de segundo_ESI es menor a la de primer_ESI.
+	 * Argumentos:
+	 * 		ESI primer_ESI
+	 * 		ESI segundo_ESI
 	 */
 
 int wait_time(ESI esi);
@@ -307,9 +315,16 @@ void iniciar_hilos(void);
 	 * 		void
 	 */
 
-ESI shortest(t_esi_list lista);
+ESI shortest_job(t_esi_list lista);
 	/*
-	 * Descripción: devuelve el elemento cuyo tiempo de ejecución es menor.
+	 * Descripción: devuelve el elemento cuyo tiempo de ejecución estimado es menor.
+	 * Argumentos:
+	 * 		t_esi_list* lista: lista a obtener el elemento.
+	 */
+
+ESI shortest_remaining(t_esi_list lista);
+	/*
+	 * Descripción: devuelve el elemento cuya ráfaga remanente es menor.
 	 * Argumentos:
 	 * 		t_esi_list* lista: lista a obtener el elemento.
 	 */
@@ -457,28 +472,37 @@ void conseguir_desbloqueados(void);
 	 * 		void
 	 */
 
-void aumentarRafaga(ESI esi);
+void aumentarRafaga(ESI esi, t_esi_list* lista);
 	/*
-	 * Descripción: aumenta la ráfaga real del ESI en la lista ready_ESIs. Si no se encuentra en la lista,
+	 * Descripción: aumenta la ráfaga real del ESI en la lista. Si no se encuentra en la lista,
 	 * 		no hace nada.
 	 * Argumentos:
 	 * 		ESI esi
 	 */
 
-void actualizarEstimacion(ESI esi);
+void actualizarEstimacion(ESI esi, t_esi_list* lista);
 	/*
-	 * Descripción: pone en el atributo de rafaga_estimada del ESI la estimación producida por estimated(ESI),
-	 * 		en el ESI en la lista ready_ESIs. Si no se encuentra, no hace nada.
+	 * Descripción: pone en el atributo de rafaga_estimada del ESI la estimación producida por estimated(ESI) en la lista.
+	 * 		 Si no se encuentra, no hace nada.
 	 * Argumentos:
 	 * 		ESI esi
 	 */
 
-void actualizarTiempoArribo(ESI esi);
+void actualizarTiempoArribo(ESI esi, t_esi_list* lista);
 	/*
 	 * Descripción: actualiza el atributo tiempo_arribo del ESI en la lista en base a la variable global tiempo.
 	 * 		Si no se encuentra en la lista, no hace nada.
 	 * Argumentos:
 	 * 		ESI esi
+	 */
+
+void decrementarRemanente(ESI esi, t_esi_list* lista);
+	/*
+	 * Descripción: decrementa el atributo rafaga_estimada en 1 del esi en la lista. Si no se encuentra, no
+	 * 		hace nada.
+	 * Argumentos:
+	 * 		ESI esi
+	 * 		t_esi_list* lista
 	 */
 
 void newESI(ESI esi);
@@ -513,6 +537,13 @@ void finishESI(ESI esi);
 void executeESI(ESI esi);
 	/*
 	 * Descripción: libera los semáforos correspondientes y aumenta la ráfaga del executing_ESI.
+	 * Argumentos:
+	 * 		ESI esi
+	 */
+
+void reencolar(ESI esi);
+	/*
+	 * Descripción: agrega el esi al final de la lista de ready_ESIs.
 	 * Argumentos:
 	 * 		ESI esi
 	 */
