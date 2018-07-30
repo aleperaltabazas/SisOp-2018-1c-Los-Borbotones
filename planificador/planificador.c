@@ -318,6 +318,10 @@ void newESI(ESI esi) {
 void blockESI(ESI esi) {
 	pthread_mutex_lock(&sem_ready_ESIs);
 	pthread_mutex_lock(&sem_ESIs_size);
+
+	aumentarRafaga(esi, &ready_ESIs);
+	actualizarEstimacion(esi, &ready_ESIs);
+	ESI aux = findByIDIn(esi.id, ready_ESIs);
 	eliminar_ESI(&ready_ESIs, esi);
 
 	ESIs_size--;
@@ -330,7 +334,7 @@ void blockESI(ESI esi) {
 
 	pthread_mutex_unlock(&sem_ejecucion);
 
-	agregar_ESI(&blocked_ESIs, esi);
+	agregar_ESI(&blocked_ESIs, aux);
 
 	log_info(logger, "ESI número %i fue bloqueado.", esi.id);
 
@@ -966,8 +970,7 @@ void datos_ESI(void) {
 		printf("Su última ráfaga real es de %i \n", esi.rafaga_real);
 		printf("La estimación de su próxima ráfaga es de %f \n",
 				estimated_time(esi));
-		printf("La ráfaga remanente dedl ESI es de %f \n",
-				esi.rafaga_remanente);
+		printf("Su ráfaga remanente es de %f \n", esi.rafaga_remanente);
 		printf("Su último tiempo de arribo fue en t = %i \n",
 				esi.tiempo_arribo);
 		printf("Su tiempo de espera es de %i \n", wait_time(esi));
@@ -988,6 +991,7 @@ void datos_ESI(void) {
 		printf("Su última ráfaga real fue de %i \n", esi.rafaga_real);
 		printf("La estimación de su próxima ráfaga sería de %f \n",
 				estimated_time(esi));
+		printf("Su ráfaga remanente es de %f \n", esi.rafaga_remanente);
 		printf("Su último tiempo de arribo fue en t = %i \n",
 				esi.tiempo_arribo);
 		printf("Su response ratio sería de %f \n", response_ratio(esi));
@@ -1191,6 +1195,7 @@ void desbloquear_ESI(uint32_t id) {
 
 	eliminar_ESI(&blocked_ESIs, esi);
 	agregar_ESI(&ready_ESIs, esi);
+	actualizarTiempoArribo(esi, &ready_ESIs);
 
 	ESIs_size++;
 
