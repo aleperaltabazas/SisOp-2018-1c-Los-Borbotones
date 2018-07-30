@@ -228,8 +228,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -677,7 +677,11 @@ entrada obtener_entrada_segun_CIRC() {
 	puntero_entrada = puntero->una_entrada.pos_valor;
 	avanzar_puntero_CIRC();
 
-	return puntero->una_entrada;
+	entrada entrada_a_eliminar = asignar_entrada(puntero);
+
+	liberar_entradas_atomicas(entradas_atomicas);
+
+	return entrada_a_eliminar;
 }
 
 int el_nuevo_supera_segun_CIRC(entradas_node * puntero_actual,
@@ -743,7 +747,38 @@ entrada obtener_entrada_segun_LRU() {
 	log_trace(logger, "TIEMPO DE LA ENTRADA SELECCIONADA: %i",
 			puntero->una_entrada.tiempo_sin_ser_referenciado);
 
-	return puntero->una_entrada;
+	entrada entrada_a_eliminar = asignar_entrada(puntero);
+
+	liberar_entradas_atomicas(entradas_atomicas);
+
+	return entrada_a_eliminar;
+}
+
+entrada asignar_entrada(entradas_node * puntero){
+
+	entrada entrada_a_eliminar;
+
+	entrada_a_eliminar.clave = puntero->una_entrada.clave;
+	entrada_a_eliminar.pos_valor = puntero->una_entrada.pos_valor;
+	entrada_a_eliminar.tamanio_valor = puntero->una_entrada.tamanio_valor;
+	entrada_a_eliminar.tiempo_sin_ser_referenciado = puntero->una_entrada.tiempo_sin_ser_referenciado;
+
+	return entrada_a_eliminar;
+
+}
+
+void liberar_entradas_atomicas(t_entrada_list entradas_atomicas){
+	entradas_node * puntero = entradas_atomicas.head;
+	entradas_node * aux = puntero->siguiente;
+
+	while(puntero != NULL){
+		free(puntero);
+		puntero = aux;
+		if(aux != NULL){
+			aux = puntero -> siguiente;
+		}
+	}
+
 }
 
 t_entrada_list obtener_entradas_atomicas(){
@@ -810,7 +845,11 @@ entrada obtener_entrada_segun_BSU() {
 	puntero_entrada = puntero->una_entrada.pos_valor;
 	avanzar_puntero_CIRC();
 
-	return puntero->una_entrada;
+	entrada entrada_a_eliminar = asignar_entrada(puntero);
+
+	liberar_entradas_atomicas(entradas_atomicas);
+
+	return entrada_a_eliminar;
 }
 
 void borrar_entrada(entrada entrada_a_eliminar) {

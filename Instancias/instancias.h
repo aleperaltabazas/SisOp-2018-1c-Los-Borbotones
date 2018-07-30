@@ -224,6 +224,8 @@ char * recibir_clave(int sockfd);
 char * leer_valor_de_archivo(FILE * archivo_a_leer);
 t_entrada_list obtener_entradas_atomicas();
 bool es_entrada_atomica(entrada una_entrada);
+void liberar_entradas_atomicas(t_entrada_list entradas_atomicas);
+entrada asignar_entrada(entradas_node * puntero);
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_entrada_list entradas_asignadas;
