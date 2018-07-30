@@ -480,6 +480,14 @@ void aumentarRafaga(ESI esi, t_esi_list* lista);
 	 * 		ESI esi
 	 */
 
+void reiniciarRafagaReal(ESI esi, t_esi_list* lista);
+	/*
+	 * Descripción: reinicia la ráfaga real del ESI en la lista, poniendo 0.
+	 * Argumentos:
+	 * 		ESI esi
+	 * 		t_esi_list* lista
+	 */
+
 void actualizarEstimacion(ESI esi, t_esi_list* lista);
 	/*
 	 * Descripción: pone en el atributo de rafaga_estimada del ESI la estimación producida por estimated(ESI) en la lista.

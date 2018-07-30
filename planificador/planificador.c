@@ -619,6 +619,8 @@ ESI dame_proximo_ESI() {
 
 	}
 
+	reiniciarRafagaReal(next_esi, &ready_ESIs);
+
 	next_esi.rafaga_real = 0;
 	return next_esi;
 }
@@ -779,6 +781,18 @@ void aumentarRafaga(ESI esi, t_esi_list* lista) {
 	while (puntero != NULL) {
 		if (puntero->esi.id == esi.id) {
 			(puntero->esi.rafaga_real)++;
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+void reiniciarRafagaReal(ESI esi, t_esi_list* lista) {
+	t_esi_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (puntero->esi.id == esi.id) {
+			puntero->esi.rafaga_real = 0;
 		}
 
 		puntero = puntero->sgte;
