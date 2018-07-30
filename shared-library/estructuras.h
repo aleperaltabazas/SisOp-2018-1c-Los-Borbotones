@@ -38,6 +38,7 @@ typedef struct ESI {
 	int socket;
 	float rafaga_estimada;
 	int rafaga_real;
+	float rafaga_remanente;
 	int tiempo_arribo;
 	bool ejecutando;
 } ESI;

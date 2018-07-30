@@ -409,6 +409,10 @@ void finishESI(ESI esi) {
 }
 
 void executeESI(ESI esi) {
+	pthread_mutex_lock(&sem_ready_ESIs);
+	aumentarRafaga(esi);
+	pthread_mutex_unlock(&sem_ready_ESIs);
+
 	pthread_mutex_lock(&sem_clock);
 	tiempo++;
 	pthread_mutex_unlock(&sem_clock);
@@ -476,27 +480,17 @@ void desalojar(void) {
 	if (executing_ESI.id != esi_vacio.id) {
 
 		pthread_mutex_lock(&sem_ready_ESIs);
-		eliminar_ESI(&ready_ESIs, executing_ESI);
+		ESI esi = findByIDIn(executing_ESI.id, ready_ESIs);
+		if (esi.id == ESI_error.id) {
+			salir_con_error("El executing_ESI no se enconraba en la lista",
+					socket_coordinador);
+		}
 
-		ESI new_ESI = executing_ESI;
+		actualizarTiempoArribo(esi);
+		actualizarEstimacion(esi);
 
-		log_debug(logger, "Rafaga real: %i", new_ESI.rafaga_real);
-		log_debug(logger, "Rafaga estimada anterior: %f",
-				new_ESI.rafaga_estimada);
-		log_debug(logger, "Estimación de la próxima ráfaga: %f",
-				estimated_time(new_ESI));
-
-		new_ESI.rafaga_estimada = estimated_time(new_ESI);
-
-		pthread_mutex_lock(&sem_clock);
-		new_ESI.tiempo_arribo = tiempo;
-		pthread_mutex_unlock(&sem_clock);
-
-		log_debug(logger, "Nuevo tiempo de arribo: %i", new_ESI.tiempo_arribo);
-		log_debug(logger, "RR: %f", response_ratio(new_ESI));
-
-		agregar_ESI(&ready_ESIs, new_ESI);
-
+		eliminar_ESI(&ready_ESIs, esi);
+		agregar_ESI(&ready_ESIs, esi);
 		pthread_mutex_unlock(&sem_ready_ESIs);
 
 		vaciar_ESI();

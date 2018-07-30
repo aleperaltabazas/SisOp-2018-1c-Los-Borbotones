@@ -24,7 +24,9 @@ algoritmo_planificacion ALGORITMO_PLANIFICACION;
 ESI esi_vacio = {
 		.id = 0,
 		.socket = 0,
-		.rafaga_real = 0
+		.rafaga_real = 0,
+		.rafaga_estimada = 0,
+		.rafaga_remanente = 0
 };
 
 uint32_t ESI_id;
