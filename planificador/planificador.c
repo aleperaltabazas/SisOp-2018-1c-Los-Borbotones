@@ -408,10 +408,6 @@ void finishESI(ESI esi) {
 
 	loggear("Agregado correctamente a la cola de terminados.");
 
-	pthread_mutex_lock(&sem_clock);
-	tiempo++;
-	pthread_mutex_unlock(&sem_clock);
-
 }
 
 void executeESI(ESI esi) {
@@ -419,10 +415,6 @@ void executeESI(ESI esi) {
 	aumentarRafaga(esi, &ready_ESIs);
 	decrementarRemanente(esi, &ready_ESIs);
 	pthread_mutex_unlock(&sem_ready_ESIs);
-
-	pthread_mutex_lock(&sem_clock);
-	tiempo++;
-	pthread_mutex_unlock(&sem_clock);
 
 	pthread_mutex_lock(&sem_ejecutando);
 	ejecutando = false;
@@ -494,14 +486,6 @@ void desalojar(void) {
 			salir_con_error("El executing_ESI no se enconraba en la lista",
 					socket_coordinador);
 		}
-
-		actualizarTiempoArribo(esi, &ready_ESIs);
-		actualizarEstimacion(esi, &ready_ESIs);
-
-		ESI aux = findByIDIn(esi.id, ready_ESIs);
-
-		log_debug(logger, "Nuevo tiempo de arribo: %i", aux.tiempo_arribo);
-		log_debug(logger, "Nueva estimación: %f", aux.rafaga_estimada);
 
 		reencolar(esi);
 		pthread_mutex_unlock(&sem_ready_ESIs);
@@ -587,6 +571,10 @@ void ejecutar(ESI esi_a_ejecutar) {
 
 	send_aviso_no_exit(orden_ejecucion, socket_ESI);
 
+	pthread_mutex_lock(&sem_clock);
+	tiempo++;
+	pthread_mutex_unlock(&sem_clock);
+
 }
 
 ESI dame_proximo_ESI() {
@@ -609,8 +597,6 @@ ESI dame_proximo_ESI() {
 		break;
 
 	}
-
-	reiniciarRafagaReal(next_esi, &ready_ESIs);
 
 	next_esi.rafaga_real = 0;
 	return next_esi;
@@ -751,19 +737,6 @@ void mostrar(t_esi_node* puntero) {
 	}
 
 	printf("\n");
-}
-
-void cerrar_ESIs() {
-	t_esi_node* puntero = ready_ESIs.head;
-
-	while (puntero != NULL) {
-		kill_ESI(puntero->esi);
-
-		sleep(1);
-
-		puntero = puntero->sgte;
-	}
-
 }
 
 void aumentarRafaga(ESI esi, t_esi_list* lista) {
@@ -1201,6 +1174,7 @@ void desbloquear_ESI(uint32_t id) {
 	eliminar_ESI(&blocked_ESIs, esi);
 	agregar_ESI(&ready_ESIs, esi);
 	actualizarTiempoArribo(esi, &ready_ESIs);
+	reiniciarRafagaReal(esi, &ready_ESIs);
 
 	ESIs_size++;
 
