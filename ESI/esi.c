@@ -163,6 +163,9 @@ void ejecutar(int socket_coordinador, int socket_planificador) {
 
 	if (res == -1) {
 		log_error(logger, "ABORT");
+
+		enviar_aviso(socket_coordinador, aviso_abort);
+		enviar_aviso(socket_planificador, aviso_abort);
 		exit_gracefully(5);
 	}
 

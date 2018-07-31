@@ -349,14 +349,14 @@ void abortESI(ESI esi) {
 
 		pthread_mutex_lock(&sem_ready_ESIs);
 		pthread_mutex_lock(&sem_ESIs_size);
-		if (!esta(ready_ESIs, esi)) {
-			agregar_ESI(&ready_ESIs, esi);
-			ESIs_size++;
+		if (esta(ready_ESIs, esi)) {
+			eliminar_ESI(&ready_ESIs, esi);
+			ESIs_size--;
 		}
 
-		eliminar_ESI(&ready_ESIs, esi);
-
-		ESIs_size--;
+		if (esta(blocked_ESIs, esi)) {
+			eliminar_ESI(&blocked_ESIs, esi);
+		}
 		pthread_mutex_unlock(&sem_ESIs_size);
 		pthread_mutex_unlock(&sem_ready_ESIs);
 
@@ -396,6 +396,14 @@ void finishESI(ESI esi) {
 
 	if (executing_ESI.id == esi.id) {
 		vaciar_ESI();
+
+		pthread_mutex_lock(&sem_ejecutando);
+		ejecutando = false;
+		pthread_mutex_unlock(&sem_ejecutando);
+
+		conseguir_desbloqueados();
+		pthread_mutex_unlock(&sem_ejecucion);
+
 	}
 
 	loggear("Agregado correctamente a la cola de terminados.");
@@ -403,13 +411,6 @@ void finishESI(ESI esi) {
 	pthread_mutex_lock(&sem_clock);
 	tiempo++;
 	pthread_mutex_unlock(&sem_clock);
-
-	pthread_mutex_lock(&sem_ejecutando);
-	ejecutando = false;
-	pthread_mutex_unlock(&sem_ejecutando);
-
-	conseguir_desbloqueados();
-	pthread_mutex_unlock(&sem_ejecucion);
 
 }
 

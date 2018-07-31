@@ -212,6 +212,7 @@ void* atender_ESI(void* un_socket) {
 
 	log_trace(logger, "Hilo de ESI número %i terminado", id);
 
+	close(socket_cliente);
 	return NULL;
 }
 
@@ -270,7 +271,6 @@ void finishESI(uint32_t id) {
 	pthread_mutex_lock(&sem_desbloqueados);
 
 	if (contieneDesbloqueado(cola_desbloqueados, id)) {
-		log_error(logger, "El desbloqueado está en la lista.");
 		eliminarDesbloqueadoPorID(&cola_desbloqueados, id);
 	}
 	pthread_mutex_unlock(&sem_desbloqueados);

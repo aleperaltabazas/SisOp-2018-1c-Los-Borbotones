@@ -26,6 +26,10 @@ t_parsed_list parsed_ops;
 
 t_list* lineas_parseadas;
 
+aviso_con_ID aviso_abort = {
+		.aviso = -10
+};
+
 aviso_con_ID aviso_fin = {
 		.aviso = 0
 };
