@@ -528,21 +528,11 @@ bool no_hay_ESI() {
 void kill_ESI(ESI esi) {
 	int socket_ESI = esi.socket;
 
-	aviso_con_ID aviso = { .aviso = -1, .id = esi.id };
-
-	int packageSize = sizeof(aviso_con_ID);
-	char* package = malloc(packageSize);
-
-	serializar_aviso(aviso, &package);
-
-	int envio = send(socket_ESI, package, packageSize, 0);
-
-	if (envio < 0) {
-		loggear("Falló la terminación. Intentando de vuelta.");
-		kill_ESI(esi);
-	}
+	aviso_con_ID aborto = { .aviso = -1, .id = esi.id };
+	enviar_aviso(socket_ESI, aborto);
 
 	log_info(logger, "ESI número %i has fainted!", esi.id);
+
 }
 
 int asignar_ID(ESI esi) {
@@ -1322,6 +1312,7 @@ void kill_esi(int id) {
 
 	if (asesina3.id != ESI_error.id) {
 		kill_ESI(asesina3);
+		eliminar_ESI(&blocked_ESIs, asesina3);
 		printf("ESI %i abortado. \n", id);
 		return;
 	}
@@ -1329,7 +1320,6 @@ void kill_esi(int id) {
 	asesina3 = findByIDIn(id_as_uint, finished_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
-		;
 		printf("El ESI %i ya terminó, así que no pudo ser abortado. \n", id);
 		return;
 	}
