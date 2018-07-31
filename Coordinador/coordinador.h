@@ -859,6 +859,27 @@ t_deadlock_list getEsperaCircular(t_deadlock_list lista);
  * 		t_deadlock_list lista
  */
 
+void filterRetenientes(t_deadlock_list* lista);
+/*
+ * Descripción: filtra los elementos que no retengan ninguna clave de la lista.
+ * Argumentos:
+ * 		t_deadlock_list* lista
+ */
+
+void filterEsperando(t_deadlock_list* lista);
+/*
+ * Descripción: filtra los elementos que no estén esperando ninguna clave de la lista.
+ * Argumentos:
+ * 		t_deadlock_list* lista
+ */
+
+void filterEsperaCircular(t_deadlock_list* lista);
+/*
+ * Descripción: filtra los elementos que no esperen un recurso retenido por alguno de los otros elementos,
+ * 		o no retiene un recurso requerido por otro elemento de la lista.
+ * Argumentos:
+ * 		t_deadlock_list* lista
+ */
 bool esta(char* clave, t_clave_list lista);
 /*
  * Descripción: devuelve si la clave se encuentra en la lista.

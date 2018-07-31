@@ -1262,36 +1262,30 @@ void getDeadlock(int sockfd) {
 	pthread_mutex_lock(&sem_ESIs);
 	if (chequearNull(ESIs, sockfd))
 		return;
-	t_deadlock_list firstIteration = getRetenientes(ESIs);
+	t_deadlock_list copyESIs = deadlockListDuplicate(ESIs);
 	pthread_mutex_unlock(&sem_ESIs);
 
-	if (chequearNull(firstIteration, sockfd))
+	filterEsperando(&copyESIs);
+	if (chequearNull(copyESIs, sockfd))
 		return;
-
-	t_deadlock_list secondIteration = getEsperando(firstIteration);
-	if (chequearNull(secondIteration, sockfd))
+	filterRetenientes(&copyESIs);
+	if (chequearNull(copyESIs, sockfd))
 		return;
-
-	t_deadlock_list finalIteration = getEsperaCircular(secondIteration);
-	if (chequearNull(finalIteration, sockfd))
+	filterEsperaCircular(&copyESIs);
+	if (chequearNull(copyESIs, sockfd))
 		return;
-
-	t_deadlock_list deadlocked;
-
-	t_deadlock_list aux = finalIteration;
 
 	int iteraciones;
-	for (iteraciones = 0; iteraciones < deadlockLength(finalIteration);
+	for (iteraciones = 0; iteraciones < deadlockLength(copyESIs);
 			iteraciones++) {
-		deadlocked = getEsperaCircular(aux);
-		aux = deadlocked;
+		filterEsperaCircular(&copyESIs);
 	}
 
-	if (chequearNull(deadlocked, sockfd))
+	if (chequearNull(copyESIs, sockfd))
 		return;
 
 	log_debug(logger, "ESIs en deadlock: ");
-	t_deadlock_node* puntero = deadlocked.head;
+	t_deadlock_node* puntero = copyESIs.head;
 	while (puntero != NULL) {
 		log_debug(logger, "ID: %i", puntero->esi.id);
 
@@ -1303,10 +1297,49 @@ void getDeadlock(int sockfd) {
 	aviso_con_ID noHayMas = { .aviso = 414 };
 	enviar_aviso(socket_planificador, noHayMas);
 
-	deadlockListDestroy(&firstIteration);
-	deadlockListDestroy(&secondIteration);
-	deadlockListDestroy(&finalIteration);
-	deadlockListDestroy(&deadlocked);
+	deadlockListDestroy(&copyESIs);
+
+}
+
+void filterEsperando(t_deadlock_list* lista) {
+	t_deadlock_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->esi.claveBloqueo, "null")) {
+			eliminar_deadlock(lista, puntero->esi);
+			puntero = lista->head;
+		} else {
+			puntero = puntero->sgte;
+		}
+
+	}
+}
+
+void filterRetenientes(t_deadlock_list* lista) {
+	t_deadlock_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (emptyClaves(puntero->esi.clavesTomadas)) {
+			eliminar_deadlock(lista, puntero->esi);
+			puntero = lista->head;
+		} else {
+			puntero = puntero->sgte;
+		}
+	}
+}
+
+void filterEsperaCircular(t_deadlock_list* lista) {
+	t_deadlock_node* puntero = lista->head;
+
+	while (puntero != NULL) {
+		if (!esperaAlgoDeOtro(puntero->esi, *lista)
+				|| !tieneAlgoQueOtroQuiere(puntero->esi, *lista)) {
+			eliminar_deadlock(lista, puntero->esi);
+			puntero = lista->head;
+		} else {
+			puntero = puntero->sgte;
+		}
+	}
 }
 
 bool chequearNull(t_deadlock_list lista, int sockfd) {

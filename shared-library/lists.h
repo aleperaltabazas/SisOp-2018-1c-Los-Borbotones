@@ -405,6 +405,13 @@ bool deadlockListContains(t_deadlock_list lista, uint32_t id);
 	 * 		uint32_t id
 	 */
 
+t_deadlock_list deadlockListDuplicate(t_deadlock_list lista);
+	/*
+	 * Descripción: devuelve una nueva lista con los mismos elementos.
+	 * Argumentos:
+	 * 		t_deadlock_list lista
+	 */
+
 /*
  * ==============================
  * =====      ENTRADAS      =====

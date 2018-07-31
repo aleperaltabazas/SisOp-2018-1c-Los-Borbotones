@@ -576,6 +576,20 @@ deadlock headDeadlock(t_deadlock_list lista) {
 	return esi;
 }
 
+t_deadlock_list deadlockListDuplicate(t_deadlock_list lista) {
+	t_deadlock_node* puntero = lista.head;
+	t_deadlock_list newList;
+	newList.head = NULL;
+	newList.size = 0;
+
+	while (puntero != NULL) {
+		agregar_deadlock(&newList, puntero->esi);
+		puntero = puntero->sgte;
+	}
+
+	return newList;
+}
+
 bool deadlockListContains(t_deadlock_list lista, uint32_t id) {
 	t_deadlock_node* puntero = lista.head;
 
