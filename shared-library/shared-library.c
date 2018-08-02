@@ -112,7 +112,7 @@ char* recv_string_no_exit(int sockfd, uint32_t size) {
 		return string_recv_error;
 	}
 
-	loggear("Cadena recibida.");
+	log_trace(debug_logger, "Cadena recibida.");
 
 	return ret_string;
 }
@@ -128,7 +128,7 @@ aviso_con_ID recv_aviso_no_exit(int sockfd) {
 		return aviso_recv_error;
 	}
 
-	loggear("Aviso con ID recibido.");
+	log_trace(debug_logger, "Aviso con ID recibido.");
 
 	return ret_aviso;
 }
@@ -144,7 +144,7 @@ package_int recv_packed_no_exit(int sockfd) {
 		return packed_recv_error;
 	}
 
-	loggear("Package Int recibido.");
+	log_trace(debug_logger, "Package Int recibido.");
 
 	return ret_package;
 }
@@ -157,7 +157,7 @@ void send_string_no_exit(char* string, int sockfd) {
 		return;
 	}
 
-	loggear("Cadena enviada.");
+	log_trace(debug_logger, "Cadena enviada.");
 }
 
 void send_aviso_no_exit(aviso_con_ID aviso, int sockfd) {
@@ -169,7 +169,7 @@ void send_aviso_no_exit(aviso_con_ID aviso, int sockfd) {
 		return;
 	}
 
-	loggear("Aviso con ID enviado.");
+	log_trace(debug_logger, "Aviso con ID enviado.");
 }
 
 void send_packed_no_exit(package_int package, int sockfd) {
@@ -181,7 +181,7 @@ void send_packed_no_exit(package_int package, int sockfd) {
 		return;
 	}
 
-	loggear("Package Int enviado.");
+	log_trace(debug_logger, "Package Int enviado.");
 
 }
 
@@ -225,7 +225,7 @@ int send_package_int(package_int package, int sockfd) {
 
 	int envio = send(sockfd, message, packageSize, MSG_NOSIGNAL);
 
-	log_debug(logger, "Bytes enviados: %i", envio);
+	log_debug(debug_logger, "Bytes enviados: %i", envio);
 
 	free(message);
 
@@ -238,11 +238,11 @@ int send_aviso_con_ID(aviso_con_ID aviso, int sockfd) {
 
 	serializar_aviso(aviso, &message);
 
-	loggear("Serialice bien.");
+	log_trace(debug_logger, "Serialice bien.");
 
 	int envio = send(sockfd, message, packageSize, 0);
 
-	log_debug(logger, "Bytes enviados: %i", envio);
+	log_debug(debug_logger, "Bytes enviados: %i", envio);
 
 	free(message);
 
@@ -255,7 +255,7 @@ int send_string(char* string, int sockfd) {
 
 	int envio = send(sockfd, string, cadena_size, 0);
 
-	log_debug(logger, "Bytes enviados: %i", envio);
+	log_debug(debug_logger, "Bytes enviados: %i", envio);
 
 	return envio;
 }
@@ -268,7 +268,7 @@ void enviar_aviso(int sockfd, aviso_con_ID aviso) {
 		salir_con_error("Falló el envío del Aviso con ID.", sockfd);
 	}
 
-	loggear("Aviso con ID enviado.");
+	log_trace(debug_logger, "Aviso con ID enviado.");
 }
 
 aviso_con_ID recibir_aviso(int sockfd) {
@@ -281,7 +281,7 @@ aviso_con_ID recibir_aviso(int sockfd) {
 		salir_con_error("Falló la recepción del Aviso con ID", sockfd);
 	}
 
-	loggear("Aviso con ID recibido.");
+	log_trace(debug_logger, "Aviso con ID recibido.");
 
 	return ret_aviso;
 }
@@ -294,7 +294,7 @@ void enviar_packed(package_int packed, int sockfd) {
 		salir_con_error("Falló el envío del Package Int.", sockfd);
 	}
 
-	loggear("Package Int enviado.");
+	log_trace(debug_logger, "Package Int enviado.");
 }
 
 package_int recibir_packed(int sockfd) {
@@ -307,7 +307,7 @@ package_int recibir_packed(int sockfd) {
 		salir_con_error("Falló la recepción del Package Int.", sockfd);
 	}
 
-	loggear("Package Int recibido.");
+	log_trace(debug_logger, "Package Int recibido.");
 
 	return ret_package;
 }
@@ -320,7 +320,7 @@ void enviar_cadena(char* cadena, int sockfd) {
 		salir_con_error("Falló el envío de la cadena", sockfd);
 	}
 
-	loggear("Cadena enviada.");
+	log_trace(debug_logger, "Cadena enviada.");
 }
 
 char* recibir_cadena(int sockfd, uint32_t size) {
@@ -333,7 +333,7 @@ char* recibir_cadena(int sockfd, uint32_t size) {
 		salir_con_error("Falló la recepción de la cadena", sockfd);
 	}
 
-	loggear("Cadena recibida");
+	log_trace(debug_logger, "Cadena recibida");
 
 	return ret_string;
 }
@@ -549,7 +549,7 @@ int conectar_a(char *ip, char *puerto, package_int id, int tries) {
 
 void chequear_servidor(package_int id, int server_socket) {
 
-	log_debug(logger, "%i", id);
+	log_debug(debug_logger, "%i", id);
 
 	if (id.packed == 0) {
 		log_info(logger, "Servidor reconocido.");
@@ -568,6 +568,12 @@ void chequear_servidor(package_int id, int server_socket) {
 void iniciar_log(char* nombre, char* mensajeInicial) {
 	logger = log_create("ReDisTinto.log", nombre, true, LOG_LEVEL_TRACE);
 	loggear(mensajeInicial);
+
+	char* debug = transfer(nombre, strlen(nombre) + strlen("-Debug") + 1);
+	debug_logger = log_create("Debug.log", debug, false, LOG_LEVEL_TRACE);
+
+	free(debug);
+
 }
 
 void loggear(char* mensaje) {

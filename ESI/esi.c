@@ -66,15 +66,15 @@ void swap_values(aviso_con_ID* aviso) {
 	aviso->aviso = aviso->id;
 	aviso->id = aviso_aux;
 
-	log_debug(logger, "Nuevo aviso: %i", aviso->aviso);
-	log_debug(logger, "Nuevo ID: %i", aviso->id);
+	log_debug(debug_logger, "Nuevo aviso: %i", aviso->aviso);
+	log_debug(debug_logger, "Nuevo ID: %i", aviso->id);
 }
 
 uint32_t recibir_ID(int server_socket) {
 	aviso_con_ID aviso = recibir_aviso(server_socket);
 
-	log_debug(logger, "Aviso: %i", aviso.aviso);
-	log_debug(logger, "ID: %i", aviso.id);
+	log_debug(debug_logger, "Aviso: %i", aviso.aviso);
+	log_debug(debug_logger, "ID: %i", aviso.id);
 
 	if (aviso.id == 1 && aviso.aviso > 1) {
 		swap_values(&aviso);
@@ -118,7 +118,7 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	orden = recibir_aviso(socket_planificador);
 
-	log_debug(logger, "%i", orden.aviso);
+	log_debug(debug_logger, "%i", orden.aviso);
 
 	if (orden.aviso == -1) {
 		log_info(logger, "Orden de terminación.");
@@ -322,7 +322,7 @@ t_esi_operacion parsear(char* line) {
 			break;
 		default:
 			log_warning(logger, "No se pudo interpretar la linea.");
-			log_debug(logger, "Line: %s", line);
+			log_debug(debug_logger, "Line: %s", line);
 			parsed.valido = false;
 			break;
 		}

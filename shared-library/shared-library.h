@@ -31,7 +31,9 @@
 #define MAX_LEN 40
 #define WEED "\x1b[32m"
 
-t_log * logger;
+t_log* logger;
+t_log* debug_logger;
+
 char* mensajePlanificador =
 		"My name is Planificador.c and I'm the fastest planifier alive...";
 char* mensajeESI = "A wild ESI has appeared!";

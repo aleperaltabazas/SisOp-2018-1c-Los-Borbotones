@@ -126,7 +126,8 @@ void bloqueo_inicial(void) {
 				CLAVES_BLOQUEADAS[i]);
 		avisar_bloqueo(socket_coordinador, CLAVES_BLOQUEADAS[i]);
 
-		log_trace(logger, "Clave bloqueada con éxito.");
+		log_info(logger, "La clave %s fue bloqueada con éxito.",
+				CLAVES_BLOQUEADAS[i]);
 		i++;
 	}
 
@@ -198,7 +199,7 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 
 	package_int cliente_packed = recibir_packed(socket_cliente);
 
-	log_debug(logger, "%i", cliente_packed.packed);
+	log_debug(debug_logger, "%i", cliente_packed.packed);
 
 	loggear("Mensaje recibido exitosamente. Identificando cliente...");
 	identificar_cliente(cliente_packed, socket_cliente);
@@ -215,7 +216,7 @@ int manejar_cliente(int listening_socket, int socket_cliente,
 void identificar_cliente(package_int id, int socket_cliente) {
 	pthread_t hilo_ESI;
 
-	log_debug(logger, "%i", id);
+	log_debug(debug_logger, "%i", id);
 
 	if (id.packed == 2) {
 		loggear(mensajeESI);
@@ -437,8 +438,8 @@ void conseguir_desbloqueados(void) {
 
 	while (1) {
 		aviso_con_ID respuesta_desbloqueado = recibir_aviso(socket_coordinador);
-		log_debug(logger, "Aviso: %i", respuesta_desbloqueado.aviso);
-		log_debug(logger, "ID: %i", respuesta_desbloqueado.id);
+		log_debug(debug_logger, "Aviso: %i", respuesta_desbloqueado.aviso);
+		log_debug(debug_logger, "ID: %i", respuesta_desbloqueado.id);
 
 		if (respuesta_desbloqueado.aviso == 0
 				|| respuesta_desbloqueado.id == 0) {
@@ -480,7 +481,7 @@ void desalojar(void) {
 
 		pthread_mutex_lock(&sem_ready_ESIs);
 		ESI esi = findByIDIn(executing_ESI.id, ready_ESIs);
-		log_debug(logger, "ESI: %i", esi.id);
+		log_debug(debug_logger, "ESI: %i", esi.id);
 
 		if (esi.id == ESI_error.id) {
 			salir_con_error("El executing_ESI no se enconraba en la lista",
@@ -534,8 +535,8 @@ int asignar_ID(ESI esi) {
 
 	enviar_aviso(socket_ESI, aviso);
 
-	log_debug(logger, "Aviso: %i", aviso.aviso);
-	log_debug(logger, "ID: %i", aviso.id);
+	log_debug(debug_logger, "Aviso: %i", aviso.aviso);
+	log_debug(debug_logger, "ID: %i", aviso.id);
 
 	return (int) aviso.id;
 
@@ -1153,7 +1154,7 @@ void avisar_desbloqueo(int server_socket, char* clave) {
 	enviar_cadena(clave, server_socket);
 
 	aviso_con_ID respuesta_desbloqueo = recibir_aviso(server_socket);
-	log_debug(logger, "Respuesta: %i", respuesta_desbloqueo.aviso);
+	log_debug(debug_logger, "Respuesta: %i", respuesta_desbloqueo.aviso);
 }
 
 void desbloquear_ESI(uint32_t id) {
@@ -1201,7 +1202,7 @@ void avisar_bloqueo(int server_socket, char* clave) {
 	enviar_cadena(clave, server_socket);
 
 	aviso_con_ID respuesta_bloqueo = recibir_aviso(server_socket);
-	log_debug(logger, "Respuesta: %i", respuesta_bloqueo.aviso);
+	log_debug(debug_logger, "Respuesta: %i", respuesta_bloqueo.aviso);
 
 }
 
@@ -1306,8 +1307,8 @@ void getDeadlock(void) {
 	printf("ESIs en Deadlock: ");
 	while (1) {
 		aviso_con_ID deadlock_id = recibir_aviso(socket_coordinador);
-		log_debug(logger, "Aviso: %i", deadlock_id.aviso);
-		log_debug(logger, "ID: %i", deadlock_id.id);
+		log_debug(debug_logger, "Aviso: %i", deadlock_id.aviso);
+		log_debug(debug_logger, "ID: %i", deadlock_id.id);
 
 		if (deadlock_id.aviso == 0) {
 			printf("No hay ESIs en Deadlock \n");

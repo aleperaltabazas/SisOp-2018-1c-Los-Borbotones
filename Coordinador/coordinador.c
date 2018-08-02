@@ -293,8 +293,8 @@ uint32_t decimeID(int sockfd) {
 	aviso_con_ID aviso_id = recv_aviso_no_exit(sockfd);
 	pthread_mutex_unlock(&sem_listening_socket);
 
-	log_debug(logger, "Aviso: %i", aviso_id.aviso);
-	log_debug(logger, "ID: %i", aviso_id.id);
+	log_debug(debug_logger, "Aviso: %i", aviso_id.aviso);
+	log_debug(debug_logger, "ID: %i", aviso_id.id);
 
 	if (aviso_id.aviso != 2) {
 		abortar_ESI(sockfd);
@@ -328,8 +328,8 @@ void liberar_claves(uint32_t id) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	while (puntero != NULL) {
-		log_debug(logger, "Blocker: %i", puntero->block_id);
-		log_debug(logger, "ESI: %i", id);
+		log_debug(debug_logger, "Blocker: %i", puntero->block_id);
+		log_debug(debug_logger, "ESI: %i", id);
 
 		if (puntero->block_id == id) {
 			desbloquear(puntero->clave);
@@ -344,7 +344,7 @@ void liberar_claves(uint32_t id) {
 int chequear_solicitud(int socket_cliente, uint32_t id) {
 	aviso_con_ID aviso_cliente = recv_aviso_no_exit(socket_cliente);
 
-	log_debug(logger, "%i", aviso_cliente.aviso);
+	log_debug(debug_logger, "%i", aviso_cliente.aviso);
 
 	int status;
 
@@ -362,17 +362,17 @@ int chequear_solicitud(int socket_cliente, uint32_t id) {
 	}
 
 	else if (aviso_cliente.aviso == 11) {
-		log_debug(logger, "%i", aviso_cliente.id);
+		log_debug(debug_logger, "%i", aviso_cliente.id);
 		status = get(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 12) {
-		log_debug(logger, "%i", aviso_cliente.id);
+		log_debug(debug_logger, "%i", aviso_cliente.id);
 		status = set(socket_cliente, aviso_cliente.id);
 	}
 
 	else if (aviso_cliente.aviso == 13) {
-		log_debug(logger, "%i", aviso_cliente.id);
+		log_debug(debug_logger, "%i", aviso_cliente.id);
 		status = store(socket_cliente, aviso_cliente.id);
 	}
 
@@ -405,7 +405,7 @@ int get(int socket_cliente, uint32_t id) {
 
 	op_response response = { .packed = doGet(get) };
 
-	log_debug(logger, "Response GET: %i", response.packed);
+	log_debug(debug_logger, "Response GET: %i", response.packed);
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
 
@@ -421,11 +421,11 @@ int set(int socket_cliente, uint32_t id) {
 
 	// -25 valor de reintento porque justo la instancia que elegi murio
 	while (response.packed == -25) {
-		log_debug(logger, "Response SET: %i", response.packed);
+		log_debug(debug_logger, "Response SET: %i", response.packed);
 		response.packed = doSet(set);
 	}
 
-	log_debug(logger, "Response SET: %i", response.packed);
+	log_debug(debug_logger, "Response SET: %i", response.packed);
 
 	if (response.packed == OP_COMPACT) {
 		enviar_instancias_a_compactar();
@@ -434,7 +434,7 @@ int set(int socket_cliente, uint32_t id) {
 		response.packed = doSet(set);
 	}
 
-	log_debug(logger, "Response SET: %i", response.packed);
+	log_debug(debug_logger, "Response SET: %i", response.packed);
 
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
@@ -449,7 +449,7 @@ int store(int socket_cliente, uint32_t id) {
 
 	op_response response = { .packed = doStore(store) };
 
-	log_debug(logger, "Response STORE: %i", response.packed);
+	log_debug(debug_logger, "Response STORE: %i", response.packed);
 	sleep(1);
 	send_packed_no_exit(response, socket_cliente);
 
@@ -667,13 +667,13 @@ void actualizarEntradas(Instancia instancia, uint32_t entradas) {
 
 	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
-			log_debug(logger, "Entradas ocupadas por la instancia: %i",
+			log_debug(debug_logger, "Entradas ocupadas por la instancia: %i",
 					instancia.espacio_usado);
-			log_debug(logger, "Entradas ocupadas por el puntero: %i",
+			log_debug(debug_logger, "Entradas ocupadas por el puntero: %i",
 					instancia.espacio_usado);
 
 			puntero->instancia.espacio_usado = entradas;
-			log_debug(logger, "Nuevo espacio ocupado por el puntero: %i",
+			log_debug(debug_logger, "Nuevo espacio ocupado por el puntero: %i",
 					puntero->instancia.espacio_usado);
 		}
 
@@ -812,7 +812,7 @@ void log_store(STORE_Op store) {
 
 bool estaCaida(Instancia unaInstancia) {
 
-	log_debug(logger, "Verificando disponibilidad de la instancia...");
+	log_debug(debug_logger, "Verificando disponibilidad de la instancia...");
 
 	if (!unaInstancia.disponible) {
 		log_warning(logger, "La instancia fue marcada como no disponible");
@@ -830,7 +830,7 @@ bool estaCaida(Instancia unaInstancia) {
 
 uint32_t waitPing(Instancia unaInstancia) {
 	int resultado_ping = esperar_confirmacion_de_exito(unaInstancia.sockfd);
-	log_debug(logger, "Ping recibido: %i", resultado_ping);
+	log_debug(debug_logger, "Ping recibido: %i", resultado_ping);
 
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
 
@@ -862,7 +862,7 @@ uint32_t waitPing(Instancia unaInstancia) {
 
  if (strcmp(puntero->clave, clave) == 0) {
  if (puntero->block_id != id) {
- log_debug(logger, "%i %i", puntero->block_id, id);
+ log_debug(debug_logger, "%i %i", puntero->block_id, id);
 
  log_warning(logger, "Abortando ESI %i.", id);
  return -3;
@@ -893,8 +893,8 @@ void actualizarClave(char* clave, char* valor) {
 	t_clave_node* puntero = claves_bloqueadas.head;
 
 	while (puntero != NULL) {
-		//log_debug(logger, "Clave en la lista: %s", puntero->clave);
-		//log_debug(logger, "Mi clave: %s", clave);
+		//log_debug(debug_logger, "Clave en la lista: %s", puntero->clave);
+		//log_debug(debug_logger, "Mi clave: %s", clave);
 		if (mismoString(puntero->clave, clave)) {
 			strcpy(puntero->valor, valor);
 
@@ -936,7 +936,7 @@ void actualizarClave(char* clave, char* valor) {
 
  enviar_valores_set(tamanio_parametros_set, (void*) (intptr_t) instancia.sockfd);
 
- log_debug(logger, "Esperando confirmacion...");
+ log_debug(debug_logger, "Esperando confirmacion...");
 
  esperar_confirmacion_de_exito((int) instancia.sockfd);
 
@@ -944,16 +944,16 @@ void actualizarClave(char* clave, char* valor) {
 
  cantidad_entradas_ocupadas_instancia = recibir_packed(instancia.sockfd);
 
- log_debug(logger, "Cantidad de entradas ocupadas por la instancia %s: %i",
+ log_debug(debug_logger, "Cantidad de entradas ocupadas por la instancia %s: %i",
  instancia.nombre, cantidad_entradas_ocupadas_instancia.packed);
 
- log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+ log_debug(debug_logger, "%s tiene la clave %s", instancia.nombre, clave);
 
  actualizarEntradas(instancia, cantidad_entradas_ocupadas_instancia.packed);
 
  enviar_orden_instancia(0, (void*) (intptr_t) instancia.sockfd, 15);
 
- log_debug(logger, "Esperando confirmacion...");
+ log_debug(debug_logger, "Esperando confirmacion...");
 
  esperar_confirmacion_de_exito((int) instancia.sockfd);
 
@@ -979,11 +979,11 @@ void actualizarInstancia(Instancia instancia, char* clave) {
 Instancia elQueLaTiene(char* clave) {
 	t_instancia_node* puntero = instancias.head;
 
-	log_debug(logger, "Buscando instancia con la clave %s", clave);
+	log_debug(debug_logger, "Buscando instancia con la clave %s", clave);
 
 	while (puntero != NULL) {
 
-		log_debug(logger, "Instancia: %s", puntero->instancia.nombre);
+		log_debug(debug_logger, "Instancia: %s", puntero->instancia.nombre);
 
 		if (tieneLaClave(puntero->instancia, clave)) {
 			return puntero->instancia;
@@ -1000,7 +1000,7 @@ bool estaAsignada(char* clave) {
 
 	while (puntero != NULL) {
 		if (tieneLaClave(puntero->instancia, clave)) {
-			log_debug(logger, "Instancia que tiene la clave: %s",
+			log_debug(debug_logger, "Instancia que tiene la clave: %s",
 					puntero->instancia.nombre);
 			return true;
 		}
@@ -1008,7 +1008,7 @@ bool estaAsignada(char* clave) {
 		puntero = puntero->sgte;
 	}
 
-	log_debug(logger, "Ninguna instancia tiene la clave asignada.");
+	log_debug(debug_logger, "Ninguna instancia tiene la clave asignada.");
 	return false;
 }
 
@@ -1050,8 +1050,8 @@ Instancia equitativeLoad(void) {
 	t_instancia_node* puntero = instancias.head;
 
 	while (puntero != NULL) {
-		log_debug(logger, "Pointer: %i", pointer);
-		log_debug(logger, "Index del puntero: %i", puntero->index);
+		log_debug(debug_logger, "Pointer: %i", pointer);
+		log_debug(debug_logger, "Index del puntero: %i", puntero->index);
 		if (puntero->index == pointer) {
 			if (puntero->instancia.disponible) {
 				ret_inst = puntero->instancia;
@@ -1118,7 +1118,7 @@ Instancia keyExplicit(char* clave) {
 }
 
 void avanzar_puntero(void) {
-	log_debug(logger, "Puntero antes de avanzar: %i", pointer);
+	log_debug(debug_logger, "Puntero antes de avanzar: %i", pointer);
 	pointer++;
 
 	pthread_mutex_lock(&sem_instancias);
@@ -1127,7 +1127,7 @@ void avanzar_puntero(void) {
 	}
 	pthread_mutex_unlock(&sem_instancias);
 
-	log_debug(logger, "Puntero después de avanzar: %i", pointer);
+	log_debug(debug_logger, "Puntero después de avanzar: %i", pointer);
 }
 
 bool leCorresponde(Instancia instancia, char caracter) {
@@ -1174,7 +1174,7 @@ bool tieneLaClave(Instancia unaInstancia, char* clave) {
 Instancia getInstanciaStore(char* clave) {
 
 	Instancia instancia = elQueLaTiene(clave);
-	log_debug(logger, "%s tiene la clave %s", instancia.nombre, clave);
+	log_debug(debug_logger, "%s tiene la clave %s", instancia.nombre, clave);
 	return instancia;
 
 }
@@ -1198,8 +1198,8 @@ void bloquear_ESI(char* clave, uint32_t id) {
 	char* clave_dup = strdup(clave);
 	strcpy(bloqueado.clave, clave_dup);
 
-	log_debug(logger, "Clave: %s", clave_dup);
-	log_debug(logger, "ID: %i", id);
+	log_debug(debug_logger, "Clave: %s", clave_dup);
+	log_debug(debug_logger, "ID: %i", id);
 
 	agregar_blocked(&blocked_ESIs, bloqueado);
 	free(clave_dup);
@@ -1222,7 +1222,7 @@ void* atender_Planificador(void* un_socket) {
 		aviso_plani = recibir_aviso(socket_planificador);
 		pthread_mutex_lock(&sem_listening_socket);
 
-		log_debug(logger, "%i", aviso_plani.aviso);
+		log_debug(debug_logger, "%i", aviso_plani.aviso);
 
 		if (aviso_plani.aviso == 0) {
 			log_info(logger,
@@ -1300,10 +1300,10 @@ void getDeadlock(int sockfd) {
 	if (chequearNull(copyESIs, sockfd))
 		return;
 
-	log_debug(logger, "ESIs en deadlock: ");
+	log_debug(debug_logger, "ESIs en deadlock: ");
 	t_deadlock_node* puntero = copyESIs.head;
 	while (puntero != NULL) {
-		log_debug(logger, "ID: %i", puntero->esi.id);
+		log_debug(debug_logger, "ID: %i", puntero->esi.id);
 
 		aviso_con_ID deadlock_id = { .aviso = 404, .id = puntero->esi.id };
 		enviar_aviso(socket_planificador, deadlock_id);
@@ -1535,7 +1535,7 @@ void desbloquear(char* clave) {
 			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
 		}
 
-		log_debug(logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
+		log_debug(debug_logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
 
 		free(dup_clave);
 	}
@@ -1600,8 +1600,8 @@ void bloquear_segun_clave(int sockfd) {
 	char* clave = recibir_cadena(sockfd, size_package.packed);
 	package_int id_package = recibir_packed(sockfd);
 
-	log_debug(logger, "ID: %i", id_package.packed);
-	log_debug(logger, "Clave: %s", clave);
+	log_debug(debug_logger, "ID: %i", id_package.packed);
+	log_debug(debug_logger, "Clave: %s", clave);
 
 	bloquear(clave, 0);
 
@@ -1621,8 +1621,8 @@ void show_blocked_list(t_blocked_list lista) {
 	t_blocked_node* puntero = lista.head;
 
 	while (puntero != NULL) {
-		log_debug(logger, "ID: %i", puntero->id);
-		log_debug(logger, "Clave: %s", puntero->clave);
+		log_debug(debug_logger, "ID: %i", puntero->id);
+		log_debug(debug_logger, "Clave: %s", puntero->clave);
 
 		puntero = puntero->sgte;
 	}
@@ -1934,7 +1934,7 @@ void redistribuir_claves(void) {
 
 	if (ALGORITMO_DISTRIBUCION == KE) {
 		int disponibles = instanciasDisponibles();
-		log_debug(logger, "Instancias disponibles: %i", disponibles);
+		log_debug(debug_logger, "Instancias disponibles: %i", disponibles);
 
 		int contador = 0;
 
@@ -1944,7 +1944,7 @@ void redistribuir_claves(void) {
 			if (puntero->instancia.disponible) {
 				asignarKeyMinMax(&(puntero->instancia), contador, disponibles);
 
-				log_debug(logger, "%s tiene min %c y max %c",
+				log_debug(debug_logger, "%s tiene min %c y max %c",
 						puntero->instancia.nombre, puntero->instancia.keyMin,
 						puntero->instancia.keyMax);
 				contador++;
@@ -2039,7 +2039,7 @@ void ping(Instancia instancia) {
 bool recv_ping(int sockfd) {
 	package_int ping = recv_packed_no_exit(sockfd);
 
-	log_debug(logger, "%i", ping.packed);
+	log_debug(debug_logger, "%i", ping.packed);
 
 	if (ping.packed != 100) {
 		return false;
@@ -2076,7 +2076,7 @@ void enviar_claves(t_clave_list claves, int sockfd, char* name) {
 		int size = strlen(puntero->clave) + 1;
 		package_int size_package = { .packed = size };
 
-		log_debug(logger, "Clave: %s", puntero->clave);
+		log_debug(debug_logger, "Clave: %s", puntero->clave);
 
 		send_packed_no_exit(size_package, sockfd);
 		send_string_no_exit(puntero->clave, sockfd);
@@ -2156,7 +2156,7 @@ void update(char* name, int sockfd) {
 
 		if (mismoString(puntero->instancia.nombre, name)) {
 			puntero->instancia.disponible = true;
-			log_debug(logger, "Actualizando socket de la instancia...");
+			log_debug(debug_logger, "Actualizando socket de la instancia...");
 			puntero->instancia.sockfd = sockfd;
 		}
 
@@ -2213,7 +2213,7 @@ void asignar_entradas(int sockfd) {
 	enviar_orden_instancia(CANTIDAD_ENTRADAS, (void*) (intptr_t) sockfd,
 			TAMANIO_ENTRADAS);
 
-	log_debug(logger, "Esperando confirmacion...");
+	log_debug(debug_logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
@@ -2331,7 +2331,7 @@ void enviar_instancias_a_compactar() {
 
 	while (nodo_aux != NULL) {
 
-		log_debug(logger, "Enviando instancia %s a compactar...",
+		log_debug(debug_logger, "Enviando instancia %s a compactar...",
 				nodo_aux->instancia.nombre);
 
 		pthread_mutex_lock(&sem_socket_operaciones_coordi);
@@ -2352,7 +2352,7 @@ void send_orden_no_exit(int op_code, int sockfd) {
 	pthread_mutex_lock(&sem_socket_operaciones_coordi);
 	enviar_orden_instancia(0, (void*) (intptr_t) sockfd, op_code);
 
-	log_debug(logger, "Esperando confirmacion...");
+	log_debug(debug_logger, "Esperando confirmacion...");
 
 	esperar_confirmacion_de_exito((int) sockfd);
 	pthread_mutex_unlock(&sem_socket_operaciones_coordi);
@@ -2361,7 +2361,7 @@ void send_orden_no_exit(int op_code, int sockfd) {
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	log_debug(logger, "Tamanio parametros set: %i", tamanio_parametros_set);
+	log_debug(debug_logger, "Tamanio parametros set: %i", tamanio_parametros_set);
 
 	log_debug(logger,
 			"Valor_set, tamanio_valor: %i valor: %s tamanio_clave %i clave %s",
