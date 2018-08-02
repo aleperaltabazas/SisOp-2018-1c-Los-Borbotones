@@ -265,20 +265,20 @@ int recibir_mensaje(int socket_cliente, int id, ESI esi) {
 
 	log_trace(logger, "Mensaje recibido del ESI numero: %i", id);
 
-	if (aviso.aviso == 0) {
+	if (aviso.aviso == ESI_FIN) {
 		finishESI(esi);
 		return 0;
 	}
 
-	else if (aviso.aviso == 1) {
+	else if (aviso.aviso == ESI_READY) {
 		newESI(esi);
 	}
 
-	else if (aviso.aviso == 5) {
+	else if (aviso.aviso == ESI_BLOCK) {
 		blockESI(esi);
 	}
 
-	else if (aviso.aviso == 10) {
+	else if (aviso.aviso == ESI_EXEC) {
 		executeESI(esi);
 	}
 
@@ -830,11 +830,6 @@ void* consola(void* nada) {
 
 float recibirCodigo() {
 	int code = 0;
-	if (show_debug_commands) {
-		if (code > 7) {
-			code = -1;
-		}
-	}
 
 	scanf("%i", &code);
 	return code;
@@ -922,7 +917,7 @@ void interpretarYEjecutarCodigo(int comando) {
 	default:
 		printf("Código incorrecto \n");
 		break;
-	};
+	}
 }
 
 void show(void) {

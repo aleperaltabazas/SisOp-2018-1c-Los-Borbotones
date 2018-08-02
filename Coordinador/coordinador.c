@@ -427,7 +427,7 @@ int set(int socket_cliente, uint32_t id) {
 
 	log_debug(logger, "Response SET: %i", response.packed);
 
-	if (response.packed == 101) {
+	if (response.packed == OP_COMPACT) {
 		enviar_instancias_a_compactar();
 		log_debug(logger,
 				"Ya mande a compactar, volviendo a intentar el SET...");
@@ -460,10 +460,17 @@ uint32_t doGet(GET_Op get) {
 	revisar_existencia(get.clave);
 	uint32_t blocker_id = getBlockerID(get.clave);
 
+	if (strlen(get.clave) > 40) {
+		log_error(logger,
+				"La clave tiene una longitud de %i, supera el máximo de 40",
+				strlen(get.clave));
+		return OP_ERROR;
+	}
+
 	if (blocker_id == desbloqueada_ID) {
 		getKeyESI(get.id, get.clave);
 		gettearClave(get);
-		return 20;
+		return OP_SUCCESS;
 	}
 
 	else {
@@ -474,7 +481,7 @@ uint32_t doGet(GET_Op get) {
 				"El ESI %i fue bloqueado tratando de adquirir la clave %s, en posesión de %i.",
 				get.id, get.clave, blocker_id);
 
-		return 5;
+		return OP_BLOCK;
 	}
 
 }
@@ -487,7 +494,7 @@ uint32_t doSet(SET_Op set) {
 
 		if (estaCaida(instanciaSet)) {
 			desconectar(instanciaSet);
-			return -25;
+			return OP_ERROR;
 		}
 
 		return settearClave(set, instanciaSet);
@@ -497,7 +504,7 @@ uint32_t doSet(SET_Op set) {
 		operacion error = { .id = set.id, .op_type = op_ERROR };
 		log_op(error);
 
-		return -1;
+		return OP_ERROR;
 	}
 
 	else {
@@ -505,7 +512,7 @@ uint32_t doSet(SET_Op set) {
 				"El ESI %i trató de hacer SET sobre la clave %s, que en posesión de %i",
 				set.id, set.clave, blocker_id);
 
-		return -1;
+		return OP_ERROR;
 	}
 }
 
@@ -521,7 +528,7 @@ uint32_t doStore(STORE_Op store) {
 		operacion error = { .id = store.id, .op_type = op_ERROR };
 		log_op(error);
 
-		return -1;
+		return OP_ERROR;
 	}
 
 	else {
@@ -531,10 +538,10 @@ uint32_t doStore(STORE_Op store) {
 
 		operacion error = { .id = store.id, .op_type = op_ERROR };
 		log_op(error);
-		return -1;
+		return OP_ERROR;
 	}
 
-	return 20;
+	return OP_SUCCESS;
 }
 
 void gettearClave(GET_Op get) {
@@ -549,24 +556,24 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		log_warning(logger, "Hubo un error asignando la instancia.");
-		return -1;
+		return OP_ERROR;
 	}
 
 	enviar_set(set, instancia);
 	uint32_t resultado = recibir_set(instancia);
 
-	if (resultado == 101) {
-		return 101;
+	if (resultado == OP_COMPACT) {
+		return OP_COMPACT;
 	}
 
-	if (resultado == 20) {
+	if (resultado == OP_SUCCESS) {
 		actualizarInstancia(instancia, set.clave);
 		actualizarClave(set.clave, set.valor);
 		log_set(set);
-		return 20;
+		return OP_SUCCESS;
 	} else {
 		log_warning(logger, "Falló la operación de SET del ESI %i.", set.id);
-		return -1;
+		return OP_ERROR;
 	}
 }
 
@@ -574,12 +581,12 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 
 	if (estaCaida(instancia)) {
 		log_warning(logger, "La instancia esta caida");
-		return -1;
+		return OP_ERROR;
 	}
 
 	if (mismoString(instancia.nombre, inst_error.nombre)) {
 		log_warning(logger, "Hubo un error asignando la instancia.");
-		return -1;
+		return OP_ERROR;
 	}
 
 	log_trace(logger, "Storeando...");
@@ -590,9 +597,8 @@ uint32_t storearClave(STORE_Op store, Instancia instancia) {
 	//devuelve -1, así que en el hilo de atender_ESI libera todas las claves restantes.
 
 	desbloquear(store.clave);
-	avisarDesbloqueo(store.clave);
 
-	if (resultado == 20) {
+	if (resultado == OP_SUCCESS) {
 		log_store(store);
 	}
 
@@ -691,7 +697,7 @@ uint32_t recibir_store(Instancia instancia) {
 	}
 
 	loggear("STORE finalizado con exito!");
-	return 20;
+	return OP_SUCCESS;
 }
 
 uint32_t recibir_set(Instancia instancia) {
@@ -710,7 +716,7 @@ uint32_t recibir_set(Instancia instancia) {
 
 		log_error(logger,
 				"Fallo en la ejecucion del set, resultado recibido: %i");
-		return -1;
+		return OP_ERROR;
 
 	}
 
@@ -719,7 +725,7 @@ uint32_t recibir_set(Instancia instancia) {
 		loggear("Tengo que mandar las instancias a compactar");
 		//Esta funcion no esta testeada, puede que falle por aca si entra en algun momento
 		//enviar_instancias_a_compactar();
-		return 101;
+		return OP_COMPACT;
 	}
 
 	loggear("SET completo en la instancia");
@@ -728,11 +734,7 @@ uint32_t recibir_set(Instancia instancia) {
 
 	actualizarEntradas(instancia, entradas_ocupadas.packed);
 
-	return 20;
-
-}
-
-void avisarDesbloqueo(char* clave) {
+	return OP_SUCCESS;
 
 }
 

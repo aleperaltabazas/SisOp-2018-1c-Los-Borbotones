@@ -11,6 +11,11 @@
 #include <shared-library.h>
 //#include "shared-library.h"
 
+#define OP_SUCCESS 20
+#define OP_COMPACT 101
+#define OP_BLOCK 5
+#define OP_ERROR -1
+
 //Variables globales
 
 char* PUERTO_COORDINADOR;

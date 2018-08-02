@@ -10,6 +10,11 @@
 
 #include <shared-library.h>
 
+#define ESI_FIN 0
+#define ESI_READY 1
+#define ESI_BLOCK 5
+#define ESI_EXEC 10
+
 //Variables locales
 
 char* PUERTO_COORDINADOR;
