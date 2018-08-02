@@ -237,12 +237,32 @@ void iniciar(char** argv) {
 
 	loggear("Parseando sentencias.");
 
+	int totalLines = 0;
+	int parsedLines = 0;
+	int skippedLines = 0;
+
 	while ((read = getline(&line, &len, archivo_de_parseo)) != -1) {
+		if (line[0] == '\n') {
+			log_warning(logger, "Empty line %i.", totalLines);
+			skippedLines++;
+			continue;
+		}
+
 		parsed = parsear(line);
+
 		if (parsed.valido) {
 			agregar_parseo(&parsed_ops, parsed);
+			parsedLines++;
+		} else {
+			skippedLines++;
 		}
+
+		totalLines++;
 	}
+
+	log_info(logger, "Total de líneas leídas: %i", totalLines);
+	log_info(logger, "Total de líneas parseadas: %i", parsedLines);
+	log_info(logger, "Total de líneas salteadas: %i", skippedLines);
 
 	if (line)
 		free(line);
@@ -295,13 +315,10 @@ t_esi_operacion parsear(char* line) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
-			loggear("Parseado correctamente.");
 			break;
 		case SET:
-			loggear("Parseado correctamente.");
 			break;
 		case STORE:
-			loggear("Parseado correctamente.");
 			break;
 		default:
 			log_warning(logger, "No se pudo interpretar la linea.");
@@ -310,9 +327,6 @@ t_esi_operacion parsear(char* line) {
 			break;
 		}
 
-	} else {
-		log_error(logger, "No se puedo interpretar correctamente el archivo.");
-		exit(EXIT_FAILURE);
 	}
 
 	return parsed;
