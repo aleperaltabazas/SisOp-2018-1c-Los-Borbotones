@@ -22,25 +22,25 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: Coordinador
+all: coordinador
 
 dependents:
-	-cd /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
+	-cd /home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug && $(MAKE) all
 
 # Tool invocations
-Coordinador: $(OBJS) $(USER_OBJS) /home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
+coordinador: $(OBJS) $(USER_OBJS) /home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -L"/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "Coordinador" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug" -o "coordinador" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Coordinador
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) coordinador
 	-@echo ' '
 
 .PHONY: all clean dependents
-/home/utnso/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so:
+/home/alesaurio/tp-2018-1c-Los-borbotones/shared-library/Debug/libshared-library.so:
 
 -include ../makefile.targets
