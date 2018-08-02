@@ -402,11 +402,11 @@ void finishESI(ESI esi) {
 		ejecutando = false;
 		pthread_mutex_unlock(&sem_ejecutando);
 
-		conseguir_desbloqueados();
 		pthread_mutex_unlock(&sem_ejecucion);
 
 	}
 
+	conseguir_desbloqueados();
 	loggear("Agregado correctamente a la cola de terminados.");
 
 }
@@ -1304,22 +1304,55 @@ void getDeadlock(void) {
 	aviso_con_ID aviso_deadlock = { .aviso = 404 };
 	enviar_aviso(socket_coordinador, aviso_deadlock);
 
-	printf("ESIs en Deadlock: ");
+	printf("ESIs en Deadlock:");
+	int i = 0;
+
 	while (1) {
 		aviso_con_ID deadlock_id = recibir_aviso(socket_coordinador);
 		log_debug(debug_logger, "Aviso: %i", deadlock_id.aviso);
 		log_debug(debug_logger, "ID: %i", deadlock_id.id);
 
 		if (deadlock_id.aviso == 0) {
-			printf("No hay ESIs en Deadlock \n");
+			printf(" no hay ESIs en Deadlock \n");
 			return;
 		}
 
 		if (deadlock_id.aviso == 414) {
 			break;
 		}
-		printf(" %i ", deadlock_id.id);
+
+		if (!estaBloqueado(deadlock_id.id)) {
+			continue;
+		}
+
+		if (i > 0) {
+			printf(",");
+		}
+
+		printf(" %i", deadlock_id.id);
+		i++;
 	}
+
+	printf("\n");
+	printf("\n");
+}
+
+bool estaBloqueado(uint32_t id) {
+	ESI esi = findByIDIn(id, blocked_ESIs);
+
+	return esi.id == id;
+}
+
+bool estaTerminado(uint32_t id) {
+	ESI esi = findByIDIn(id, finished_ESIs);
+
+	return esi.id == id;
+}
+
+bool estaListo(uint32_t id) {
+	ESI esi = findByIDIn(id, ready_ESIs);
+
+	return esi.id == id;
 }
 
 void show_deadlock(void) {

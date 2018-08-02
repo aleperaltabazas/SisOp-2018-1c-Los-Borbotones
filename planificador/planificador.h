@@ -561,4 +561,11 @@ void reencolar(ESI esi);
 	 * 		ESI esi
 	 */
 
+bool estaBloqueado(uint32_t id);
+	/*
+	 * Descripción: devuelve si un ESI se encuentra en la cola de bloqueados.
+	 * Argumentos:
+	 * 		uint32_t id
+	 */
+
 #endif /* PLANIFICADOR_H_ */
