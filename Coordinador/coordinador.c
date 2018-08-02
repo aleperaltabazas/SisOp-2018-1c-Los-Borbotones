@@ -489,6 +489,13 @@ uint32_t doGet(GET_Op get) {
 uint32_t doSet(SET_Op set) {
 	uint32_t blocker_id = getBlockerID(set.clave);
 
+	if (strlen(set.clave) > 40) {
+		log_error(logger,
+				"La clave tiene una longitud de %i, supera el máximo de 40",
+				strlen(set.clave));
+		return OP_ERROR;
+	}
+
 	if (blocker_id == set.id) {
 		Instancia instanciaSet = getInstanciaSet(set.clave);
 
@@ -518,6 +525,13 @@ uint32_t doSet(SET_Op set) {
 
 uint32_t doStore(STORE_Op store) {
 	uint32_t blocker_id = getBlockerID(store.clave);
+
+	if (strlen(store.clave) > 40) {
+		log_error(logger,
+				"La clave tiene una longitud de %i, supera el máximo de 40",
+				strlen(store.clave));
+		return OP_ERROR;
+	}
 
 	if (blocker_id == store.id) {
 		Instancia instanciaStore = getInstanciaStore(store.clave);
