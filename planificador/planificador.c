@@ -732,9 +732,19 @@ ESI get_ESI(uint32_t id, t_esi_list lista) {
 }
 
 void mostrar(t_esi_node* puntero) {
+	if (puntero == NULL) {
+		printf(" no hay ESIs en la cola");
+	}
+
+	int i = 0;
 	while (puntero != NULL) {
-		printf("%i, ", puntero->esi.id);
+		if (i > 0) {
+			printf(",");
+		}
+
+		printf(" %i", puntero->esi.id);
 		puntero = puntero->sgte;
+		i++;
 	}
 
 	printf("\n");
@@ -1207,18 +1217,21 @@ void avisar_bloqueo(int server_socket, char* clave) {
 }
 
 void dame_datos() {
-	printf("ESI ejecutando: %i \n", executing_ESI.id);
+	if (executing_ESI.id == esi_vacio.id)
+		printf("ESI ejecutando: no hay ESI ejecutando actualmente \n");
+	else
+		printf("ESI ejecutando: %i \n", executing_ESI.id);
 
 	t_esi_node* puntero = ready_ESIs.head;
-	printf("ESIs listos para ejecutar: ");
+	printf("ESIs listos para ejecutar:");
 	mostrar(puntero);
 
 	puntero = blocked_ESIs.head;
-	printf("ESIs bloqueados: ");
+	printf("ESIs bloqueados:");
 	mostrar(puntero);
 
 	puntero = finished_ESIs.head;
-	printf("ESIs terminados: ");
+	printf("ESIs terminados:");
 	mostrar(puntero);
 }
 
