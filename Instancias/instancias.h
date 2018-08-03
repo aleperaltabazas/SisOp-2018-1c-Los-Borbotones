@@ -240,6 +240,7 @@ t_entrada_list obtener_entradas_atomicas();
 bool es_entrada_atomica(entrada una_entrada);
 void liberar_entradas_atomicas(t_entrada_list entradas_atomicas);
 entrada asignar_entrada(entradas_node * puntero);
+char * obtener_vector_entradas_disponibles();
 
 //Aca guardo todos los structs entrada para poder referenciarlos
 t_entrada_list entradas_asignadas;

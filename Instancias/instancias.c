@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
 		case 14:
 			loggear("Operacion de COMPACTACION");
 			compactacion();
+			leer_valores_almacenados();
 			break;
 		case 15:
 			loggear("Mostrando lo almacenado...");
@@ -1262,13 +1263,34 @@ void leer_valores_almacenados() {
 
 	log_trace(logger, "Posicion del puntero actual: %i", puntero_entrada);
 
-	int i;
+	char * buffer_entradas_disponibles = obtener_vector_entradas_disponibles();
 
-	for (i = 0; i < cantidad_entradas; i++) {
-		log_debug(logger, "%i", entradas_disponibles[i]);
+	log_trace(logger, "Vector de entradas disponibles: [%s]", buffer_entradas_disponibles);
+
+	free(buffer_entradas_disponibles);
+
+}
+
+char * obtener_vector_entradas_disponibles(){
+
+	char * buffer_entradas_disponibles = malloc((cantidad_entradas - 1) * 3 + 2);
+
+	int i = 0;
+
+	for (i = 0; i < cantidad_entradas - 1; i++) {
+		char * num = string_itoa(entradas_disponibles[i]);
+		memcpy(buffer_entradas_disponibles + i * 3, num, sizeof(char));
+		buffer_entradas_disponibles[i * 3 + 1] = ',';
+		buffer_entradas_disponibles[i * 3 + 2] = ' ';
+		free(num);
 	}
 
+	char * num = string_itoa(entradas_disponibles[i]);
+	memcpy(buffer_entradas_disponibles + i * 3, num, sizeof(char));
+	buffer_entradas_disponibles[i * 3 + 1] = '\0';
+	free(num);
 
+	return buffer_entradas_disponibles;
 
 }
 
