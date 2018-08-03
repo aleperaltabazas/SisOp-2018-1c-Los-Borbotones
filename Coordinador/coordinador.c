@@ -131,7 +131,6 @@ float dame_retardo(int retardo_int) {
 
 void cerrar(void) {
 	cerrar_instancias();
-	destruir_listas();
 	destruir_semaforos();
 
 	close(listening_socket);
@@ -1555,7 +1554,6 @@ void desbloquear(char* clave) {
 	}
 
 	else if (existe(clave) && esta_bloqueada(clave)) {
-		//mostrar_listas();
 		char* dup_clave = strdup(clave);
 
 		if (esta(clave, claves_bloqueadas)) {

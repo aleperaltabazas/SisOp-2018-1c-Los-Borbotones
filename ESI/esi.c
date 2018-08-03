@@ -37,7 +37,6 @@ void cerrar(void) {
 	close(socket_planificador);
 	close(socket_coordinador);
 
-	clear(&parsed_ops);
 }
 
 void ejecutar_sentencias(void) {
@@ -99,11 +98,9 @@ uint32_t recibir_ID(int server_socket) {
 	}
 
 	if (aviso.aviso == 0) {
-		clear(&parsed_ops);
 		salir_con_error("Fin de este ESI por parte del planificador",
 				server_socket);
 	} else if (aviso.aviso != 1) {
-		clear(&parsed_ops);
 		salir_con_error("Orden desconocida.", server_socket);
 	}
 
@@ -143,7 +140,6 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 		loggear("Orden de ejecucion recibida.");
 	} else if (orden.aviso == 99) {
 		log_info(logger, "Fin del planificador. Cerrando y terminando.");
-		clear(&parsed_ops);
 		exit(-1);
 	}
 
