@@ -61,6 +61,7 @@ uint32_t desbloqueada_ID = -1;
 uint32_t proximo_desbloqueado;
 t_desbloqueado_list cola_desbloqueados;
 
+int instancia_id;
 int cantidad_instancias;
 
 typedef deadlock t_ESI;
@@ -956,6 +957,12 @@ void destruir_semaforos();
  * 		void
  */
 
+Instancia getInstanciaSet(char* clave);
+
+Instancia equitativeLoad(void);
+Instancia leastSpaceUsed(void);
+Instancia keyExplicit(char * clave);
+
 void getDeadlock(int sockfd);
 
 void liberarClavesTomadas(t_deadlock_list* lista);
@@ -969,16 +976,11 @@ void bloquear_segun_clave(int sockfd);
 t_blocked_list listaAuxiliar;
 
 char* getValor(char* clave);
-char* getInstancia(char* clave);
 char* getBloqueados(char* clave);
 void enviarValor(int sockfd, char* clave);
 void enviarInstancia(int sockfd, char* clave);
 void enviarBloqueados(int sockfd, char* clave);
 t_clave_node* findByKeyIn(char* clave, t_clave_list lista);
-
-int do_set(char* valor, char* clave);
-
-Instancia getInstanciaSet(char* clave);
 
 void enviar_orden_instancia(int tamanio_parametros_set, void* un_socket,
 		int codigo_de_operacion);
@@ -989,26 +991,12 @@ void asignar_entradas(int sockfd);
 int obtener_tamanio_parametros_set(SET_Op set);
 void asignar_parametros_set(SET_Op set);
 
-int instancia_id;
-Instancia equitativeLoad(void); //Devuelve el socket que corresponde
-Instancia leastSpaceUsed(void);
 int desempatar(t_instancia_node* a, int b);
-Instancia keyExplicit(char * clave);
 int esperar_confirmacion_de_exito(int un_socket);
 void enviar_instancias_a_compactar();
 
 int instanciasDisponibles(void);
 void mostrar_listas();
-
-t_blocked_list tienenAlgoRetenido(t_blocked_list lista); //Filtra de los esis bloqueados los que si tienen recursos asignados
-bool tieneAlgoRetenido(uint32_t id);
-char * pasarACadena(t_blocked_list lista);
-t_blocked_list estanEnDL(t_blocked_list lista);
-bool puedeLlegarA(t_blocked_node * puntero);
-t_clave_node * duenioDe(char * claveBuscada);
-void liberar(t_blocked_list * lista);
 bool estaEn(t_blocked_list lista, uint32_t id);
-void agregar(t_blocked_list lista, t_blocked_node nodo);
-void comunicarDeadlock(int socket);
 
 #endif /* COORDINADOR_H_ */

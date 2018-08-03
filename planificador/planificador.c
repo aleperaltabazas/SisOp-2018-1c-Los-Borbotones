@@ -985,7 +985,6 @@ void datos_ESI(void) {
 
 	if (esi.id != ESI_error.id) {
 		printf("El ESI %i se encuentra en la cola de listos \n", id);
-		//printf("Su nombre es %s \n", esi.pokeesi);
 		printf("Su última ráfaga estimada es de %f \n", esi.rafaga_estimada);
 		printf("Su última ráfaga real es de %i \n", esi.rafaga_real);
 		printf("La estimación de su próxima ráfaga es de %f \n",
