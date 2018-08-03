@@ -99,8 +99,6 @@ void dame_datos(void);
 void bloquear_clave(void);
 void desbloquear_clave(void);
 void weed(void);
-void finishStatus(void);
-void finishListar(void);
 void bloquearSegunClave(void);
 void listar_bloqueados(void);
 void matar(void);
@@ -199,13 +197,6 @@ void deserializar_esi(void* esi_copiado, ESI* esi_receptor);
 	 * Argumentos:
 	 * 		void* esi_copiado: el buffer de memoria donde se contiene la información.
 	 * 		ESI* esi_receptor: el recipiente de la información del buffer.
-	 */
-
-void cerrar(void);
-	/*
-	 * Descripción: llama a cerrar_listas() y libera la variable executing_ESI.
-	 * Argumentos:
-	 * 		void
 	 */
 
 void cerrar_listas(void);
@@ -414,11 +405,12 @@ ESI get_ESI(uint32_t id, t_esi_list lista);
 	 * 		t_esi_list lista: la lista donde buscar.
 	 */
 
-void mostrar(t_esi_node* puntero);
+void mostrar(t_esi_list lista, pthread_mutex_t* semaforo);
 	/*
 	 * Descripción: muestra el id de los ESIs de una lista.
 	 * Argumentos:
-	 * 		t_esi_node* puntero: puntero de la lista.
+	 * 		t_esi_list lista
+	 * 		pthread_mutex_t* semaforo
 	 */
 
 void bloqueo_inicial(void);
@@ -427,7 +419,6 @@ void bloqueo_inicial(void);
 	 * Argumentos:
 	 * 		void
 	 */
-
 
 void startSigHandlers(void);
 	/*
@@ -449,15 +440,6 @@ ESI findByIDIn(uint32_t id, t_esi_list lista);
 	 * Argumentos:
 	 * 		uint32_t id: ID de ESI a buscar.
 	 * 		t_esi_list lista: lista donde buscar.
-	 */
-
-void avisarBloqueoESIPorClave(ESI esi, char* clave, int sockfd);
-	/*
-	 * Descripción: avisa al coordinador para que bloquee a un ESI detrás de la clave.
-	 * Argumentos:
-	 * 		ESI esi: ESI a bloquear.
-	 * 		char* clave: clave por la cual bloquear al ESI.
-	 * 		int sockfd: socket del coordinador.
 	 */
 
 float response_ratio(ESI esi);

@@ -762,21 +762,11 @@ bool existe(uint32_t id) {
 
 }
 
-ESI get_ESI(uint32_t id, t_esi_list lista) {
+void mostrar(t_esi_list lista, pthread_mutex_t* semaforo) {
+	pthread_mutex_lock(semaforo);
 	t_esi_node* puntero = lista.head;
+	pthread_mutex_unlock(semaforo);
 
-	while (puntero != NULL) {
-		if (id == puntero->esi.id) {
-			return puntero->esi;
-		}
-
-		puntero = puntero->sgte;
-	}
-
-	return ESI_error;
-}
-
-void mostrar(t_esi_node* puntero) {
 	if (puntero == NULL) {
 		printf(" no hay ESIs en la cola");
 	}
@@ -977,7 +967,10 @@ void interpretarYEjecutarCodigo(int comando) {
 }
 
 void show(void) {
+	bool aux = display;
+	display = true;
 	listarOpciones();
+	display = aux;
 }
 
 void show_debug(void) {
@@ -1267,17 +1260,14 @@ void dame_datos() {
 	else
 		printf("ESI ejecutando: %i \n", executing_ESI.id);
 
-	t_esi_node* puntero = ready_ESIs.head;
 	printf("ESIs listos para ejecutar:");
-	mostrar(puntero);
+	mostrar(ready_ESIs, &sem_ready_ESIs);
 
-	puntero = blocked_ESIs.head;
 	printf("ESIs bloqueados:");
-	mostrar(puntero);
+	mostrar(blocked_ESIs, &sem_blocked_ESIs);
 
-	puntero = finished_ESIs.head;
 	printf("ESIs terminados:");
-	mostrar(puntero);
+	mostrar(finished_ESIs, &sem_finished_ESIs);
 }
 
 void display_console() {
@@ -1395,28 +1385,6 @@ bool estaBloqueado(uint32_t id) {
 	ESI esi = findByIDIn(id, blocked_ESIs);
 
 	return esi.id == id;
-}
-
-bool estaTerminado(uint32_t id) {
-	ESI esi = findByIDIn(id, finished_ESIs);
-
-	return esi.id == id;
-}
-
-bool estaListo(uint32_t id) {
-	ESI esi = findByIDIn(id, ready_ESIs);
-
-	return esi.id == id;
-}
-
-void show_deadlock(void) {
-	package_int paquete;
-	char * ids = NULL;
-	paquete.packed = 62;
-	enviar_packed(paquete, socket_coordinador);
-	paquete.packed = recibir_packed(socket_coordinador).packed;
-	strcpy(ids, recibir_cadena(socket_coordinador, paquete.packed));
-	printf("%s", ids);
 }
 
 void weed() {
