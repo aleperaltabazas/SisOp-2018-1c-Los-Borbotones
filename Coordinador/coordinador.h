@@ -957,6 +957,37 @@ void destruir_semaforos();
  * 		void
  */
 
+bool mismoEspacio(Instancia unaInstancia, Instancia otraInstancia);
+/*
+ * Descripción: devuelve si el atributo espacio_ocupado de ambas instancias es igual.
+ * Argumentos:
+ * 		Instancia unaInstancia
+ * 		Instancia otraInstancia
+ */
+
+Instancia desempate(Instancia unaInstancia, Instancia otraInstancia);
+/*
+ * Descripción: devuelve la instancia cuyo atributo veces_llamado es menor. Si ambos son iguales, devuelve
+ * 		la primera.
+ * Argumentos:
+ * 		Instancia unaInstancia
+ * 		Instancia otraInstancia
+ */
+
+void resetearLlamados(void);
+/*
+ * Descripción: pone el atributo veces_llamado de todas las instancias de la lista en 0.
+ * Argumentos:
+ * 		void
+ */
+
+void actualizarLlamados(Instancia instancia);
+/*
+ * Descripción: aumenta el atributo veces_llamado de la instancia en la lista de instancias en 1.
+ * Argumentos:
+ * 		Instancia instancia
+ */
+
 Instancia getInstanciaSet(char* clave);
 
 Instancia equitativeLoad(void);

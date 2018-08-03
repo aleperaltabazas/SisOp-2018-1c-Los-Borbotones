@@ -611,6 +611,7 @@ uint32_t settearClave(SET_Op set, Instancia instancia) {
 	if (resultado == OP_SUCCESS) {
 		actualizarInstancia(instancia, set.clave);
 		actualizarClave(set.clave, set.valor);
+		actualizarLlamados(instancia);
 		log_set(set);
 		return OP_SUCCESS;
 	} else {
@@ -687,7 +688,9 @@ void asignar_parametros_set(SET_Op set) {
 }
 
 void actualizarEntradas(Instancia instancia, uint32_t entradas) {
+	pthread_mutex_lock(&sem_instancias);
 	t_instancia_node* puntero = instancias.head;
+	pthread_mutex_unlock(&sem_instancias);
 
 	while (puntero != NULL) {
 		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
@@ -703,6 +706,35 @@ void actualizarEntradas(Instancia instancia, uint32_t entradas) {
 
 		puntero = puntero->sgte;
 	}
+}
+
+void actualizarLlamados(Instancia instancia) {
+	pthread_mutex_lock(&sem_instancias);
+	t_instancia_node* puntero = instancias.head;
+	pthread_mutex_unlock(&sem_instancias);
+
+	while (puntero != NULL) {
+		if (mismoString(puntero->instancia.nombre, instancia.nombre)) {
+			log_debug(debug_logger, "Veces llamado actual: %i",
+					puntero->instancia.veces_llamado);
+			puntero->instancia.veces_llamado++;
+			log_debug(debug_logger, "Nuevo veces llamado: %i",
+					puntero->instancia.veces_llamado);
+		}
+
+		puntero = puntero->sgte;
+	}
+}
+
+void resetearLlamados(void) {
+	pthread_mutex_lock(&sem_instancias);
+	t_instancia_node* puntero = instancias.head;
+
+	while (puntero != NULL) {
+		puntero->instancia.veces_llamado = 0;
+		puntero = puntero->sgte;
+	}
+	pthread_mutex_unlock(&sem_instancias);
 }
 
 void enviar_store(STORE_Op store, Instancia instancia) {
@@ -991,12 +1023,25 @@ Instancia leastSpaceUsed(void) {
 		if (tieneMenosEspacio(puntero->instancia, instancia)
 				&& puntero->instancia.disponible) {
 			instancia = puntero->instancia;
+		} else if (mismoEspacio(instancia, puntero->instancia)) {
+			instancia = desempate(instancia, puntero->instancia);
 		}
 
 		puntero = puntero->sgte;
 	}
 
 	return instancia;
+}
+
+bool mismoEspacio(Instancia unaInstancia, Instancia otraInstancia) {
+	return unaInstancia.espacio_usado == otraInstancia.espacio_usado;
+}
+
+Instancia desempate(Instancia unaInstancia, Instancia otraInstancia) {
+	if (unaInstancia.veces_llamado > otraInstancia.veces_llamado)
+		return otraInstancia;
+	else
+		return unaInstancia;
 }
 
 Instancia keyExplicit(char* clave) {
@@ -1823,6 +1868,7 @@ void levantar_instancia(char* name, int sockfd) {
 	loggear("Instancia agregada correctamente");
 
 	redistribuir_claves();
+	resetearLlamados();
 
 }
 
