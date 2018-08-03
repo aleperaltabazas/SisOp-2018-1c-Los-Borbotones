@@ -26,6 +26,9 @@ int main(int argc, char** argv) {
 	while (disponibilidad_de_conexion) {
 		orden_del_coordinador orden;
 		orden = recibir_orden_coordinador(socket_coordinador);
+
+		pthread_mutex_lock(&sem_entradas);
+
 		switch (orden.codigo_operacion) {
 		case -1:
 			loggear("Orden de Fin");
@@ -61,7 +64,7 @@ int main(int argc, char** argv) {
 			revivir(socket_coordinador);
 			break;
 		case 100:
-			loggear("Envio de Ping para decir que estoy viva");
+			loggear("Envio de Ping, no morí (aún)");
 			confirmar_resultado_de_operacion(100);
 			break;
 		default:
@@ -69,6 +72,8 @@ int main(int argc, char** argv) {
 			exit(-1);
 			break;
 		}
+
+		pthread_mutex_unlock(&sem_entradas);
 	}
 
 	close(socket_coordinador);
