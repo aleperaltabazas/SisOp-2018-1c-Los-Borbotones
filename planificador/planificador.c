@@ -104,8 +104,7 @@ void sigHandler_sigint(int signo) {
 	log_warning(logger, "Tiraste un CTRL+C, macho, abortaste el proceso.");
 	log_error(logger, strerror(errno));
 
-	close(listening_socket);
-	exit(0);
+	cerrar();
 }
 
 void iniciar_hilos(void) {
@@ -1294,8 +1293,6 @@ void mostrame_clock(void) {
 void terminar(void) {
 	printf("Eligio cerrar el planificador \n");
 	cerrar();
-
-	exit(42);
 }
 
 void pausarOContinuar(void) {
