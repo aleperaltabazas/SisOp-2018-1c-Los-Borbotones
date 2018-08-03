@@ -18,6 +18,18 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(logger, "Tiraste un CTRL+C, macho, abortaste el proceso.");
+	log_error(logger, strerror(errno));
+
+	cerrar();
+	exit(-1);
+}
+
 void cerrar(void) {
 	avisar_cierre(socket_coordinador, this_id);
 	avisar_cierre(socket_planificador, this_id);
@@ -234,6 +246,7 @@ void iniciar(char** argv) {
 	iniciar_log("ESI", "ESI on duty!");
 	loggear("Cargando configuración.");
 	cargar_configuracion(argv);
+	startSigHandlers();
 
 	char* line = NULL;
 	size_t len = 0;

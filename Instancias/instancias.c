@@ -81,6 +81,17 @@ int main(int argc, char** argv) {
 	return EXIT_SUCCESS;
 }
 
+void startSigHandlers(void) {
+	signal(SIGINT, sigHandler_sigint);
+}
+
+void sigHandler_sigint(int signo) {
+	log_warning(logger, "Tiraste un CTRL+C, macho, abortaste el proceso.");
+	log_error(logger, strerror(errno));
+
+	exit(-1);
+}
+
 void revivir(int sockfd) {
 	int hay_mas_claves = 61;
 
@@ -215,8 +226,9 @@ void store(uint32_t tamanio_a_recibir, int socket_coordinador) {
 void iniciar(char** argv) {
 	iniciar_log("Instancias", "A new Instance joins the brawl!");
 	loggear("Cargando configuración.");
-
 	cargar_configuracion(argv);
+	startSigHandlers();
+
 	setup_montaje();
 	init_dump_thread();
 	iniciar_semaforos();
@@ -306,8 +318,7 @@ void* dump(void* buffer) {
 		entradas_node * nodo_aux = entradas_asignadas.head;
 
 		while (nodo_aux != NULL) {
-			char* valor_a_dumpear = leer_valor(
-					nodo_aux->una_entrada.pos_valor,
+			char* valor_a_dumpear = leer_valor(nodo_aux->una_entrada.pos_valor,
 					nodo_aux->una_entrada.tamanio_valor);
 
 			char* clave_a_dumpear = nodo_aux->una_entrada.clave;
@@ -727,12 +738,12 @@ entrada obtener_entrada_segun_LRU() {
 	entradas_node * puntero_auxiliar = entradas_atomicas.head;
 
 	//El primero de la lista de filtrados
-	int tiempo_del_elegido = puntero -> una_entrada.tiempo_sin_ser_referenciado;
-
+	int tiempo_del_elegido = puntero->una_entrada.tiempo_sin_ser_referenciado;
 
 	while (puntero_auxiliar != NULL) {
 
-		int tiempo_entrada_a_comparar = puntero_auxiliar -> una_entrada.tiempo_sin_ser_referenciado;
+		int tiempo_entrada_a_comparar =
+				puntero_auxiliar->una_entrada.tiempo_sin_ser_referenciado;
 
 		//Busco el que tenga el mayor tiempo sin ser referenciado, o sea el que tenga el menor tiempo de ultimo acceso
 		if (tiempo_del_elegido > tiempo_entrada_a_comparar) {
@@ -754,34 +765,35 @@ entrada obtener_entrada_segun_LRU() {
 	return entrada_a_eliminar;
 }
 
-entrada asignar_entrada(entradas_node * puntero){
+entrada asignar_entrada(entradas_node * puntero) {
 
 	entrada entrada_a_eliminar;
 
 	entrada_a_eliminar.clave = puntero->una_entrada.clave;
 	entrada_a_eliminar.pos_valor = puntero->una_entrada.pos_valor;
 	entrada_a_eliminar.tamanio_valor = puntero->una_entrada.tamanio_valor;
-	entrada_a_eliminar.tiempo_sin_ser_referenciado = puntero->una_entrada.tiempo_sin_ser_referenciado;
+	entrada_a_eliminar.tiempo_sin_ser_referenciado =
+			puntero->una_entrada.tiempo_sin_ser_referenciado;
 
 	return entrada_a_eliminar;
 
 }
 
-void liberar_entradas_atomicas(t_entrada_list entradas_atomicas){
+void liberar_entradas_atomicas(t_entrada_list entradas_atomicas) {
 	entradas_node * puntero = entradas_atomicas.head;
 	entradas_node * aux = puntero->siguiente;
 
-	while(puntero != NULL){
+	while (puntero != NULL) {
 		free(puntero);
 		puntero = aux;
-		if(aux != NULL){
-			aux = puntero -> siguiente;
+		if (aux != NULL) {
+			aux = puntero->siguiente;
 		}
 	}
 
 }
 
-t_entrada_list obtener_entradas_atomicas(){
+t_entrada_list obtener_entradas_atomicas() {
 
 	t_entrada_list entradas_atomicas;
 	entradas_atomicas.head = NULL;
@@ -790,22 +802,23 @@ t_entrada_list obtener_entradas_atomicas(){
 
 	while (puntero != NULL) {
 
-		entrada una_entrada = puntero -> una_entrada;
+		entrada una_entrada = puntero->una_entrada;
 
 		if (es_entrada_atomica(una_entrada)) {
 			agregar_entrada(una_entrada, &entradas_atomicas);
 		}
 
-		puntero = puntero -> siguiente;
+		puntero = puntero->siguiente;
 
 	}
 
 	return entradas_atomicas;
 }
 
-bool es_entrada_atomica(entrada una_entrada){
+bool es_entrada_atomica(entrada una_entrada) {
 
-	int entradas_que_ocupa = obtener_entradas_que_ocupa(una_entrada.tamanio_valor);
+	int entradas_que_ocupa = obtener_entradas_que_ocupa(
+			una_entrada.tamanio_valor);
 
 	return entradas_que_ocupa == 1;
 }
@@ -1304,7 +1317,7 @@ void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 	} else if (codigo_exito_operacion == 112) {
 		loggear("CONFIRMO STORE");
 	} else if (codigo_exito_operacion == 114) {
-	 loggear("COMPACTACION FINALIZADA");
+		loggear("COMPACTACION FINALIZADA");
 	} else if (codigo_exito_operacion == 115) {
 		loggear("CONFIRMO LECTURA");
 	} else if (codigo_exito_operacion == 140) {

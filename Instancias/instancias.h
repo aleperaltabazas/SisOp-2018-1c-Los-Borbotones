@@ -173,6 +173,20 @@ void iniciar_semaforos(void);
 	 * 		void
 	 */
 
+void startSigHandlers(void);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		void
+	 */
+
+void sigHandler_sigint(int signo);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		int signo
+	 */
+
 void store(uint32_t longitud_parametros, int socket_coordinador);
 
 int recieve_and_deserialize_set(parametros_set *parametros, int socketCliente);

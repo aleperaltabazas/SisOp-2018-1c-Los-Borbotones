@@ -206,4 +206,18 @@ op_response recibir_respuesta(int sockfd);
 	 * 		int sockfd
 	 */
 
+void startSigHandlers(void);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		void
+	 */
+
+void sigHandler_sigint(int signo);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		int signo
+	 */
+
 #endif /* ESI_H_ */
