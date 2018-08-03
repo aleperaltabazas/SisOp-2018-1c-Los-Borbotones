@@ -275,6 +275,7 @@ void iniciar(char** argv) {
 			agregar_parseo(&parsed_ops, parsed);
 			parsedLines++;
 		} else {
+			destruir_operacion(parsed);
 			skippedLines++;
 		}
 
@@ -336,10 +337,14 @@ t_esi_operacion parsear(char* line) {
 	if (parsed.valido) {
 		switch (parsed.keyword) {
 		case GET:
+			parsed.valido = verificarLongitud(parsed.argumentos.GET.clave);
 			break;
 		case SET:
+			parsed.valido = verificarLongitud(parsed.argumentos.SET.clave)
+					&& verificarLongitud(parsed.argumentos.SET.valor);
 			break;
 		case STORE:
+			parsed.valido = verificarLongitud(parsed.argumentos.STORE.clave);
 			break;
 		default:
 			log_warning(logger, "No se pudo interpretar la linea.");
@@ -353,9 +358,20 @@ t_esi_operacion parsear(char* line) {
 	return parsed;
 }
 
+bool verificarLongitud(char* string) {
+	int longitud = strlen(string) + 1;
+	log_debug(debug_logger, "Longitud: %i", longitud);
+
+	return longitud <= 40;
+}
+
 void clear(t_parsed_list* lista) {
+	t_parsed_node* puntero;
+
 	while (lista->head != NULL) {
-		eliminar_parseo(lista);
+		puntero = lista->head;
+		lista->head = lista->head->sgte;
+		free(puntero);
 	}
 }
 

@@ -206,6 +206,13 @@ op_response recibir_respuesta(int sockfd);
 	 * 		int sockfd
 	 */
 
+bool verificarLongitud(char* string);
+	/*
+	 * Descripción: devuelve si la longitud (más 1) de string es menor o igual a 40.
+	 * Argumentos:
+	 * 		char* string
+	 */
+
 void startSigHandlers(void);
 	/*
 	 * Descripción:
