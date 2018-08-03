@@ -33,18 +33,18 @@ int main(int argc, char** argv) {
 			disponibilidad_de_conexion = 0;
 			break;
 		case 11:
-			loggear("SET");
+			loggear("Operacion SET");
 			set(orden.tamanio_a_enviar, socket_coordinador);
 			break;
 		case 12:
-			loggear("STORE");
+			loggear("Operacion STORE");
 			store(orden.tamanio_a_enviar, socket_coordinador);
 			break;
 		case 13:
-			loggear("Fallo");
+			loggear("Fallo en la operacion");
 			break;
 		case 14:
-			loggear("Compactar");
+			loggear("Operacion de COMPACTACION");
 			compactacion();
 			break;
 		case 15:
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 			revivir(socket_coordinador);
 			break;
 		case 100:
-			loggear("Ping.");
+			loggear("Envio de Ping para decir que estoy viva");
 			confirmar_resultado_de_operacion(100);
 			break;
 		default:
@@ -101,7 +101,6 @@ void revivir(int sockfd) {
 		FILE * archivo_a_leer = open_file(clave, "r", dump_spot);
 
 		if (archivo_a_leer == NULL) {
-			loggear("No se pudo encontrar esa clave en los archivos");
 			confirmar_resultado_de_operacion(152);
 			free(clave);
 		} else {
@@ -130,7 +129,7 @@ void revivir(int sockfd) {
 char * recibir_clave(int sockfd) {
 	package_int tamanio_clave = recibir_packed(sockfd);
 	char *buffer_clave = recibir_cadena(sockfd, tamanio_clave.packed);
-	log_trace(logger, "Clave recibida!: %s", buffer_clave);
+	log_debug(logger, "Clave recibida!: %s", buffer_clave);
 	confirmar_resultado_de_operacion(151);
 	return buffer_clave;
 }
@@ -149,7 +148,6 @@ char * leer_valor_de_archivo(FILE * archivo_a_leer) {
 	}
 
 	linea_parseada[read] = '\0';
-	log_warning(logger, "Linea parseada: %s, %i", linea_parseada, read);
 	return linea_parseada;
 }
 
@@ -181,7 +179,7 @@ void store(uint32_t tamanio_a_recibir, int socket_coordinador) {
 
 	char* clave = recibir_cadena(socket_coordinador, tamanio_a_recibir);
 
-	log_trace(logger, "CLAVE RECIBIDA: %s", clave);
+	log_debug(logger, "Clave recibida: %s", clave);
 
 	int posicion_de_entrada = posicion_de_entrada_con_clave(clave);
 
@@ -211,8 +209,6 @@ void store(uint32_t tamanio_a_recibir, int socket_coordinador) {
 
 	valor[tamanio_valor] = '\0';
 
-	log_trace(logger, "%s", valor);
-
 	write_file(clave, valor, PUNTO_MONTAJE);
 
 	free(valor);
@@ -240,8 +236,8 @@ void iniciar_semaforos(void) {
 
 void init_dump_thread(void) {
 	pthread_t dump_thread;
-	strcpy(dump_spot, "/home/alesaurio/dump/");
-	//strcpy(dump_spot, "/home/utnso/dump/");
+	//strcpy(dump_spot, "/home/alesaurio/dump/");
+	strcpy(dump_spot, "/home/utnso/dump/");
 
 	crear_directorio(dump_spot);
 
@@ -268,19 +264,15 @@ FILE* open_file(char* file_name, char* mode, char* directory) {
 		return NULL;
 	}
 
-	log_info(logger, "Archivo abierto exitosamente");
-
-	log_trace(logger, "DIRECTORIO: %s PATH: %s", directory, path);
-
 	free(path);
 
 	return fd;
 }
 
 void write_file(char* file_name, char* text, char* directory) {
+
 	FILE* fd = open_file(file_name, "w", directory);
 
-	log_trace(logger, "text: %s", text);
 	int res = fputs(text, fd);
 
 	if (res < 0) {
@@ -288,10 +280,8 @@ void write_file(char* file_name, char* text, char* directory) {
 		exit(-1);
 	}
 
-	//log_trace(logger, "%s", text);
-
-	//loggear("Archivo escrito correctamente");
 	fclose(fd);
+
 }
 
 void cerrar_directorio(char* directorio) {
@@ -311,7 +301,7 @@ void* dump(void* buffer) {
 
 	while (1) {
 		sleep(DUMP);
-		loggear("Iniciando DUMP, esto es lo que tengo almacenado:");
+		log_info(logger, "Iniciando DUMP");
 		leer_valores_almacenados();
 
 		pthread_mutex_lock(&sem_entradas);
@@ -322,10 +312,7 @@ void* dump(void* buffer) {
 					nodo_aux->una_entrada.tamanio_valor);
 
 			char* clave_a_dumpear = nodo_aux->una_entrada.clave;
-			//log_debug(logger, "Clave: %s", clave_a_dumpear);
-			//log_debug(logger, "Valor: %s", valor_a_dumpear);
 
-			//log_trace(logger, "Persistiendo %s...", clave_a_dumpear);
 			write_file(clave_a_dumpear, valor_a_dumpear, dump_path);
 
 			free(valor_a_dumpear);
@@ -344,7 +331,7 @@ void setup_montaje(void) {
 
 	crear_directorio(PUNTO_MONTAJE);
 
-	log_info(logger, "Punto de montaje creado exitósamente.");
+	log_info(logger, "Punto de montaje creado exitosamente.");
 
 }
 
@@ -443,10 +430,9 @@ void inicializar(int cantidad_entradas, int tamanio_entrada) {
 orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 
 	orden_del_coordinador orden;
-	orden_del_coordinador * buffer_orden = malloc(
-			sizeof(orden_del_coordinador));
+	orden_del_coordinador * buffer_orden = malloc(sizeof(orden_del_coordinador));
 
-	loggear("Esperando orden del coordinador...");
+	log_info(logger, "Esperando orden del coordinador...");
 
 	int res = recv(socket_coordinador, buffer_orden,
 			sizeof(orden_del_coordinador), 0);
@@ -459,10 +445,7 @@ orden_del_coordinador recibir_orden_coordinador(int socket_coordinador) {
 		return orden;
 	}
 
-	log_trace(logger, "Orden recibida!, bytes recibidos: %i", res);
-
-	log_trace(logger, "cod. op: %d, tamanio: %d",
-			buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
+	log_trace(logger, "cod. op: %d, tamanio: %d", buffer_orden->codigo_operacion, buffer_orden->tamanio_a_enviar);
 
 	orden.codigo_operacion = buffer_orden->codigo_operacion;
 
@@ -486,16 +469,16 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 	int posicion_entrada_clave = posicion_de_entrada_con_clave(
 			parametros.clave);
 
-	log_trace(logger, "tamanio_valor %d, tamanio_clave %d",
+	log_debug(logger, "Tamanio valor: %d, Tamanio clave: %d",
 			parametros.tamanio_valor, parametros.tamanio_clave);
 
 	if (posicion_entrada_clave >= 0) {
-		loggear("La entrada ya existe, actualizando...");
+		log_info(logger, "La entrada ya existe, actualizando...");
 		actualizar_entrada(parametros, posicion_entrada_clave);
 	}
 
 	else {
-		loggear("La entrada no existe, generando nueva entrada...");
+		log_info(logger, "La entrada no existe, generando nueva entrada...");
 		generar_entrada(parametros);
 	}
 
@@ -506,7 +489,7 @@ void set(uint32_t longitud_parametros, int socket_coordinador) {
 int posicion_de_entrada_con_clave(char* clave) {
 
 	if (entradas_asignadas.head == NULL) {
-		loggear("No hay entradas en la lista");
+		log_debug(logger, "No hay entradas en la lista");
 		return -1;
 	}
 
@@ -525,15 +508,6 @@ int posicion_de_entrada_con_clave(char* clave) {
 	}
 
 	return -1;
-}
-
-int comparar_claves(char * clave, int tamanio_clave, char * clave_a_comparar) {
-	char * auxiliar_clave = malloc(tamanio_clave + 1);
-	memcpy(auxiliar_clave, clave, tamanio_clave);
-	auxiliar_clave[tamanio_clave] = '\0';
-	int comparacion = strcmp(auxiliar_clave, clave_a_comparar);
-	free(auxiliar_clave);
-	return comparacion;
 }
 
 void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
@@ -572,7 +546,7 @@ void actualizar_entrada(parametros_set parametros, int posicion_entrada_clave) {
 	cantidad_entradas_ocupadas.packed =
 			(uint32_t) obtener_cantidad_de_entradas_ocupadas();
 
-	log_debug(logger, "Enviando cantidad de entradas ocupadas... %i",
+	log_debug(logger, "Enviando cantidad de entradas ocupadas: %i",
 			cantidad_entradas_ocupadas.packed);
 
 	enviar_packed(cantidad_entradas_ocupadas, socket_coordinador);
@@ -598,9 +572,8 @@ void generar_entrada(parametros_set parametros) {
 			entradas_que_ocupa);
 
 	if (entrada_seleccionada >= 0) {
-		log_debug(logger, "valor a generar: %s", parametros.valor);
-		almacenar_valor(entrada_seleccionada, entradas_que_ocupa,
-				parametros.valor);
+		log_debug(logger, "Valor a generar: %s", parametros.valor);
+		almacenar_valor(entrada_seleccionada, entradas_que_ocupa, parametros.valor);
 		actualizar_entradas(entrada_seleccionada, entradas_que_ocupa);
 		crear_entrada(parametros, entrada_seleccionada);
 
@@ -611,7 +584,7 @@ void generar_entrada(parametros_set parametros) {
 		cantidad_entradas_ocupadas.packed =
 				(uint32_t) obtener_cantidad_de_entradas_ocupadas();
 
-		log_debug(logger, "Enviando cantidad de entradas ocupadas... %i",
+		log_debug(logger, "Enviando cantidad de entradas ocupadas: %i",
 				cantidad_entradas_ocupadas.packed);
 
 		enviar_packed(cantidad_entradas_ocupadas, socket_coordinador);
@@ -649,13 +622,15 @@ void eliminar_entrada_segun_algoritmo() {
 	switch (ALGORITMO_REEMPLAZO) {
 	case CIRC:
 		borrar_entrada(obtener_entrada_segun_CIRC());
-		log_trace(logger, "CIRC, Puntero: %i", puntero_entrada);
+		log_info(logger, "Reemplazo CIRC finalizado! Nueva posicion del puntero: %i", puntero_entrada);
 		break;
 	case LRU:
 		borrar_entrada(obtener_entrada_segun_LRU());
+		log_info(logger, "Reemplazo LRU finalizado! Nueva posicion del puntero: %i", puntero_entrada);
 		break;
 	case BSU:
 		borrar_entrada(obtener_entrada_segun_BSU());
+		log_info(logger, "Reemplazo BSU finalizado! Nueva posicion del puntero: %i", puntero_entrada);
 		break;
 	default:
 		break;
@@ -755,7 +730,7 @@ entrada obtener_entrada_segun_LRU() {
 
 	}
 
-	log_trace(logger, "TIEMPO DE LA ENTRADA SELECCIONADA: %i",
+	log_debug(logger, "Tiempo de la entrada seleccionada: %i",
 			puntero->una_entrada.tiempo_sin_ser_referenciado);
 
 	entrada entrada_a_eliminar = asignar_entrada(puntero);
@@ -812,6 +787,11 @@ t_entrada_list obtener_entradas_atomicas() {
 
 	}
 
+	if(entradas_atomicas.head == NULL){
+		log_warning(logger, "Que problema! No hay entradas para borrar. Borro la primera por default");
+		agregar_entrada(first(), &entradas_atomicas);
+	}
+
 	return entradas_atomicas;
 }
 
@@ -860,6 +840,8 @@ entrada obtener_entrada_segun_BSU() {
 
 	entrada entrada_a_eliminar = asignar_entrada(puntero);
 
+	log_debug(logger, "Tamanio del valor de la entrada seleccionada: %i", entrada_a_eliminar.tamanio_valor);
+
 	liberar_entradas_atomicas(entradas_atomicas);
 
 	return entrada_a_eliminar;
@@ -888,9 +870,6 @@ void borrar_entrada(entrada entrada_a_eliminar) {
 				aux = puntero;
 				puntero = puntero->siguiente;
 			}
-
-			log_trace(logger, "Estoy por borrar la entrada: %d",
-					puntero->una_entrada.pos_valor);
 
 			if (puntero->siguiente != NULL) {
 				aux->siguiente = puntero->siguiente;
@@ -1056,11 +1035,9 @@ void compactacion() {
 		return;
 	}
 
-	loggear("Estoy por compactar");
-
 	int total_de_entradas_ocupadas = obtener_cantidad_de_entradas_ocupadas();
 
-	log_trace(logger, "entradas ocupadas: %i", total_de_entradas_ocupadas);
+	log_debug(logger, "Entradas ocupadas: %i", total_de_entradas_ocupadas);
 
 	//Como ya se que esta libre le sumo 1
 	int i = primera_entrada_disponible + 1;
@@ -1069,7 +1046,7 @@ void compactacion() {
 
 		if (entradas_disponibles[i]) {
 
-			log_trace(logger, "Entrada encontrada: %i", i);
+			log_info(logger, "Entrada encontrada para desplazar: %i", i);
 
 			entradas_node * puntero_entrada_a_desplazar =
 					buscar_entrada_en_posicion(i);
@@ -1082,9 +1059,6 @@ void compactacion() {
 			// -1 porque despues le hago el i++
 			i += obtener_entradas_que_ocupa(
 					puntero_entrada_a_desplazar->una_entrada.tamanio_valor) - 1;
-
-			log_trace(logger, "POS ENTRADA NUEVA: %i",
-					puntero_entrada_a_desplazar->una_entrada.pos_valor);
 
 		}
 
@@ -1146,9 +1120,6 @@ void actualizar_entradas_disponibles(int entradas_ocupadas) {
 		entradas_disponibles[i] = 1;
 	}
 
-	//Tendria que ver si se hizo el ultimo i++
-	log_trace(logger, "El valor de i es: %d", i);
-
 	for (j = i; j < cantidad_entradas; j++) {
 		entradas_disponibles[j] = 0;
 	}
@@ -1209,8 +1180,8 @@ void desplazar(entradas_node * puntero_entrada, int nueva_posicion) {
 	int entradas_que_ocupa = obtener_entradas_que_ocupa(
 			puntero_entrada->una_entrada.tamanio_valor);
 
-	log_trace(logger,
-			"Posicion Actual: %i, Nueva posicion: %i, Entradas que ocupa: %i",
+	log_info(logger,
+			"Posicion actual: %i, Nueva posicion: %i, Entradas que ocupa: %i",
 			posicion_actual, nueva_posicion, entradas_que_ocupa);
 
 	desplazar_memoria(nueva_posicion, posicion_actual, entradas_que_ocupa);
@@ -1219,8 +1190,6 @@ void desplazar(entradas_node * puntero_entrada, int nueva_posicion) {
 
 void desplazar_memoria(int posicion_a_desplazarse, int posicion_actual,
 		int entradas_del_valor) {
-
-	loggear("Estoy por mover la memoria");
 
 	memcpy(almacenamiento_de_valores + posicion_a_desplazarse * tamanio_entrada,
 			almacenamiento_de_valores + posicion_actual * tamanio_entrada,
@@ -1291,128 +1260,47 @@ void leer_valores_almacenados() {
 		nodo_auxiliar = nodo_auxiliar->siguiente;
 	}
 
-	log_trace(logger, "PUNTERO: %i", puntero_entrada);
+	log_trace(logger, "Posicion del puntero actual: %i", puntero_entrada);
 
 	int i;
+
 	for (i = 0; i < cantidad_entradas; i++) {
-		log_trace(logger, "%i", entradas_disponibles[i]);
+		log_debug(logger, "%i", entradas_disponibles[i]);
 	}
 
-	//confirmar_resultado_de_operacion(115);
+
 
 }
 
 void confirmar_resultado_de_operacion(int codigo_exito_operacion) {
 
 	if (codigo_exito_operacion == 100) {
-		loggear("ENVIO DE PING");
+		log_info(logger, "Envio de Ping finalizado con exito!");
 	} else if (codigo_exito_operacion == 51) {
-		loggear("CLAVE RESTAURADA CORRECTAMENTE");
+		log_info(logger, "Clave restaurada con exito!");
 	} else if (codigo_exito_operacion == 101) {
-		loggear("SOLICITUD DE COMPACTACION ENVIADA");
+		log_info(logger, "Envio de solicitud de compactacion");
 	} else if (codigo_exito_operacion == 110) {
-		loggear("ENTRADAS Y TAMANIO INICIADO CORRECTAMENTE");
+		log_info(logger, "Entradas y tamanio inicializadas con exito!");
 	} else if (codigo_exito_operacion == 111) {
-		loggear("CONFIRMO SET");
+		log_info(logger, "SET finalizado con exito!");
 	} else if (codigo_exito_operacion == 112) {
-		loggear("CONFIRMO STORE");
+		log_info(logger, "STORE finalizado con exito!");
 	} else if (codigo_exito_operacion == 114) {
-		loggear("COMPACTACION FINALIZADA");
-	} else if (codigo_exito_operacion == 115) {
-		loggear("CONFIRMO LECTURA");
+		log_info(logger, "Compactacion finalizada!");
 	} else if (codigo_exito_operacion == 140) {
-		loggear("CONFIRMO NOMBRE ENVIADO");
+		log_info(logger, "Envio de nombre finalizado!");
 	} else if (codigo_exito_operacion == 150) {
-		loggear("RESURRECCION COMPLETA");
+		log_info(logger, "Instancia lista para volver a trabajar!");
 	} else if (codigo_exito_operacion == 151) {
-		loggear("CLAVE RECIBIDA CON EXITO");
+		//log_debug(logger, "Clave recibida con exito!");
 	} else if (codigo_exito_operacion == 152) {
-		loggear("CLAVE NO FUE DUMPEADA");
+		log_warning(logger, "La clave no fue dumpeada :(");
 	} else if (codigo_exito_operacion == 666) {
-		loggear("PIDIENDO ABORTO DEL ESI");
+		log_warning(logger, "PIDIENDO ABORTO DEL ESI");
 	}
 
 	package_int ping = { .packed = codigo_exito_operacion };
 
 	enviar_packed(ping, socket_coordinador);
 }
-
-/*
- //Lleno con el valor ejemplo
- void caso_de_prueba_1() {
- valor = "EjemploX";
- while (disponibilidad_de_conexion) {
- resultado_almacenamiento = almacenar_valor(entrada_seleccionada, entradas_que_ocupa, valor);
- if (resultado_almacenamiento == EXIT_FAILURE) {
- disponibilidad_de_conexion = 0;
- }
- }
- }
-
- //Lleno con distintos tipos de valores que ocupan una entrada
- void caso_de_prueba_2() {
- int t = 0;
- while (disponibilidad_de_conexion) {
- //Recibimos el valor
- if (t == 0) {
- valor = "Ejemplo1";
- } else if (t == 1) {
- valor = "Ejemplo2";
- } else if (t == 8) {
- valor = "Algo";
- } else {
- valor = "Default";
- }
- resultado_almacenamiento = almacenar_valor();
- if (resultado_almacenamiento == EXIT_FAILURE) {
- disponibilidad_de_conexion = 0;
- }
- t++;
- }
- }
-
- //Valor que ocupa dos entradas
- void caso_de_prueba_3() {
- valor = "EjemploEjemplo";
- while (disponibilidad_de_conexion) {
- resultado_almacenamiento = almacenar_valor();
- if (resultado_almacenamiento == EXIT_FAILURE) {
- disponibilidad_de_conexion = 0;
- }
- }
- }
-
- //Un valor que ocupa todas las entradas
- void caso_de_prueba_4() {
- valor =
- "80caracteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeees";
- while (disponibilidad_de_conexion) {
- resultado_almacenamiento = almacenar_valor();
- if (resultado_almacenamiento == EXIT_FAILURE) {
- disponibilidad_de_conexion = 0;
- }
- }
- }
-
- //Lleno con distintos tipos de valores que ocupan una o mas entradas
- void caso_de_prueba_5() {
- int t = 0;
- while (disponibilidad_de_conexion) {
- //Recibimos el valor
- if (t == 0) {
- valor = "20caractereeeeeeeees";
- } else if (t == 1) {
- valor = "15caractereeees";
- } else if (t == 2) {
- valor = "40caractereeeeeeeeeeeeeeeeeeeeeeeeeeeees";
- } else {
- valor = "1";
- }
- resultado_almacenamiento = almacenar_valor();
- if (resultado_almacenamiento == EXIT_FAILURE) {
- disponibilidad_de_conexion = 0;
- }
- t++;
- }
- }
- */

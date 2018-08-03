@@ -27,12 +27,12 @@ void cerrar_cadena(char* cadena) {
 	cadena[i] = '\0';
 }
 
-bool esDePuntuacion(char caracter) {
-	char caracteresDePuntuacion[] = "!,#~$%&/()=: \"\'¿¡|";
+bool esDePuntuacionOEnie(char caracter) {
+	char caracteresDePuntuacionYEnie[] = "!,#~$%&/()=: \"\'¿¡|ñ";
 
 	int i = 0;
-	while (caracteresDePuntuacion[i]) {
-		if (caracter == caracteresDePuntuacion[i]) {
+	while (caracteresDePuntuacionYEnie[i]) {
+		if (caracter == caracteresDePuntuacionYEnie[i]) {
 			return true;
 		}
 
@@ -43,5 +43,5 @@ bool esDePuntuacion(char caracter) {
 }
 
 bool esParseable(char caracter) {
-	return isalnum(caracter) || esDePuntuacion(caracter);
+	return isalnum(caracter) || esDePuntuacionOEnie(caracter);
 }
