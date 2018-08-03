@@ -243,7 +243,7 @@ uint32_t store(t_esi_operacion parsed, int socket_coordinador) {
 }
 
 void iniciar(char** argv) {
-	iniciar_log("ESI", "ESI on duty!");
+	iniciar_log(argv[2], "ESI on duty!");
 	loggear("Cargando configuración.");
 	cargar_configuracion(argv);
 	startSigHandlers();

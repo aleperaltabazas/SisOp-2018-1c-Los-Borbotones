@@ -492,8 +492,6 @@ void conseguir_desbloqueados(void) {
 			return;
 		} else if (respuesta_desbloqueado.aviso == 15) {
 			desbloquear_ESI(respuesta_desbloqueado.id);
-			log_info(logger, "El ESI %i fue desbloqueado",
-					respuesta_desbloqueado.id);
 
 			if (ALGORITMO_PLANIFICACION.desalojo) {
 				desalojar();
