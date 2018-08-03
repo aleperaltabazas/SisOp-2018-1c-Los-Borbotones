@@ -66,17 +66,14 @@ t_esi_list finished_ESIs;
 
 //Semaforos
 
-pthread_mutex_t sem_ESIs_size;
 pthread_mutex_t sem_ID;
-pthread_mutex_t sem_ESI_ID;
-pthread_mutex_t mutex_consola_planificacion;
 pthread_mutex_t sem_clock;
-pthread_mutex_t sem_planificacion;
 pthread_mutex_t sem_ejecucion;
 pthread_mutex_t sem_ejecutando;
 pthread_mutex_t sem_ready_ESIs;
-pthread_mutex_t sem_server_socket;
-pthread_mutex_t sem_socket_coordinador;
+pthread_mutex_t sem_ready_ESIs_size;
+pthread_mutex_t sem_blocked_ESIs;
+pthread_mutex_t sem_finished_ESIs;
 
 //Hilos
 
@@ -566,6 +563,35 @@ bool estaBloqueado(uint32_t id);
 	 * Descripción: devuelve si un ESI se encuentra en la cola de bloqueados.
 	 * Argumentos:
 	 * 		uint32_t id
+	 */
+
+void destruir_listas(void);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		void
+	 */
+
+void destruir_semaforos(void);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		void
+	 */
+
+void destruir_loggers(void);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		void
+	 */
+
+void cerrar_conexion_lista(t_esi_list lista, pthread_mutex_t* semaforo);
+	/*
+	 * Descripción:
+	 * Argumentos:
+	 * 		t_esi_list lista
+	 * 		pthread_mutex_t* semaforo
 	 */
 
 #endif /* PLANIFICADOR_H_ */

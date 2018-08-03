@@ -57,6 +57,13 @@ ESI headESIs(t_esi_list lista);
 	 * 		t_esi_list* lista: lista a obtener el elemento.
 	 */
 
+void destroyESIList(t_esi_list* lista);
+	/*
+	 * Descripción: libera la memoria ocupada por la lista.
+	 * Argumentos:
+	 * 		t_esi_list* lista
+	 */
+
 /*
  * ==============================
  * =====     INSTANCIAS     =====

@@ -129,6 +129,42 @@ float dame_retardo(int retardo_int) {
 	return ret_val;
 }
 
+void cerrar(void) {
+	cerrar_instancias();
+	destruir_listas();
+	destruir_semaforos();
+
+	close(listening_socket);
+	exit(EXIT_SUCCESS);
+}
+
+void cerrar_instancias(void) {
+	pthread_mutex_lock(&sem_instancias);
+	t_instancia_node* puntero = instancias.head;
+	while (puntero != NULL) {
+		enviar_orden_instancia(0, (void*) (intptr_t) puntero->instancia.sockfd,
+				-1);
+
+		close(puntero->instancia.sockfd);
+		puntero = puntero->sgte;
+	}
+	pthread_mutex_unlock(&sem_instancias);
+}
+
+void destruir_listas(void) {
+	pthread_mutex_lock(&sem_instancias);
+	deadlockListDestroy(&ESIs);
+	pthread_mutex_unlock(&sem_instancias);
+}
+
+void destruir_semaforos(void) {
+	pthread_mutex_destroy(&sem_socket_operaciones_coordi);
+	pthread_mutex_destroy(&sem_instancias);
+	pthread_mutex_destroy(&sem_listening_socket);
+	pthread_mutex_destroy(&sem_desbloqueados);
+	pthread_mutex_destroy(&sem_ESIs);
+}
+
 int manejar_cliente(int server_socket, int socketCliente, package_int id) {
 
 	log_info(logger, "Esperando cliente...");
@@ -1227,8 +1263,9 @@ void* atender_Planificador(void* un_socket) {
 		if (aviso_plani.aviso == 0) {
 			log_info(logger,
 					"Fin de Planificador. Cerrando sesión y terminando.");
-			exit(42);
-			break;
+
+			cerrar();
+			exit(EXIT_SUCCESS);
 		}
 
 		else if (aviso_plani.aviso == 15) {
@@ -1535,7 +1572,8 @@ void desbloquear(char* clave) {
 			liberar_ESI(&blocked_ESIs, proximo_desbloqueado);
 		}
 
-		log_debug(debug_logger, "Próximo desbloqueado: %i", proximo_desbloqueado);
+		log_debug(debug_logger, "Próximo desbloqueado: %i",
+				proximo_desbloqueado);
 
 		free(dup_clave);
 	}
@@ -2361,7 +2399,8 @@ void send_orden_no_exit(int op_code, int sockfd) {
 
 void enviar_valores_set(int tamanio_parametros_set, void * un_socket) {
 
-	log_debug(debug_logger, "Tamanio parametros set: %i", tamanio_parametros_set);
+	log_debug(debug_logger, "Tamanio parametros set: %i",
+			tamanio_parametros_set);
 
 	log_debug(logger,
 			"Valor_set, tamanio_valor: %i valor: %s tamanio_clave %i clave %s",

@@ -24,6 +24,8 @@ void cerrar(void) {
 
 	close(socket_planificador);
 	close(socket_coordinador);
+
+	clear(&parsed_ops);
 }
 
 void ejecutar_sentencias(void) {
@@ -121,13 +123,19 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 	log_debug(debug_logger, "%i", orden.aviso);
 
 	if (orden.aviso == -1) {
-		log_info(logger, "Orden de terminación.");
+		log_error(logger, "Orden de terminación.");
 		cerrar();
 
 		exit(1);
 	} else if (orden.aviso == 2) {
 		loggear("Orden de ejecucion recibida.");
-	} else {
+	} else if (orden.aviso == 99) {
+		log_info(logger, "Fin del planificador. Cerrando y terminando.");
+		clear(&parsed_ops);
+		exit(-1);
+	}
+
+	else {
 		salir_con_error("Orden desconocida.", socket_planificador);
 	}
 

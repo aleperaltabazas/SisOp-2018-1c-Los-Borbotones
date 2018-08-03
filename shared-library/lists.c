@@ -79,6 +79,22 @@ ESI headESIs(t_esi_list lista) {
 
 }
 
+void destroyESIList(t_esi_list* lista) {
+	t_esi_node* puntero;
+
+	if (lista->head == NULL) {
+		return;
+	}
+
+	while (lista->head != NULL) {
+		puntero = lista->head;
+		lista->head = puntero->sgte;
+		free(puntero);
+	}
+
+	lista->head = NULL;
+}
+
 /*
  * ==============================
  * =====     INSTANCIAS     =====

@@ -928,6 +928,34 @@ bool chequearNull(t_deadlock_list lista, int sockfd);
  * 		int sockfd
  */
 
+void cerrar(void);
+/*
+ * Descripción:
+ * Argumentos:
+ * 		void
+ */
+
+void cerrar_instancias();
+/*
+ * Descripción:
+ * Argumentos:
+ * 		void
+ */
+
+void destruir_listas();
+/*
+ * Descripción:
+ * Argumentos:
+ * 		void
+ */
+
+void destruir_semaforos();
+/*
+ * Descripción:
+ * Argumentos:
+ * 		void
+ */
+
 void getDeadlock(int sockfd);
 
 void liberarClavesTomadas(t_deadlock_list* lista);
