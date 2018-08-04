@@ -1,4 +1,3 @@
-# tp-2018-1c-Los-borbotones
+# Welcome
 
-Link directo a la checklist:
-https://github.com/sisoputnfrba/tp-2018-1c-Los-borbotones/issues/4
+:bowtie:
