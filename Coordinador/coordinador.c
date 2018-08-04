@@ -435,7 +435,7 @@ int get(int socket_cliente, uint32_t id) {
 	op_response response = { .packed = doGet(get) };
 
 	log_debug(debug_logger, "Response GET: %i", response.packed);
-	sleep(1);
+	sleep(RETARDO);
 	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
@@ -464,7 +464,7 @@ int set(int socket_cliente, uint32_t id) {
 
 	log_debug(debug_logger, "Response SET: %i", response.packed);
 
-	sleep(1);
+	sleep(RETARDO);
 	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
@@ -478,7 +478,7 @@ int store(int socket_cliente, uint32_t id) {
 	op_response response = { .packed = doStore(store) };
 
 	log_debug(debug_logger, "Response STORE: %i", response.packed);
-	sleep(1);
+	sleep(RETARDO);
 	send_packed_no_exit(response, socket_cliente);
 
 	return (int) response.packed;
@@ -1100,7 +1100,6 @@ void mostrar_listas() {
 		log_trace(logger, "Clave: %s", puntero_disponibles->clave);
 		puntero_disponibles = puntero_disponibles->sgte;
 	}
-	sleep(1);
 }
 
 bool tieneLaClave(Instancia unaInstancia, char* clave) {

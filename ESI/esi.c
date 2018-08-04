@@ -133,7 +133,12 @@ void esperar_ejecucion(int socket_coordinador, int socket_planificador) {
 
 	if (orden.aviso == -1) {
 		log_error(logger, "Orden de terminación.");
-		cerrar();
+		aviso_con_ID aviso_abort = { .aviso = -5 };
+		enviar_aviso(socket_coordinador, aviso_abort);
+		enviar_aviso(socket_planificador, aviso_abort);
+
+		close(socket_coordinador);
+		close(socket_planificador);
 
 		exit(1);
 	} else if (orden.aviso == 2) {

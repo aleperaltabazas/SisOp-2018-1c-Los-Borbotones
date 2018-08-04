@@ -350,6 +350,7 @@ void newESI(ESI esi) {
 	agregar_ESI(&ready_ESIs, esi);
 
 	ESIs_size++;
+	log_debug(logger, "ESIs_size: %i", ESIs_size);
 	pthread_mutex_unlock(&sem_ready_ESIs_size);
 	pthread_mutex_unlock(&sem_ready_ESIs);
 
@@ -390,32 +391,35 @@ void blockESI(ESI esi) {
 }
 
 void abortESI(ESI esi) {
-	log_warning(logger, "El ESI %i se cayó o fue abortado.", esi.id);
+	log_debug(debug_logger, "ESI ID: %i", esi.id);
+	log_debug(debug_logger, "Executing ESI: %i", executing_ESI.id);
+	log_warning(debug_logger, "El ESI %i se cayó o fue abortado.", esi.id);
 	if (executing_ESI.id == esi.id) {
-
 		pthread_mutex_lock(&sem_ready_ESIs);
 		pthread_mutex_lock(&sem_ready_ESIs_size);
 		if (esta(ready_ESIs, esi)) {
 			eliminar_ESI(&ready_ESIs, esi);
 			ESIs_size--;
+			loggear("Me metí en el if de readyESIs");
 		}
 
-		if (esta(blocked_ESIs, esi)) {
-			eliminar_ESI(&blocked_ESIs, esi);
-		}
 		pthread_mutex_unlock(&sem_ready_ESIs_size);
 		pthread_mutex_unlock(&sem_ready_ESIs);
 
-		if (executing_ESI.id == esi.id) {
-			vaciar_ESI();
+		vaciar_ESI();
 
-			pthread_mutex_lock(&sem_ejecutando);
-			ejecutando = false;
-			pthread_mutex_unlock(&sem_ejecutando);
+		pthread_mutex_lock(&sem_ejecutando);
+		ejecutando = false;
+		pthread_mutex_unlock(&sem_ejecutando);
 
-			pthread_mutex_unlock(&sem_ejecucion);
-		}
+		pthread_mutex_unlock(&sem_ejecucion);
+
 	}
+
+	if (esta(blocked_ESIs, esi)) {
+		eliminar_ESI(&blocked_ESIs, esi);
+	}
+
 }
 
 void finishESI(ESI esi) {
@@ -508,6 +512,8 @@ bool esta(t_esi_list lista, ESI esi) {
 	t_esi_node* puntero = lista.head;
 
 	while (puntero != NULL) {
+		log_debug(debug_logger, "ESI: %i", esi.id);
+		log_debug(debug_logger, "Puntero: %i", puntero->esi.id);
 		if (puntero->esi.id == esi.id) {
 			return true;
 		}
@@ -593,6 +599,12 @@ void planificar(void) {
 
 		if (no_hay_ESI()) {
 			next_esi = dame_proximo_ESI();
+			if (next_esi.id == ESI_error.id) {
+				log_warning(logger, "No hay ESIs listos esperando.");
+				log_debug(logger, "ESIs_size: %i", ESIs_size);
+				pthread_mutex_unlock(&sem_ejecucion);
+				return;
+			}
 			log_info(logger, "ESI número %i elegido.", next_esi.id);
 
 		}
@@ -648,6 +660,10 @@ ESI dame_proximo_ESI() {
 
 ESI shortest_job(t_esi_list lista) {
 	t_esi_node* puntero = lista.head;
+
+	if (puntero == NULL) {
+		return ESI_error;
+	}
 
 	ESI esi = headESIs(lista);
 
@@ -1311,30 +1327,47 @@ void pausarOContinuar(void) {
 void kill_esi(int id) {
 	uint32_t id_as_uint = (uint32_t) id;
 
+	pthread_mutex_lock(&sem_ready_ESIs_size);
+	pthread_mutex_lock(&sem_ready_ESIs);
 	ESI asesina3 = findByIDIn(id_as_uint, ready_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
 		kill_ESI(asesina3);
 		eliminar_ESI(&ready_ESIs, asesina3);
+		ESIs_size--;
 		printf("ESI %i abortado. \n", id);
+
+		pthread_mutex_unlock(&sem_ready_ESIs_size);
+		pthread_mutex_unlock(&sem_ready_ESIs);
+
 		return;
 	}
+	pthread_mutex_unlock(&sem_ready_ESIs_size);
+	pthread_mutex_unlock(&sem_ready_ESIs);
 
+	pthread_mutex_lock(&sem_blocked_ESIs);
 	asesina3 = findByIDIn(id_as_uint, blocked_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
 		kill_ESI(asesina3);
 		eliminar_ESI(&blocked_ESIs, asesina3);
 		printf("ESI %i abortado. \n", id);
+
+		pthread_mutex_unlock(&sem_blocked_ESIs);
+
 		return;
 	}
+	pthread_mutex_unlock(&sem_blocked_ESIs);
 
+	pthread_mutex_lock(&sem_finished_ESIs);
 	asesina3 = findByIDIn(id_as_uint, finished_ESIs);
 
 	if (asesina3.id != ESI_error.id) {
 		printf("El ESI %i ya terminó, así que no pudo ser abortado. \n", id);
+		pthread_mutex_unlock(&sem_finished_ESIs);
 		return;
 	}
+	pthread_mutex_unlock(&sem_finished_ESIs);
 
 	printf(
 			"El ESI %i no se encuentra en el sistema, por lo que no se pudo abortar. \n",
