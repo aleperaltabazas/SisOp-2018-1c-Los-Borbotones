@@ -423,7 +423,6 @@ char * serializar_valores_set(int tamanio_a_enviar, parametros_set * valor_set) 
 }
 
 void avisar_cierre(int server_socket, uint32_t id) {
-	int status = 1;
 	aviso_con_ID aviso_de_fin = { .aviso = 0, .id = id };
 
 	int packageSize = sizeof(aviso_de_fin.aviso) + sizeof(aviso_de_fin.id);
@@ -433,18 +432,11 @@ void avisar_cierre(int server_socket, uint32_t id) {
 
 	loggear("Enviando aviso de fin.");
 
-	while (status) {
-		int envio = send(server_socket, message, packageSize, 0);
+	int envio = send(server_socket, message, packageSize, 0);
 
-		status = 0;
-
-		if (envio < 0) {
-			log_warning(logger, "Fallo el envio. Intentando de nuevo en 5: %s",
-					strerror(errno));
-			status = 1;
-
-			sleep(5);
-		}
+	if (envio < 0) {
+		free(message);
+		salir_con_error("Falló el aviso de fin.", server_socket);
 	}
 
 	free(message);
